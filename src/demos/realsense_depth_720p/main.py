@@ -387,7 +387,10 @@ def run_realsense_demo(args: argparse.Namespace):
         log.info(f"Custom Intrinsics: fx={K[0,0]:.2f}, fy={K[1,1]:.2f}, cx={K[0,2]:.2f}, cy={K[1,2]:.2f}")
 
     log.info(f"Real-time FPS Limiter set to: {args.fps:.1f} FPS (buffer dropping enabled)")
-    log.info(f"Object radius compensation: {args.bottle_radius*100:.1f} cm (diameter: {args.bottle_radius*200:.1f} cm)")
+    if args.bottle_radius > 0:
+        log.info(f"Object radius compensation: {args.bottle_radius*100:.1f} cm (diameter: {args.bottle_radius*200:.1f} cm)")
+    else:
+        log.info("Object radius compensation: Disabled (raw surface depth)")
 
     frame_interval = 1.0 / max(0.1, args.fps)
     last_process_time = 0.0
@@ -626,8 +629,8 @@ def main():
                         help=f"AprilTag physical marker side length in meters (default: {DEFAULT_MARKER_SIZE}m)")
     parser.add_argument("--factory-calib", action="store_true", default=False,
                         help="Use RealSense factory color camera intrinsics from device EEPROM instead of custom calibrator")
-    parser.add_argument("--bottle-radius", type=float, default=0.045,
-                        help="Object radius in meters for center compensation along viewing ray (default: 0.045m = 9cm diameter)")
+    parser.add_argument("--bottle-radius", type=float, default=0.0,
+                        help="Object radius in meters for center compensation along viewing ray (default: 0.0 = disabled, e.g. 0.045 for 9cm bottle)")
     parser.add_argument("--undistort", action="store_true",
                         help="Apply OpenCV lens undistortion using loaded calibration coefficients")
     parser.add_argument("--no-gui", action="store_true",
