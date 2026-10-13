@@ -342,6 +342,7 @@ def render_poses_panel(width: int, height: int, poses: list[dict], ref_tag_id: i
             name = p["name"]
             x, y_pos, z = p["xyz_cm"]
             euclid_cm = math.sqrt(x * x + y_pos * y_pos + z * z)
+            r, pitch, yaw = p.get("rpy_deg", (0.0, 0.0, 0.0))
             is_tag = p.get("is_tag", False)
             is_cam = p.get("is_cam", False)
             if is_cam:
