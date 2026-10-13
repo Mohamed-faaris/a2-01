@@ -237,19 +237,48 @@ def detect_yolo_objects(frame_bgr: np.ndarray, model: YOLO, target_classes: set[
     return detections
 
 
-def triangulate_points(pt0_px: tuple[float, float], pt1_px: tuple[float, float], P0: np.ndarray, P1: np.ndarray) -> tuple[np.ndarray, float]:
+def triangulate_points(pt0_px: tuple[float, float], pt1_px: tuple[float, float], P0: np.ndarray, P1: np.ndarray,
+                       K0: np.ndarray, K1: np.ndarray,
+                       R0_w: np.ndarray, t0_w: np.ndarray,
+                       R1_w: np.ndarray, t1_w: np.ndarray) -> tuple[np.ndarray, float, float]:
+    """Triangulate 3D point and compute both reprojection error (px) and 3D ray distance / difference (cm)."""
     pts0 = np.array(pt0_px, dtype=np.float64).reshape(2, 1)
     pts1 = np.array(pt1_px, dtype=np.float64).reshape(2, 1)
     homo = cv2.triangulatePoints(P0, P1, pts0, pts1).reshape(4)
     if abs(homo[3]) < 1e-9:
-        return np.zeros(3), float("inf")
+        return np.zeros(3), float("inf"), float("inf")
     pt3d = homo[:3] / homo[3]
     pt3d_h = np.append(pt3d, 1.0)
     p0_p = P0 @ pt3d_h
     p1_p = P1 @ pt3d_h
     e0 = float(np.linalg.norm(p0_p[:2] / p0_p[2] - np.array(pt0_px)))
     e1 = float(np.linalg.norm(p1_p[:2] / p1_p[2] - np.array(pt1_px)))
-    return pt3d, (e0 + e1) / 2.0
+    reproj_err_px = (e0 + e1) / 2.0
+
+    # Ray difference: shortest 3D distance between the two viewing optical rays
+    # Optical centers in world (Tag) frame: C = -R^T * t
+    c0 = -R0_w.T @ t0_w
+    c1 = -R1_w.T @ t1_w
+
+    # Ray directions in world frame
+    v0_cam = np.linalg.inv(K0) @ np.array([pt0_px[0], pt0_px[1], 1.0])
+    v1_cam = np.linalg.inv(K1) @ np.array([pt1_px[0], pt1_px[1], 1.0])
+    d0 = R0_w.T @ v0_cam
+    d0 = d0 / max(1e-9, np.linalg.norm(d0))
+    d1 = R1_w.T @ v1_cam
+    d1 = d1 / max(1e-9, np.linalg.norm(d1))
+
+    # Shortest distance between skew lines L0: c0 + s*d0 and L1: c1 + t*d1
+    cross_d = np.cross(d0, d1)
+    cross_norm = np.linalg.norm(cross_d)
+    if cross_norm < 1e-6:
+        # Near-parallel rays
+        ray_diff_cm = float(np.linalg.norm(np.cross(c1 - c0, d0))) * 100.0
+    else:
+        # Distance = |(c1 - c0) . (d0 x d1)| / ||d0 x d1||
+        ray_diff_cm = float(abs(np.dot(c1 - c0, cross_d)) / cross_norm) * 100.0
+
+    return pt3d, reproj_err_px, ray_diff_cm
 
 
 def associate_stereo_detections(dets0: list[dict], dets1: list[dict]) -> list[tuple[dict, dict]]:
@@ -345,31 +374,31 @@ def render_table_panel(width: int, height: int, all_tags: list[dict], objects_fo
 
 
 def render_poses_panel(width: int, height: int, poses: list[dict], ref_tag_info: dict | None) -> np.ndarray:
-    """Render bottom-right panel: 6D Poses & 3D Points Table with ID and Euclidean Distance."""
+    """Render bottom-right panel: 6D Poses & 3D Points Table with ID, Euclidean Distance, and Ray Difference."""
     panel = np.zeros((height, width, 3), dtype=np.uint8)
     panel[:] = (20, 20, 24)
 
     # Header
     cv2.rectangle(panel, (0, 0), (width, 42), (36, 36, 44), -1)
-    cv2.putText(panel, "6D POSES & 3D RELATIVE COORDINATES", (16, 28),
+    cv2.putText(panel, "6D POSES & STEREO RAY DIFFERENCE", (16, 28),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 200, 255), 2, cv2.LINE_AA)
 
-    y = 68
+    y = 66
     # Reference frame status
     if ref_tag_info:
         r_txt = f"Origin: Tag #{ref_tag_info['id']} ({'Corner' if ref_tag_info['corner'] else 'Center'}) | Stereo Baselines Calibrated"
-        cv2.putText(panel, r_txt, (16, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (100, 220, 255), 1)
+        cv2.putText(panel, r_txt, (16, y), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (100, 220, 255), 1)
     else:
-        cv2.putText(panel, "Reference AprilTag not locked - displaying raw camera points", (16, y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (100, 100, 255), 1)
-    y += 14
+        cv2.putText(panel, "NO ORIGIN: Searching for AprilTag #1 in both cameras...", (16, y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 0, 255), 1)
+    y += 12
     cv2.line(panel, (16, y), (width - 16, y), (60, 60, 70), 1)
-    y += 24
+    y += 22
 
-    # Table Header with ID, Target, Euclidean Norm ||P||, and 6D values
-    cv2.putText(panel, f"{'ID':<5} {'TARGET':<8} | {'EUCLID':<9} | {'X(cm)':<7} {'Y(cm)':<7} {'Z(cm)':<7} | {'R°':<5} {'P°':<5} {'Y°'}", (16, y),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.36, (160, 160, 170), 1)
-    y += 20
+    # Table Header with ID, Target, Euclid Norm, X, Y, Z, Ray Diff (cm) or R, P, Y
+    cv2.putText(panel, f"{'ID':<5} {'TARGET':<7} | {'EUCLID':<8} | {'X(cm)':<6} {'Y(cm)':<6} {'Z(cm)':<6} | {'RAY DIFF':<9} {'REPROJ'}", (16, y),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.35, (160, 160, 170), 1)
+    y += 18
 
     if not poses:
         cv2.putText(panel, "Awaiting 3D stereo triangulations...", (24, y),
@@ -380,12 +409,27 @@ def render_poses_panel(width: int, height: int, poses: list[dict], ref_tag_info:
             name = p["name"]
             x, y_pos, z = p["xyz_cm"]
             euclid_cm = math.sqrt(x * x + y_pos * y_pos + z * z)
-            r, pitch, yaw = p.get("rpy_deg", (0.0, 0.0, 0.0))
             is_tag = p.get("is_tag", False)
-            color = (255, 220, 100) if is_tag else (100, 255, 100)
-            row_str = f"{pid:<5} {name:<8} | {euclid_cm:6.1f} cm | {x:+6.1f} {y_pos:+6.1f} {z:+6.1f} | {r:+4.0f}  {pitch:+4.0f}  {yaw:+4.0f}"
-            cv2.putText(panel, row_str, (16, y), cv2.FONT_HERSHEY_SIMPLEX, 0.37, color, 1, cv2.LINE_AA)
-            y += 22
+            is_cam = p.get("is_cam", False)
+
+            if is_cam:
+                color = (255, 120, 255)
+                extra = f"{p.get('baseline_str', '')}"
+            elif is_tag:
+                color = (255, 220, 100)
+                r, pitch, yaw = p.get("rpy_deg", (0.0, 0.0, 0.0))
+                extra = f"R:{r:+.0f}° P:{pitch:+.0f}° Y:{yaw:+.0f}°"
+            else:
+                color = (100, 255, 100)
+                ray_diff = p.get("ray_diff_cm")
+                reproj = p.get("reproj_px")
+                ray_str = f"{ray_diff:5.2f}cm" if ray_diff is not None else "--"
+                rep_str = f"{reproj:4.1f}px" if reproj is not None else "--"
+                extra = f"{ray_str:<9} {rep_str}"
+
+            row_str = f"{pid:<5} {name:<7} | {euclid_cm:5.1f}cm | {x:+6.1f} {y_pos:+6.1f} {z:+6.1f} | {extra}"
+            cv2.putText(panel, row_str, (16, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, color, 1, cv2.LINE_AA)
+            y += 21
 
     return panel
 
@@ -549,7 +593,32 @@ def main() -> int:
 
                 corner_offset = np.array([-ref_marker_size / 2.0, -ref_marker_size / 2.0, 0.0]) if args.corner_origin else np.zeros(3)
 
-                # Add all detected tags into 6D pose list relative to reference
+                # 1. Compute Camera 1 and Camera 2 6D poses in the reference (world) frame
+                # Camera position in tag frame: C = -R^T * t
+                p_cam0_tag = -R_c0_t.T @ t_c0_t - corner_offset
+                p_cam1_tag = -R_c1_t.T @ t_c1_t - corner_offset
+                rpy_c0 = rotation_matrix_to_euler_deg(R_c0_t.T)
+                rpy_c1 = rotation_matrix_to_euler_deg(R_c1_t.T)
+                baseline_m = float(np.linalg.norm(p_cam1_tag - p_cam0_tag))
+
+                poses_list.append({
+                    "id": "C01",
+                    "name": "Cam0",
+                    "xyz_cm": [p_cam0_tag[0] * 100.0, p_cam0_tag[1] * 100.0, p_cam0_tag[2] * 100.0],
+                    "rpy_deg": rpy_c0,
+                    "is_cam": True,
+                    "baseline_str": f"Base: {baseline_m*100:4.1f}cm",
+                })
+                poses_list.append({
+                    "id": "C02",
+                    "name": "Cam1",
+                    "xyz_cm": [p_cam1_tag[0] * 100.0, p_cam1_tag[1] * 100.0, p_cam1_tag[2] * 100.0],
+                    "rpy_deg": rpy_c1,
+                    "is_cam": True,
+                    "baseline_str": f"Base: {baseline_m*100:4.1f}cm",
+                })
+
+                # 2. Add all detected tags into 6D pose list relative to reference
                 for t in tags0:
                     rpy = rotation_matrix_to_euler_deg(t["R"])
                     p_in_ref = R_c0_t.T @ (t["t"] - t_c0_t) - corner_offset
@@ -564,7 +633,11 @@ def main() -> int:
                 matched_pairs = associate_stereo_detections(objs0, objs1)
 
                 for idx, (d0, d1) in enumerate(matched_pairs):
-                    pt_tag, reproj = triangulate_points(tuple(d0["center_px"]), tuple(d1["center_px"]), P0, P1)
+                    pt_tag, reproj_px, ray_diff_cm = triangulate_points(
+                        tuple(d0["center_px"]), tuple(d1["center_px"]),
+                        P0, P1, calib0.camera_matrix, calib1.camera_matrix,
+                        R_c0_t, t_c0_t, R_c1_t, t_c1_t
+                    )
                     pt_rel = pt_tag - corner_offset
                     dist_rel = float(np.linalg.norm(pt_rel))
 
@@ -580,21 +653,31 @@ def main() -> int:
                         "name": d0["class"][:10],
                         "xyz_cm": [pt_rel[0] * 100.0, pt_rel[1] * 100.0, pt_rel[2] * 100.0],
                         "rpy_deg": (0.0, 0.0, 0.0),
+                        "ray_diff_cm": ray_diff_cm,
+                        "reproj_px": reproj_px,
                         "is_tag": False,
                     })
 
-                    # Draw triangulated 3D overlay (bright green box and distance label)
+                    # Draw triangulated 3D overlay with Euclidean distance and ray difference
                     b0 = [int(v) for v in d0["bbox_xyxy"]]
                     cv2.rectangle(annotated0, (b0[0], b0[1]), (b0[2], b0[3]), (0, 255, 0), 2)
-                    cv2.putText(annotated0, f"[{obj_id}] {d0['class']} d={dist_rel*100:.1f}cm", (b0[0], max(16, b0[1] - 8)),
+                    lbl0_top = f"[{obj_id}] {d0['class']} d={dist_rel*100:.1f}cm"
+                    lbl0_bot = f"ray_diff={ray_diff_cm:.1f}cm err={reproj_px:.1f}px"
+                    cv2.putText(annotated0, lbl0_top, (b0[0], max(16, b0[1] - 18)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
+                    cv2.putText(annotated0, lbl0_bot, (b0[0], max(32, b0[1] - 4)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1)
 
                     b1 = [int(v) for v in d1["bbox_xyxy"]]
                     cv2.rectangle(annotated1, (b1[0], b1[1]), (b1[2], b1[3]), (0, 255, 0), 2)
-                    cv2.putText(annotated1, f"[{obj_id}] {d1['class']} d={dist_rel*100:.1f}cm", (b1[0], max(16, b1[1] - 8)),
+                    lbl1_top = f"[{obj_id}] {d1['class']} d={dist_rel*100:.1f}cm"
+                    lbl1_bot = f"ray_diff={ray_diff_cm:.1f}cm err={reproj_px:.1f}px"
+                    cv2.putText(annotated1, lbl1_top, (b1[0], max(16, b1[1] - 18)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
+                    cv2.putText(annotated1, lbl1_bot, (b1[0], max(32, b1[1] - 4)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1)
             else:
-                msg = "Searching for Reference AprilTag..."
+                msg = "NO ORIGIN: Searching for AprilTag #1 in both cameras..."
                 cv2.putText(annotated0, msg, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
                 cv2.putText(annotated1, msg, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
