@@ -404,12 +404,13 @@ def run_realsense_demo(args: argparse.Namespace):
                 if ref_tag:
                     p_in_ref = ref_tag["R"].T @ (t["t"] - ref_tag["t"])
                     s = args.tag_size
-                    corner_offset = np.array([-s / 2.0, -s / 2.0, 0.0])
-                    p_rel = p_in_ref - corner_offset
+                    rel_x = float(-(p_in_ref[0] - s / 2.0))
+                    rel_y = float(p_in_tag_y := (p_in_ref[1] - (-s / 2.0)))
+                    rel_z = float(-p_in_ref[2])
                     poses_list.append({
                         "id": tag_id_str,
                         "name": f"Tag #{t['id']}",
-                        "xyz_cm": [p_rel[0] * 100.0, p_rel[1] * 100.0, p_rel[2] * 100.0],
+                        "xyz_cm": [rel_x * 100.0, rel_y * 100.0, rel_z * 100.0],
                         "rpy_deg": rpy,
                         "is_tag": True,
                     })
@@ -441,19 +442,28 @@ def run_realsense_demo(args: argparse.Namespace):
                     if has_3d:
                         p_cam = backproject_to_3d(cx, cy, measured_depth, K)
                         if ref_tag:
-                            p_in_ref = ref_tag["R"].T @ (p_cam - ref_tag["t"])
+                            # Express 3D location in AprilTag reference frame
+                            p_in_tag = ref_tag["R"].T @ (p_cam - ref_tag["t"])
                             s = args.tag_size
-                            p_rel = p_in_ref - np.array([-s / 2.0, -s / 2.0, 0.0])
+                            # Exact one_cam_depth_cans_3d transformation relative to tag corner origin:
+                            # Origin at [+s/2, -s/2, 0] in tag frame
+                            rel_x = float(-(p_in_tag[0] - s / 2.0))
+                            rel_y = float(p_in_tag[1] - (-s / 2.0))
+                            rel_z = float(-p_in_tag[2])
+                            p_rel = np.array([rel_x, rel_y, rel_z], dtype=np.float64)
+
                             euclid_dist = float(np.linalg.norm(p_rel)) * 100.0
                             obj_info["euclidean_dist_cm"] = euclid_dist
                             poses_list.append({
                                 "id": obj_id,
                                 "name": cname[:10],
-                                "xyz_cm": [p_rel[0] * 100.0, p_rel[1] * 100.0, p_rel[2] * 100.0],
+                                "xyz_cm": [rel_x * 100.0, rel_y * 100.0, rel_z * 100.0],
                                 "rpy_deg": (0.0, 0.0, 0.0),
                                 "is_tag": False,
                             })
-                            label = f"[{obj_id}] {cname} d={euclid_dist:.1f}cm X:{p_rel[0]*100:.1f} Y:{p_rel[1]*100:.1f}"
+                            # Format label just like one_cam_depth_cans_3d
+                            label_top = f"[{obj_id}] {cname} (d={euclid_dist:.1f}cm)"
+                            label_coords = f"x={rel_x:+.2f}, y={rel_y:+.2f}, z={rel_z:+.2f}m"
                         else:
                             euclid_dist = float(np.linalg.norm(p_cam)) * 100.0
                             obj_info["euclidean_dist_cm"] = euclid_dist
@@ -464,12 +474,22 @@ def run_realsense_demo(args: argparse.Namespace):
                                 "rpy_deg": (0.0, 0.0, 0.0),
                                 "is_tag": False,
                             })
-                            label = f"[{obj_id}] {cname} d={euclid_dist:.1f}cm Z={measured_depth:.2f}m"
+                            label_top = f"[{obj_id}] {cname} (Cam Z={measured_depth:.2f}m)"
+                            label_coords = f"x={p_cam[0]:+.2f}, y={p_cam[1]:+.2f}, z={p_cam[2]:+.2f}m"
 
+                        # Draw bounding box and 3D coordinate annotations
                         cv2.rectangle(annotated_color, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
                         cv2.circle(annotated_color, (int(cx), int(cy)), 4, (0, 0, 255), -1)
-                        cv2.putText(annotated_color, label, (int(x1), int(y1) - 8),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
+                        cv2.putText(annotated_color, label_top, (int(x1), max(18, int(y1) - 18)),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1, cv2.LINE_AA)
+                        cv2.putText(annotated_color, label_coords, (int(x1), max(32, int(y1) - 4)),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 255), 1, cv2.LINE_AA)
+                    else:
+                        # 2D only detection fallback
+                        cv2.rectangle(annotated_color, (int(x1), int(y1)), (int(x2), int(y2)), (0, 200, 255), 2)
+                        cv2.circle(annotated_color, (int(cx), int(cy)), 4, (0, 0, 255), -1)
+                        cv2.putText(annotated_color, f"[{obj_id}] {cname} {conf:.2f} (No Depth)",
+                                    (int(x1), max(16, int(y1) - 8)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 200, 255), 1)
 
                     objects_list.append(obj_info)
 
