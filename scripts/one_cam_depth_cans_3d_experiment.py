@@ -43,7 +43,7 @@ K = np.array([
 ], dtype=np.float64)
 
 DEFAULT_MARKER_SIZE_M = 0.088
-DEFAULT_MARKER_ID = 3
+DEFAULT_MARKER_ID = 1
 CAN_RADIUS_M = 0.035
 CAN_HEIGHT_M = 0.125
 DEFAULT_YOLO_MODEL = "/home/mfk01/Projects/econ-systems/demos/demo2/yolo26s.pt"
