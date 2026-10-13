@@ -1,0 +1,7 @@
+{
+  "methodology": "yolo_dlt",
+  "status": "FAIL",
+  "cans_triangulated": 0,
+  "mean_corner_distance_error_cm": null,
+  "detections": []
+}

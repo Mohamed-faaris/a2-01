@@ -1,0 +1,112 @@
+{
+  "methodology": "contour_midpoint",
+  "status": "FAIL",
+  "cans_triangulated": 8,
+  "mean_corner_distance_error_cm": 33.45,
+  "detections": [
+    {
+      "can_name": "can_red",
+      "color": "red",
+      "estimated_3d_world": [
+        -0.1923,
+        0.1575,
+        0.0577
+      ],
+      "estimated_dist_to_corner_m": 0.2907,
+      "gt_dist_to_corner_m": 0.2974,
+      "corner_dist_error_cm": 0.68,
+      "triangulation_score": 0.002
+    },
+    {
+      "can_name": "can_green",
+      "color": "red",
+      "estimated_3d_world": [
+        0.4105,
+        1.0283,
+        0.1285
+      ],
+      "estimated_dist_to_corner_m": 1.2058,
+      "gt_dist_to_corner_m": 0.2692,
+      "corner_dist_error_cm": 93.66,
+      "triangulation_score": 0.007
+    },
+    {
+      "can_name": "can_blue",
+      "color": "red",
+      "estimated_3d_world": [
+        0.0905,
+        -0.5386,
+        0.4115
+      ],
+      "estimated_dist_to_corner_m": 0.6318,
+      "gt_dist_to_corner_m": 0.3371,
+      "corner_dist_error_cm": 29.47,
+      "triangulation_score": 0.084
+    },
+    {
+      "can_name": "can_green",
+      "color": "green",
+      "estimated_3d_world": [
+        0.0763,
+        0.1391,
+        0.0629
+      ],
+      "estimated_dist_to_corner_m": 0.2592,
+      "gt_dist_to_corner_m": 0.2692,
+      "corner_dist_error_cm": 1.0,
+      "triangulation_score": 0.0
+    },
+    {
+      "can_name": "can_red",
+      "color": "green",
+      "estimated_3d_world": [
+        -0.406,
+        0.997,
+        0.1328
+      ],
+      "estimated_dist_to_corner_m": 1.1478,
+      "gt_dist_to_corner_m": 0.2974,
+      "corner_dist_error_cm": 85.04,
+      "triangulation_score": 0.007
+    },
+    {
+      "can_name": "can_blue",
+      "color": "green",
+      "estimated_3d_world": [
+        0.3212,
+        -0.199,
+        0.3651
+      ],
+      "estimated_dist_to_corner_m": 0.5305,
+      "gt_dist_to_corner_m": 0.3371,
+      "corner_dist_error_cm": 19.34,
+      "triangulation_score": 0.047
+    },
+    {
+      "can_name": "can_blue",
+      "color": "green",
+      "estimated_3d_world": [
+        0.0934,
+        -0.6291,
+        0.4318
+      ],
+      "estimated_dist_to_corner_m": 0.7128,
+      "gt_dist_to_corner_m": 0.3371,
+      "corner_dist_error_cm": 37.57,
+      "triangulation_score": 0.077
+    },
+    {
+      "can_name": "can_blue",
+      "color": "blue",
+      "estimated_3d_world": [
+        0.248,
+        0.0631,
+        0.0552
+      ],
+      "estimated_dist_to_corner_m": 0.3283,
+      "gt_dist_to_corner_m": 0.3371,
+      "corner_dist_error_cm": 0.88,
+      "triangulation_score": 0.0
+    }
+  ]
+}

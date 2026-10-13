@@ -1,0 +1,21 @@
+{
+  "methodology": "yolo_dlt",
+  "status": "FAIL",
+  "cans_triangulated": 1,
+  "mean_corner_distance_error_cm": 0.02,
+  "detections": [
+    {
+      "can_name": "can_red",
+      "color": "red",
+      "estimated_3d_world": [
+        -0.1694,
+        0.0262,
+        0.273
+      ],
+      "estimated_dist_to_corner_m": 0.3049,
+      "gt_dist_to_corner_m": 0.3047,
+      "corner_dist_error_cm": 0.02,
+      "triangulation_score": 0.201
+    }
+  ]
+}

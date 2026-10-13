@@ -1,0 +1,7 @@
+{
+  "status": "FAIL",
+  "num_cans_gt": 3,
+  "num_cans_triangulated": 0,
+  "mean_position_error_cm": Infinity,
+  "results": []
+}

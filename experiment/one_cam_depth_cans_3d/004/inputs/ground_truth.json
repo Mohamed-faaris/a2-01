@@ -1,0 +1,95 @@
+{
+  "marker": {
+    "id": 3,
+    "size_m": 0.088,
+    "center_position": [
+      0.029,
+      -0.038,
+      0.001
+    ],
+    "corner_origin_position": [
+      -0.014999999999999996,
+      -0.08199999999999999,
+      0.001
+    ]
+  },
+  "cans": [
+    {
+      "name": "can_red",
+      "color_name": "red",
+      "color": [
+        0.85,
+        0.08,
+        0.08
+      ],
+      "position": [
+        -0.10698003673633441,
+        0.19114721107379545,
+        0.2091587478194138
+      ],
+      "radius": 0.035,
+      "height": 0.125,
+      "gt_x_rel_tag_corner_m": -0.09198003673633441,
+      "gt_y_rel_tag_corner_m": 0.27314721107379547,
+      "gt_z_rel_tag_corner_m": 0.2081587478194138,
+      "gt_dist_to_tag_corner_m": 0.35552748187609395,
+      "gt_depth_from_cam_m": 1.162180269350875
+    },
+    {
+      "name": "can_green",
+      "color_name": "green",
+      "color": [
+        0.08,
+        0.85,
+        0.08
+      ],
+      "position": [
+        0.08837040588508356,
+        0.1355434367624025,
+        0.15393967274304732
+      ],
+      "radius": 0.035,
+      "height": 0.125,
+      "gt_x_rel_tag_corner_m": 0.10337040588508356,
+      "gt_y_rel_tag_corner_m": 0.21754343676240248,
+      "gt_z_rel_tag_corner_m": 0.15293967274304732,
+      "gt_dist_to_tag_corner_m": 0.2853088347562948,
+      "gt_depth_from_cam_m": 1.1472838461940464
+    },
+    {
+      "name": "can_blue",
+      "color_name": "blue",
+      "color": [
+        0.08,
+        0.2,
+        0.88
+      ],
+      "position": [
+        0.23224116731133213,
+        0.1646671816779804,
+        0.09031645717065877
+      ],
+      "radius": 0.035,
+      "height": 0.125,
+      "gt_x_rel_tag_corner_m": 0.2472411673113321,
+      "gt_y_rel_tag_corner_m": 0.24666718167798038,
+      "gt_z_rel_tag_corner_m": 0.08931645717065877,
+      "gt_dist_to_tag_corner_m": 0.360486231154459,
+      "gt_depth_from_cam_m": 1.209563686230433
+    }
+  ],
+  "camera_position": [
+    -0.06732823653091392,
+    -0.965501694068639,
+    0.4410757810050426
+  ],
+  "intrinsics": {
+    "fx": 935.3074360871938,
+    "fy": 935.3074360871938,
+    "cx": 540.0,
+    "cy": 360.0,
+    "width": 1080,
+    "height": 720,
+    "hfov_deg": 60.0
+  }
+}

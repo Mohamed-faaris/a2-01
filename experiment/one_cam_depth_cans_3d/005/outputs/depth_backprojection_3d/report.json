@@ -1,0 +1,70 @@
+{
+  "status": "PASS",
+  "inputs": {
+    "camera_count": 1,
+    "marker_id": 3,
+    "marker_size_m": 0.088,
+    "depth_input_mode": "depth_from_can_center",
+    "constraint": "none (free 3D space, unconstrained height/position)"
+  },
+  "mean_3d_error_cm": 1.01,
+  "cans_evaluated": [
+    {
+      "can_name": "can_blue",
+      "detected_color": "blue",
+      "depth_input_m": 1.2117,
+      "estimated_3d_xyz_m": [
+        0.2265,
+        0.1295,
+        0.1568
+      ],
+      "ground_truth_3d_xyz_m": [
+        0.227,
+        0.1389,
+        0.154
+      ],
+      "error_x_cm": 0.05,
+      "error_y_cm": 0.93,
+      "error_z_cm": 0.28,
+      "euclidean_3d_error_cm": 0.97
+    },
+    {
+      "can_name": "can_green",
+      "detected_color": "green",
+      "depth_input_m": 1.2481,
+      "estimated_3d_xyz_m": [
+        0.042,
+        0.1995,
+        0.1961
+      ],
+      "ground_truth_3d_xyz_m": [
+        0.0432,
+        0.2089,
+        0.1929
+      ],
+      "error_x_cm": 0.12,
+      "error_y_cm": 0.95,
+      "error_z_cm": 0.32,
+      "euclidean_3d_error_cm": 1.01
+    },
+    {
+      "can_name": "can_red",
+      "detected_color": "red",
+      "depth_input_m": 1.222,
+      "estimated_3d_xyz_m": [
+        -0.1267,
+        0.2052,
+        0.2456
+      ],
+      "ground_truth_3d_xyz_m": [
+        -0.1247,
+        0.2149,
+        0.2424
+      ],
+      "error_x_cm": 0.2,
+      "error_y_cm": 0.97,
+      "error_z_cm": 0.33,
+      "euclidean_3d_error_cm": 1.04
+    }
+  ]
+}

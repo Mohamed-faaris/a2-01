@@ -1,0 +1,21 @@
+{
+  "methodology": "yolo_midpoint",
+  "status": "FAIL",
+  "cans_triangulated": 1,
+  "mean_corner_distance_error_cm": 0.3,
+  "detections": [
+    {
+      "can_name": "can_green",
+      "color": "green",
+      "estimated_3d_world": [
+        0.0135,
+        0.1025,
+        0.396
+      ],
+      "estimated_dist_to_corner_m": 0.4278,
+      "gt_dist_to_corner_m": 0.4248,
+      "corner_dist_error_cm": 0.3,
+      "triangulation_score": 0.001
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "marker_input": {
+    "marker_id": 0,
+    "marker_size_m": 0.075
+  },
+  "num_cans_triangulated": 3,
+  "mean_corner_distance_error_cm": 0.65,
+  "cans_relative_to_marker_corner": [
+    {
+      "can_name": "can_red",
+      "detected_color": "red",
+      "estimated_world_position_m": [
+        -0.2048,
+        0.0413,
+        0.061
+      ],
+      "estimated_rel_marker_center_m": [
+        -0.2169,
+        0.0847,
+        0.0634
+      ],
+      "estimated_rel_marker_corner_m": [
+        -0.1794,
+        0.1222,
+        0.0634
+      ],
+      "estimated_dist_to_corner_m": 0.2262,
+      "ground_truth_dist_to_corner_m": 0.2283,
+      "corner_distance_error_cm": 0.22,
+      "reprojection_error_px": 0.346
+    },
+    {
+      "can_name": "can_green",
+      "detected_color": "green",
+      "estimated_world_position_m": [
+        0.0451,
+        0.1608,
+        0.062
+      ],
+      "estimated_rel_marker_center_m": [
+        0.033,
+        0.2041,
+        0.0645
+      ],
+      "estimated_rel_marker_corner_m": [
+        0.0705,
+        0.2416,
+        0.0645
+      ],
+      "estimated_dist_to_corner_m": 0.2598,
+      "ground_truth_dist_to_corner_m": 0.2691,
+      "corner_distance_error_cm": 0.93,
+      "reprojection_error_px": 0.015
+    },
+    {
+      "can_name": "can_blue",
+      "detected_color": "blue",
+      "estimated_world_position_m": [
+        0.1935,
+        0.0539,
+        0.0609
+      ],
+      "estimated_rel_marker_center_m": [
+        0.1814,
+        0.0973,
+        0.0634
+      ],
+      "estimated_rel_marker_corner_m": [
+        0.2189,
+        0.1348,
+        0.0634
+      ],
+      "estimated_dist_to_corner_m": 0.2647,
+      "ground_truth_dist_to_corner_m": 0.2726,
+      "corner_distance_error_cm": 0.79,
+      "reprojection_error_px": 0.247
+    }
+  ]
+}

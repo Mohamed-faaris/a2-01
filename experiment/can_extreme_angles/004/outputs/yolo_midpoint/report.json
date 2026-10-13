@@ -1,0 +1,34 @@
+{
+  "methodology": "yolo_midpoint",
+  "status": "FAIL",
+  "cans_triangulated": 2,
+  "mean_corner_distance_error_cm": 0.5,
+  "detections": [
+    {
+      "can_name": "can_green",
+      "color": "green",
+      "estimated_3d_world": [
+        0.0671,
+        0.0771,
+        0.3442
+      ],
+      "estimated_dist_to_corner_m": 0.3842,
+      "gt_dist_to_corner_m": 0.3904,
+      "corner_dist_error_cm": 0.63,
+      "triangulation_score": 0.044
+    },
+    {
+      "can_name": "can_blue",
+      "color": "blue",
+      "estimated_3d_world": [
+        0.1292,
+        -0.016,
+        0.1722
+      ],
+      "estimated_dist_to_corner_m": 0.2356,
+      "gt_dist_to_corner_m": 0.2393,
+      "corner_dist_error_cm": 0.37,
+      "triangulation_score": 0.001
+    }
+  ]
+}

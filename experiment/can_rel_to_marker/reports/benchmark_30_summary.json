@@ -1,0 +1,272 @@
+[
+  {
+    "exp_id": "001",
+    "marker_id": 3,
+    "marker_size_m": 0.088,
+    "yolo_dlt_err_cm": 0.63,
+    "yolo_midpoint_err_cm": 0.63,
+    "contour_dlt_err_cm": 0.63,
+    "contour_midpoint_err_cm": 0.63
+  },
+  {
+    "exp_id": "002",
+    "marker_id": 2,
+    "marker_size_m": 0.09,
+    "yolo_dlt_err_cm": 0.59,
+    "yolo_midpoint_err_cm": 0.59,
+    "contour_dlt_err_cm": 0.65,
+    "contour_midpoint_err_cm": 0.65
+  },
+  {
+    "exp_id": "003",
+    "marker_id": 1,
+    "marker_size_m": 0.071,
+    "yolo_dlt_err_cm": 0.53,
+    "yolo_midpoint_err_cm": 0.53,
+    "contour_dlt_err_cm": 0.56,
+    "contour_midpoint_err_cm": 0.56
+  },
+  {
+    "exp_id": "004",
+    "marker_id": 2,
+    "marker_size_m": 0.072,
+    "yolo_dlt_err_cm": 0.63,
+    "yolo_midpoint_err_cm": 0.63,
+    "contour_dlt_err_cm": 0.63,
+    "contour_midpoint_err_cm": 0.63
+  },
+  {
+    "exp_id": "005",
+    "marker_id": 4,
+    "marker_size_m": 0.071,
+    "yolo_dlt_err_cm": 0.6,
+    "yolo_midpoint_err_cm": 0.6,
+    "contour_dlt_err_cm": 0.61,
+    "contour_midpoint_err_cm": 0.61
+  },
+  {
+    "exp_id": "006",
+    "marker_id": 0,
+    "marker_size_m": 0.088,
+    "yolo_dlt_err_cm": 0.65,
+    "yolo_midpoint_err_cm": 0.65,
+    "contour_dlt_err_cm": 0.68,
+    "contour_midpoint_err_cm": 0.68
+  },
+  {
+    "exp_id": "007",
+    "marker_id": 4,
+    "marker_size_m": 0.073,
+    "yolo_dlt_err_cm": 0.53,
+    "yolo_midpoint_err_cm": 0.53,
+    "contour_dlt_err_cm": 0.56,
+    "contour_midpoint_err_cm": 0.56
+  },
+  {
+    "exp_id": "008",
+    "marker_id": 1,
+    "marker_size_m": 0.07,
+    "yolo_dlt_err_cm": 0.46,
+    "yolo_midpoint_err_cm": 0.46,
+    "contour_dlt_err_cm": 0.5,
+    "contour_midpoint_err_cm": 0.5
+  },
+  {
+    "exp_id": "009",
+    "marker_id": 2,
+    "marker_size_m": 0.092,
+    "yolo_dlt_err_cm": 0.56,
+    "yolo_midpoint_err_cm": 0.56,
+    "contour_dlt_err_cm": 0.59,
+    "contour_midpoint_err_cm": 0.59
+  },
+  {
+    "exp_id": "010",
+    "marker_id": 3,
+    "marker_size_m": 0.082,
+    "yolo_dlt_err_cm": 0.65,
+    "yolo_midpoint_err_cm": 0.65,
+    "contour_dlt_err_cm": 0.6,
+    "contour_midpoint_err_cm": 0.6
+  },
+  {
+    "exp_id": "011",
+    "marker_id": 0,
+    "marker_size_m": 0.08,
+    "yolo_dlt_err_cm": 0.52,
+    "yolo_midpoint_err_cm": 0.52,
+    "contour_dlt_err_cm": 0.54,
+    "contour_midpoint_err_cm": 0.54
+  },
+  {
+    "exp_id": "012",
+    "marker_id": 1,
+    "marker_size_m": 0.088,
+    "yolo_dlt_err_cm": 0.47,
+    "yolo_midpoint_err_cm": 0.47,
+    "contour_dlt_err_cm": 0.52,
+    "contour_midpoint_err_cm": 0.52
+  },
+  {
+    "exp_id": "013",
+    "marker_id": 0,
+    "marker_size_m": 0.09,
+    "yolo_dlt_err_cm": 0.38,
+    "yolo_midpoint_err_cm": 0.38,
+    "contour_dlt_err_cm": 0.44,
+    "contour_midpoint_err_cm": 0.44
+  },
+  {
+    "exp_id": "014",
+    "marker_id": 4,
+    "marker_size_m": 0.066,
+    "yolo_dlt_err_cm": 0.75,
+    "yolo_midpoint_err_cm": 0.75,
+    "contour_dlt_err_cm": 0.76,
+    "contour_midpoint_err_cm": 0.76
+  },
+  {
+    "exp_id": "015",
+    "marker_id": 1,
+    "marker_size_m": 0.066,
+    "yolo_dlt_err_cm": 0.52,
+    "yolo_midpoint_err_cm": 0.52,
+    "contour_dlt_err_cm": 0.54,
+    "contour_midpoint_err_cm": 0.54
+  },
+  {
+    "exp_id": "016",
+    "marker_id": 2,
+    "marker_size_m": 0.087,
+    "yolo_dlt_err_cm": 0.44,
+    "yolo_midpoint_err_cm": 0.44,
+    "contour_dlt_err_cm": 0.55,
+    "contour_midpoint_err_cm": 0.55
+  },
+  {
+    "exp_id": "017",
+    "marker_id": 1,
+    "marker_size_m": 0.088,
+    "yolo_dlt_err_cm": 0.57,
+    "yolo_midpoint_err_cm": 0.57,
+    "contour_dlt_err_cm": 0.59,
+    "contour_midpoint_err_cm": 0.59
+  },
+  {
+    "exp_id": "018",
+    "marker_id": 4,
+    "marker_size_m": 0.089,
+    "yolo_dlt_err_cm": 0.59,
+    "yolo_midpoint_err_cm": 0.59,
+    "contour_dlt_err_cm": 0.59,
+    "contour_midpoint_err_cm": 0.59
+  },
+  {
+    "exp_id": "019",
+    "marker_id": 2,
+    "marker_size_m": 0.093,
+    "yolo_dlt_err_cm": 0.52,
+    "yolo_midpoint_err_cm": 0.52,
+    "contour_dlt_err_cm": 0.55,
+    "contour_midpoint_err_cm": 0.55
+  },
+  {
+    "exp_id": "020",
+    "marker_id": 0,
+    "marker_size_m": 0.066,
+    "yolo_dlt_err_cm": 0.5,
+    "yolo_midpoint_err_cm": 0.5,
+    "contour_dlt_err_cm": 0.52,
+    "contour_midpoint_err_cm": 0.52
+  },
+  {
+    "exp_id": "021",
+    "marker_id": 4,
+    "marker_size_m": 0.085,
+    "yolo_dlt_err_cm": 0.47,
+    "yolo_midpoint_err_cm": 0.48,
+    "contour_dlt_err_cm": 0.5,
+    "contour_midpoint_err_cm": 0.5
+  },
+  {
+    "exp_id": "022",
+    "marker_id": 4,
+    "marker_size_m": 0.069,
+    "yolo_dlt_err_cm": 0.39,
+    "yolo_midpoint_err_cm": 0.39,
+    "contour_dlt_err_cm": 0.38,
+    "contour_midpoint_err_cm": 0.38
+  },
+  {
+    "exp_id": "023",
+    "marker_id": 4,
+    "marker_size_m": 0.077,
+    "yolo_dlt_err_cm": 0.51,
+    "yolo_midpoint_err_cm": 0.51,
+    "contour_dlt_err_cm": 0.48,
+    "contour_midpoint_err_cm": 0.48
+  },
+  {
+    "exp_id": "024",
+    "marker_id": 1,
+    "marker_size_m": 0.081,
+    "yolo_dlt_err_cm": 0.61,
+    "yolo_midpoint_err_cm": 0.61,
+    "contour_dlt_err_cm": 0.6,
+    "contour_midpoint_err_cm": 0.6
+  },
+  {
+    "exp_id": "025",
+    "marker_id": 3,
+    "marker_size_m": 0.088,
+    "yolo_dlt_err_cm": 0.66,
+    "yolo_midpoint_err_cm": 0.66,
+    "contour_dlt_err_cm": 0.64,
+    "contour_midpoint_err_cm": 0.64
+  },
+  {
+    "exp_id": "026",
+    "marker_id": 0,
+    "marker_size_m": 0.076,
+    "yolo_dlt_err_cm": 0.62,
+    "yolo_midpoint_err_cm": 0.62,
+    "contour_dlt_err_cm": 0.65,
+    "contour_midpoint_err_cm": 0.65
+  },
+  {
+    "exp_id": "027",
+    "marker_id": 1,
+    "marker_size_m": 0.085,
+    "yolo_dlt_err_cm": 0.5,
+    "yolo_midpoint_err_cm": 0.5,
+    "contour_dlt_err_cm": 0.46,
+    "contour_midpoint_err_cm": 0.46
+  },
+  {
+    "exp_id": "028",
+    "marker_id": 4,
+    "marker_size_m": 0.068,
+    "yolo_dlt_err_cm": 0.71,
+    "yolo_midpoint_err_cm": 0.71,
+    "contour_dlt_err_cm": 0.71,
+    "contour_midpoint_err_cm": 0.71
+  },
+  {
+    "exp_id": "029",
+    "marker_id": 0,
+    "marker_size_m": 0.083,
+    "yolo_dlt_err_cm": 0.84,
+    "yolo_midpoint_err_cm": 0.84,
+    "contour_dlt_err_cm": 0.78,
+    "contour_midpoint_err_cm": 0.78
+  },
+  {
+    "exp_id": "030",
+    "marker_id": 0,
+    "marker_size_m": 0.068,
+    "yolo_dlt_err_cm": 0.57,
+    "yolo_midpoint_err_cm": 0.57,
+    "contour_dlt_err_cm": 0.55,
+    "contour_midpoint_err_cm": 0.55
+  }
+]

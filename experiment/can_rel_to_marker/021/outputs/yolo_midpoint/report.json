@@ -1,0 +1,47 @@
+{
+  "methodology": "yolo_midpoint",
+  "status": "PASS",
+  "cans_triangulated": 3,
+  "mean_corner_distance_error_cm": 0.48,
+  "detections": [
+    {
+      "can_name": "can_green",
+      "color": "green",
+      "estimated_3d_world": [
+        0.0387,
+        0.0909,
+        0.0612
+      ],
+      "estimated_dist_to_corner_m": 0.2179,
+      "gt_dist_to_corner_m": 0.2243,
+      "corner_dist_error_cm": 0.64,
+      "triangulation_score": 0.002
+    },
+    {
+      "can_name": "can_red",
+      "color": "red",
+      "estimated_3d_world": [
+        -0.2197,
+        0.0958,
+        0.0615
+      ],
+      "estimated_dist_to_corner_m": 0.2711,
+      "gt_dist_to_corner_m": 0.273,
+      "corner_dist_error_cm": 0.19,
+      "triangulation_score": 0.0
+    },
+    {
+      "can_name": "can_blue",
+      "color": "blue",
+      "estimated_3d_world": [
+        0.1295,
+        0.0789,
+        0.0611
+      ],
+      "estimated_dist_to_corner_m": 0.2574,
+      "gt_dist_to_corner_m": 0.2634,
+      "corner_dist_error_cm": 0.6,
+      "triangulation_score": 0.001
+    }
+  ]
+}

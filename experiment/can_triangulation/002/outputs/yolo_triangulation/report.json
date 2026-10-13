@@ -1,0 +1,149 @@
+{
+  "status": "PASS",
+  "num_cans_gt": 3,
+  "num_cans_triangulated": 3,
+  "mean_position_error_cm": 0.18,
+  "results": [
+    {
+      "detected_color": "red",
+      "detected_cam0": {
+        "class": "vase",
+        "color": "red",
+        "confidence": 0.46691396832466125,
+        "bbox_xyxy": [
+          331.0580139160156,
+          301.7988586425781,
+          412.5357971191406,
+          450.51129150390625
+        ],
+        "center_px": [
+          371.7969055175781,
+          376.1550750732422
+        ]
+      },
+      "detected_cam1": {
+        "class": "vase",
+        "color": "red",
+        "confidence": 0.21519510447978973,
+        "bbox_xyxy": [
+          347.09637451171875,
+          284.5220642089844,
+          420.2080993652344,
+          417.522216796875
+        ],
+        "center_px": [
+          383.65223693847656,
+          351.0221405029297
+        ]
+      },
+      "estimated_3d_position": [
+        -0.1609,
+        -0.0005,
+        0.0614
+      ],
+      "reprojection_error_px": 0.037,
+      "ground_truth_name": "can_red",
+      "ground_truth_position": [
+        -0.16,
+        0.0,
+        0.0625
+      ],
+      "position_error_m": 0.0015,
+      "position_error_cm": 0.15
+    },
+    {
+      "detected_color": "blue",
+      "detected_cam0": {
+        "class": "cup",
+        "color": "blue",
+        "confidence": 0.2179115116596222,
+        "bbox_xyxy": [
+          681.74658203125,
+          289.9635925292969,
+          756.6292114257812,
+          427.2253723144531
+        ],
+        "center_px": [
+          719.1878967285156,
+          358.594482421875
+        ]
+      },
+      "detected_cam1": {
+        "class": "vase",
+        "color": "blue",
+        "confidence": 0.3968878388404846,
+        "bbox_xyxy": [
+          668.7123413085938,
+          308.26861572265625,
+          754.1525268554688,
+          466.191650390625
+        ],
+        "center_px": [
+          711.4324340820312,
+          387.2301330566406
+        ]
+      },
+      "estimated_3d_position": [
+        0.1813,
+        -0.0395,
+        0.0611
+      ],
+      "reprojection_error_px": 0.036,
+      "ground_truth_name": "can_blue",
+      "ground_truth_position": [
+        0.18,
+        -0.04,
+        0.0625
+      ],
+      "position_error_m": 0.002,
+      "position_error_cm": 0.2
+    },
+    {
+      "detected_color": "green",
+      "detected_cam0": {
+        "class": "vase",
+        "color": "green",
+        "confidence": 0.20714204013347626,
+        "bbox_xyxy": [
+          483.10723876953125,
+          283.7009582519531,
+          552.5535278320312,
+          416.4338073730469
+        ],
+        "center_px": [
+          517.8303833007812,
+          350.0673828125
+        ]
+      },
+      "detected_cam1": {
+        "class": "vase",
+        "color": "green",
+        "confidence": 0.24847860634326935,
+        "bbox_xyxy": [
+          515.0513916015625,
+          283.5320129394531,
+          584.7357177734375,
+          416.42779541015625
+        ],
+        "center_px": [
+          549.8935546875,
+          349.9799041748047
+        ]
+      },
+      "estimated_3d_position": [
+        0.0003,
+        0.0606,
+        0.0609
+      ],
+      "reprojection_error_px": 0.451,
+      "ground_truth_name": "can_green",
+      "ground_truth_position": [
+        0.0,
+        0.06,
+        0.0625
+      ],
+      "position_error_m": 0.0018,
+      "position_error_cm": 0.18
+    }
+  ]
+}

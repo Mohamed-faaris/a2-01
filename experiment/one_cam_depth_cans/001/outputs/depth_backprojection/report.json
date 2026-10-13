@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "inputs": {
+    "camera_count": 1,
+    "marker_id": 3,
+    "marker_size_m": 0.088,
+    "depth_input_mode": "depth_from_can_center"
+  },
+  "mean_planar_error_cm": 0.65,
+  "cans_evaluated": [
+    {
+      "can_name": "can_red",
+      "detected_color": "red",
+      "depth_input_m": 1.142,
+      "estimated_plane_xy_m": [
+        -0.1929,
+        0.2873
+      ],
+      "ground_truth_plane_xy_m": [
+        -0.1901,
+        0.2936
+      ],
+      "error_x_cm": 0.28,
+      "error_y_cm": 0.63,
+      "planar_euclidean_error_cm": 0.69
+    },
+    {
+      "can_name": "can_blue",
+      "detected_color": "blue",
+      "depth_input_m": 1.0506,
+      "estimated_plane_xy_m": [
+        0.1599,
+        0.1377
+      ],
+      "ground_truth_plane_xy_m": [
+        0.16,
+        0.1438
+      ],
+      "error_x_cm": 0.01,
+      "error_y_cm": 0.62,
+      "planar_euclidean_error_cm": 0.62
+    },
+    {
+      "can_name": "can_green",
+      "detected_color": "green",
+      "depth_input_m": 1.1691,
+      "estimated_plane_xy_m": [
+        0.074,
+        0.2794
+      ],
+      "ground_truth_plane_xy_m": [
+        0.0748,
+        0.2858
+      ],
+      "error_x_cm": 0.08,
+      "error_y_cm": 0.64,
+      "planar_euclidean_error_cm": 0.64
+    }
+  ]
+}

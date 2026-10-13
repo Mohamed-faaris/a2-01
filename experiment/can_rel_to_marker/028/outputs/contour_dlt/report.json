@@ -1,0 +1,47 @@
+{
+  "methodology": "contour_dlt",
+  "status": "PASS",
+  "cans_triangulated": 3,
+  "mean_corner_distance_error_cm": 0.71,
+  "detections": [
+    {
+      "can_name": "can_red",
+      "color": "red",
+      "estimated_3d_world": [
+        -0.1255,
+        0.1,
+        0.0622
+      ],
+      "estimated_dist_to_corner_m": 0.2444,
+      "gt_dist_to_corner_m": 0.2492,
+      "corner_dist_error_cm": 0.48,
+      "triangulation_score": 0.017
+    },
+    {
+      "can_name": "can_green",
+      "color": "green",
+      "estimated_3d_world": [
+        0.0104,
+        0.1584,
+        0.0625
+      ],
+      "estimated_dist_to_corner_m": 0.2631,
+      "gt_dist_to_corner_m": 0.2713,
+      "corner_dist_error_cm": 0.82,
+      "triangulation_score": 0.034
+    },
+    {
+      "can_name": "can_blue",
+      "color": "blue",
+      "estimated_3d_world": [
+        0.2229,
+        0.1154,
+        0.062
+      ],
+      "estimated_dist_to_corner_m": 0.3108,
+      "gt_dist_to_corner_m": 0.3192,
+      "corner_dist_error_cm": 0.84,
+      "triangulation_score": 0.001
+    }
+  ]
+}

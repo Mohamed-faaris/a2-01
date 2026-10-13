@@ -1,0 +1,138 @@
+{
+  "methodology": "contour_midpoint",
+  "status": "FAIL",
+  "cans_triangulated": 10,
+  "mean_corner_distance_error_cm": 66.15,
+  "detections": [
+    {
+      "can_name": "can_red",
+      "color": "red",
+      "estimated_3d_world": [
+        -0.0606,
+        0.0521,
+        0.0591
+      ],
+      "estimated_dist_to_corner_m": 0.1509,
+      "gt_dist_to_corner_m": 0.1587,
+      "corner_dist_error_cm": 0.78,
+      "triangulation_score": 0.007
+    },
+    {
+      "can_name": "can_green",
+      "color": "red",
+      "estimated_3d_world": [
+        0.4044,
+        1.0159,
+        0.1307
+      ],
+      "estimated_dist_to_corner_m": 1.1925,
+      "gt_dist_to_corner_m": 0.2638,
+      "corner_dist_error_cm": 92.87,
+      "triangulation_score": 0.003
+    },
+    {
+      "can_name": "can_blue",
+      "color": "red",
+      "estimated_3d_world": [
+        0.5841,
+        0.0669,
+        0.3863
+      ],
+      "estimated_dist_to_corner_m": 0.7509,
+      "gt_dist_to_corner_m": 0.297,
+      "corner_dist_error_cm": 45.39,
+      "triangulation_score": 0.05
+    },
+    {
+      "can_name": "can_red",
+      "color": "red",
+      "estimated_3d_world": [
+        -0.3255,
+        0.1577,
+        0.3764
+      ],
+      "estimated_dist_to_corner_m": 0.5343,
+      "gt_dist_to_corner_m": 0.1587,
+      "corner_dist_error_cm": 37.56,
+      "triangulation_score": 0.066
+    },
+    {
+      "can_name": "can_green",
+      "color": "green",
+      "estimated_3d_world": [
+        0.0832,
+        0.1286,
+        0.0628
+      ],
+      "estimated_dist_to_corner_m": 0.2535,
+      "gt_dist_to_corner_m": 0.2638,
+      "corner_dist_error_cm": 1.03,
+      "triangulation_score": 0.0
+    },
+    {
+      "can_name": "can_red",
+      "color": "green",
+      "estimated_3d_world": [
+        -0.5138,
+        -3.92,
+        0.915
+      ],
+      "estimated_dist_to_corner_m": 3.9744,
+      "gt_dist_to_corner_m": 0.1587,
+      "corner_dist_error_cm": 381.58,
+      "triangulation_score": 0.081
+    },
+    {
+      "can_name": "can_red",
+      "color": "green",
+      "estimated_3d_world": [
+        0.0663,
+        -0.3752,
+        0.3488
+      ],
+      "estimated_dist_to_corner_m": 0.471,
+      "gt_dist_to_corner_m": 0.1587,
+      "corner_dist_error_cm": 31.23,
+      "triangulation_score": 0.024
+    },
+    {
+      "can_name": "can_blue",
+      "color": "green",
+      "estimated_3d_world": [
+        0.332,
+        -0.309,
+        0.4251
+      ],
+      "estimated_dist_to_corner_m": 0.6115,
+      "gt_dist_to_corner_m": 0.297,
+      "corner_dist_error_cm": 31.44,
+      "triangulation_score": 0.006
+    },
+    {
+      "can_name": "can_red",
+      "color": "green",
+      "estimated_3d_world": [
+        -0.17,
+        -0.3838,
+        0.4278
+      ],
+      "estimated_dist_to_corner_m": 0.5433,
+      "gt_dist_to_corner_m": 0.1587,
+      "corner_dist_error_cm": 38.46,
+      "triangulation_score": 0.006
+    },
+    {
+      "can_name": "can_blue",
+      "color": "blue",
+      "estimated_3d_world": [
+        0.1704,
+        0.1016,
+        0.0559
+      ],
+      "estimated_dist_to_corner_m": 0.2856,
+      "gt_dist_to_corner_m": 0.297,
+      "corner_dist_error_cm": 1.14,
+      "triangulation_score": 0.0
+    }
+  ]
+}

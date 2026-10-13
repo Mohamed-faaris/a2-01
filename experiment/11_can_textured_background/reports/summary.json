@@ -1,0 +1,182 @@
+[
+  {
+    "scene_id": "001",
+    "methodology": "yolo_dlt",
+    "mean_error_cm": 0.98,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "001",
+    "methodology": "yolo_midpoint",
+    "mean_error_cm": 0.98,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "001",
+    "methodology": "contour_dlt",
+    "mean_error_cm": 2581.56,
+    "passed": false,
+    "num_cans_evaluated": 8,
+    "cam0_candidates": 9,
+    "cam1_candidates": 8
+  },
+  {
+    "scene_id": "001",
+    "methodology": "contour_midpoint",
+    "mean_error_cm": 23.16,
+    "passed": false,
+    "num_cans_evaluated": 8,
+    "cam0_candidates": 9,
+    "cam1_candidates": 8
+  },
+  {
+    "scene_id": "002",
+    "methodology": "yolo_dlt",
+    "mean_error_cm": 0.55,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "002",
+    "methodology": "yolo_midpoint",
+    "mean_error_cm": 0.55,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "002",
+    "methodology": "contour_dlt",
+    "mean_error_cm": 34.17,
+    "passed": false,
+    "num_cans_evaluated": 9,
+    "cam0_candidates": 9,
+    "cam1_candidates": 9
+  },
+  {
+    "scene_id": "002",
+    "methodology": "contour_midpoint",
+    "mean_error_cm": 33.99,
+    "passed": false,
+    "num_cans_evaluated": 9,
+    "cam0_candidates": 9,
+    "cam1_candidates": 9
+  },
+  {
+    "scene_id": "003",
+    "methodology": "yolo_dlt",
+    "mean_error_cm": 0.84,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "003",
+    "methodology": "yolo_midpoint",
+    "mean_error_cm": 0.84,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "003",
+    "methodology": "contour_dlt",
+    "mean_error_cm": 66.6,
+    "passed": false,
+    "num_cans_evaluated": 10,
+    "cam0_candidates": 10,
+    "cam1_candidates": 10
+  },
+  {
+    "scene_id": "003",
+    "methodology": "contour_midpoint",
+    "mean_error_cm": 66.15,
+    "passed": false,
+    "num_cans_evaluated": 10,
+    "cam0_candidates": 10,
+    "cam1_candidates": 10
+  },
+  {
+    "scene_id": "004",
+    "methodology": "yolo_dlt",
+    "mean_error_cm": 0.53,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "004",
+    "methodology": "yolo_midpoint",
+    "mean_error_cm": 0.53,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "004",
+    "methodology": "contour_dlt",
+    "mean_error_cm": 31.66,
+    "passed": false,
+    "num_cans_evaluated": 8,
+    "cam0_candidates": 8,
+    "cam1_candidates": 10
+  },
+  {
+    "scene_id": "004",
+    "methodology": "contour_midpoint",
+    "mean_error_cm": 31.65,
+    "passed": false,
+    "num_cans_evaluated": 8,
+    "cam0_candidates": 8,
+    "cam1_candidates": 10
+  },
+  {
+    "scene_id": "005",
+    "methodology": "yolo_dlt",
+    "mean_error_cm": 0.76,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "005",
+    "methodology": "yolo_midpoint",
+    "mean_error_cm": 0.76,
+    "passed": true,
+    "num_cans_evaluated": 3,
+    "cam0_candidates": 3,
+    "cam1_candidates": 3
+  },
+  {
+    "scene_id": "005",
+    "methodology": "contour_dlt",
+    "mean_error_cm": 33.57,
+    "passed": false,
+    "num_cans_evaluated": 8,
+    "cam0_candidates": 10,
+    "cam1_candidates": 8
+  },
+  {
+    "scene_id": "005",
+    "methodology": "contour_midpoint",
+    "mean_error_cm": 33.45,
+    "passed": false,
+    "num_cans_evaluated": 8,
+    "cam0_candidates": 10,
+    "cam1_candidates": 8
+  }
+]

@@ -1,0 +1,98 @@
+{
+  "marker": {
+    "id": 1,
+    "size_m": 0.085,
+    "center_position": [
+      -0.008,
+      -0.02,
+      0.001
+    ],
+    "corner_origin_position": [
+      -0.0505,
+      -0.0625,
+      0.001
+    ]
+  },
+  "cans": [
+    {
+      "name": "can_red",
+      "color": [
+        0.85,
+        0.08,
+        0.08
+      ],
+      "position": [
+        -0.128,
+        0.038,
+        0.244
+      ],
+      "rotation": [
+        -0.011,
+        -0.123,
+        -0.195
+      ],
+      "radius": 0.035,
+      "height": 0.125,
+      "gt_dist_to_marker_corner_m": 0.274145034607596
+    },
+    {
+      "name": "can_green",
+      "color": [
+        0.08,
+        0.85,
+        0.08
+      ],
+      "position": [
+        0.033,
+        0.031,
+        0.359
+      ],
+      "rotation": [
+        0.015,
+        -0.0,
+        0.117
+      ],
+      "radius": 0.035,
+      "height": 0.125,
+      "gt_dist_to_marker_corner_m": 0.3793131951303566
+    },
+    {
+      "name": "can_blue",
+      "color": [
+        0.08,
+        0.2,
+        0.88
+      ],
+      "position": [
+        0.111,
+        0.048,
+        0.178
+      ],
+      "rotation": [
+        -0.178,
+        -0.126,
+        -0.103
+      ],
+      "radius": 0.035,
+      "height": 0.125,
+      "gt_dist_to_marker_corner_m": 0.26385886378895823
+    }
+  ],
+  "camera0_position": [
+    -0.468,
+    -0.954,
+    0.538
+  ],
+  "camera1_position": [
+    0.884,
+    0.569,
+    0.468
+  ],
+  "intrinsics": {
+    "fx": 935.3074360871938,
+    "fy": 935.3074360871938,
+    "cx": 540.0,
+    "cy": 360.0,
+    "hfov_deg": 60.0
+  }
+}
