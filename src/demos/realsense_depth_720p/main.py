@@ -116,8 +116,9 @@ class CameraCalibration:
 
     @staticmethod
     def _check_stream_type(calib: CameraCalibration, expected_stream_type: str | None = None) -> None:
+        res_str = f" @ {calib.image_size[0]}x{calib.image_size[1]}" if calib.image_size else ""
         if calib.stream_type:
-            log.info(f"Calibration stream type: '{calib.stream_type}' (Camera: {calib.name}, Card: {calib.card_name or 'Unknown'})")
+            log.info(f"Calibration stream type: '{calib.stream_type}'{res_str} (Camera: {calib.name}, Card: {calib.card_name or 'Unknown'})")
             if expected_stream_type and expected_stream_type.lower() not in calib.stream_type.lower():
                 log.warning(
                     f"Stream type mismatch! Expected '{expected_stream_type}', but calibrator produced '{calib.stream_type}'. "
@@ -126,7 +127,7 @@ class CameraCalibration:
             else:
                 log.info(f"Stream type verified matching expected '{expected_stream_type}'.")
         else:
-            log.warning(f"Calibration file does not specify 'stream_type'. Assuming default {expected_stream_type or 'RGB / Color'}.")
+            log.warning(f"Calibration file does not specify 'stream_type'{res_str}. Assuming default {expected_stream_type or 'RGB / Color'}.")
 
 
 class NonQueuingRealSenseStream:

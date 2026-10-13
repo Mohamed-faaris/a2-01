@@ -96,8 +96,9 @@ class CameraCalibration:
 
     @staticmethod
     def _check_stream_type(calib: CameraCalibration, expected_stream_type: str | None = None) -> None:
+        res_str = f" @ {calib.image_size[0]}x{calib.image_size[1]}" if calib.image_size else ""
         if calib.stream_type:
-            log.info(f"Loaded calibration '{calib.name}' stream type: '{calib.stream_type}' (Card: {calib.card_name or 'Unknown'})")
+            log.info(f"Loaded calibration '{calib.name}' stream type: '{calib.stream_type}'{res_str} (Card: {calib.card_name or 'Unknown'})")
             # Consider color variants like "Color (MJPEG)", "RGB / Color", "YUYV" as color streams
             is_color_calib = any(c in calib.stream_type.lower() for c in ("color", "rgb", "bgr", "mjpeg", "yuyv"))
             is_expected_color = any(c in (expected_stream_type or "").lower() for c in ("color", "rgb", "bgr"))
@@ -108,7 +109,7 @@ class CameraCalibration:
             else:
                 log.info(f"Calibration {calib.name} stream type verified: '{calib.stream_type}'.")
         else:
-            log.warning(f"Calibration {calib.name} does not specify 'stream_type'. Assuming default {expected_stream_type or 'RGB / Color'}.")
+            log.warning(f"Calibration {calib.name} does not specify 'stream_type'{res_str}. Assuming default {expected_stream_type or 'RGB / Color'}.")
 
 
 class NonQueuingCameraReader:
@@ -151,20 +152,32 @@ def open_camera_source(source_arg: str | int | None, calib: CameraCalibration | 
         else:
             node = 0
 
-    try:
-        idx = int(node)
-        cap = cv2.VideoCapture(idx)
-    except ValueError:
-        cap = cv2.VideoCapture(str(node))
+    import re
+    # Extract numerical index if it's a Linux /dev/videoX path
+    m = re.search(r"video(\d+)", str(node))
+    if m:
+        idx = int(m.group(1))
+        cap = cv2.VideoCapture(idx, cv2.CAP_V4L2)
+    else:
+        try:
+            idx = int(node)
+            cap = cv2.VideoCapture(idx, cv2.CAP_V4L2)
+        except ValueError:
+            cap = cv2.VideoCapture(str(node))
 
     if not cap.isOpened():
         log.warning(f"Could not open source {node}; attempting fallback index 0")
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
 
     if calib and calib.image_size:
         w, h = calib.image_size
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
+
+    actual_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    actual_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    cam_label = calib.name if calib else str(node)
+    log.info(f"Camera '{cam_label}' stream opened at resolution: {actual_w}x{actual_h}")
 
     # Drop internal buffer size to 1 to reduce driver latency
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
@@ -207,6 +220,7 @@ def detect_all_tags(gray: np.ndarray, K: np.ndarray, detector: Detector, marker_
                     break
         R = np.asarray(d.pose_R, dtype=np.float64)
         t = np.asarray(d.pose_t, dtype=np.float64).reshape(3)
+        pose_err = float(d.pose_err) if hasattr(d, "pose_err") and d.pose_err is not None else 0.0
         tag_results.append({
             "id": d.tag_id,
             "R": R,
@@ -214,6 +228,8 @@ def detect_all_tags(gray: np.ndarray, K: np.ndarray, detector: Detector, marker_
             "corners": np.asarray(d.corners, dtype=np.float64),
             "size": size,
             "center_px": [float(d.center[0]), float(d.center[1])],
+            "pose_err": pose_err,
+            "decision_margin": float(getattr(d, "decision_margin", 0.0)),
         })
     return tag_results
 
@@ -240,13 +256,19 @@ def detect_yolo_objects(frame_bgr: np.ndarray, model: YOLO, target_classes: set[
 def triangulate_points(pt0_px: tuple[float, float], pt1_px: tuple[float, float], P0: np.ndarray, P1: np.ndarray,
                        K0: np.ndarray, K1: np.ndarray,
                        R0_w: np.ndarray, t0_w: np.ndarray,
-                       R1_w: np.ndarray, t1_w: np.ndarray) -> tuple[np.ndarray, float, float]:
-    """Triangulate 3D point and compute both reprojection error (px) and 3D ray distance / difference (cm)."""
+                       R1_w: np.ndarray, t1_w: np.ndarray) -> tuple[np.ndarray, float, float, float, float]:
+    """Triangulate 3D point and compute:
+    1. pt3d: 3D point in world frame (m)
+    2. reproj_err_px: 2D reprojection residual (pixels)
+    3. ray_diff_cm: Shortest 3D distance between optical rays (cm)
+    4. ray_angle_deg: Convergence angle between rays (degrees)
+    5. est_depth_err_cm: Estimated depth 1-sigma uncertainty bound (cm)
+    """
     pts0 = np.array(pt0_px, dtype=np.float64).reshape(2, 1)
     pts1 = np.array(pt1_px, dtype=np.float64).reshape(2, 1)
     homo = cv2.triangulatePoints(P0, P1, pts0, pts1).reshape(4)
     if abs(homo[3]) < 1e-9:
-        return np.zeros(3), float("inf"), float("inf")
+        return np.zeros(3), float("inf"), float("inf"), 0.0, float("inf")
     pt3d = homo[:3] / homo[3]
     pt3d_h = np.append(pt3d, 1.0)
     p0_p = P0 @ pt3d_h
@@ -268,6 +290,10 @@ def triangulate_points(pt0_px: tuple[float, float], pt1_px: tuple[float, float],
     d1 = R1_w.T @ v1_cam
     d1 = d1 / max(1e-9, np.linalg.norm(d1))
 
+    # Angle between viewing rays (convergence angle)
+    dot_val = np.clip(float(np.dot(d0, d1)), -1.0, 1.0)
+    ray_angle_deg = math.degrees(math.acos(dot_val))
+
     # Shortest distance between skew lines L0: c0 + s*d0 and L1: c1 + t*d1
     cross_d = np.cross(d0, d1)
     cross_norm = np.linalg.norm(cross_d)
@@ -278,7 +304,14 @@ def triangulate_points(pt0_px: tuple[float, float], pt1_px: tuple[float, float],
         # Distance = |(c1 - c0) . (d0 x d1)| / ||d0 x d1||
         ray_diff_cm = float(abs(np.dot(c1 - c0, cross_d)) / cross_norm) * 100.0
 
-    return pt3d, reproj_err_px, ray_diff_cm
+    # Depth uncertainty estimator: sigma_Z = (Z / sin(theta)) * (reproj_err / f_avg) + (ray_skew / 2)
+    dist_to_obj = float(np.linalg.norm(pt3d - (c0 + c1) / 2.0))
+    sin_theta = max(1e-3, math.sin(math.radians(ray_angle_deg)))
+    f_avg = (float(K0[0, 0]) + float(K1[0, 0])) / 2.0
+    geom_err_m = (dist_to_obj / sin_theta) * (max(1.0, reproj_err_px) / f_avg)
+    est_depth_err_cm = (geom_err_m * 100.0) + (ray_diff_cm * 0.5)
+
+    return pt3d, reproj_err_px, ray_diff_cm, ray_angle_deg, est_depth_err_cm
 
 
 def associate_stereo_detections(dets0: list[dict], dets1: list[dict]) -> list[tuple[dict, dict]]:
@@ -395,9 +428,9 @@ def render_poses_panel(width: int, height: int, poses: list[dict], ref_tag_info:
     cv2.line(panel, (16, y), (width - 16, y), (60, 60, 70), 1)
     y += 22
 
-    # Table Header with ID, Target, Euclid Norm, X, Y, Z, Ray Diff (cm) or R, P, Y
-    cv2.putText(panel, f"{'ID':<5} {'TARGET':<7} | {'EUCLID':<8} | {'X(cm)':<6} {'Y(cm)':<6} {'Z(cm)':<6} | {'RAY DIFF':<9} {'REPROJ'}", (16, y),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.35, (160, 160, 170), 1)
+    # Table Header with ID, Target, Euclid Norm, X, Y, Z, Ray Diff (cm), Ray Angle (deg), Est Err (±cm)
+    cv2.putText(panel, f"{'ID':<5} {'TARGET':<7} | {'EUCLID':<8} | {'X(cm)':<6} {'Y(cm)':<6} {'Z(cm)':<6} | {'RAY-DIFF':<9} {'ANGLE':<7} {'EST-ERR'}", (16, y),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.34, (160, 160, 170), 1)
     y += 18
 
     if not poses:
@@ -418,17 +451,26 @@ def render_poses_panel(width: int, height: int, poses: list[dict], ref_tag_info:
             elif is_tag:
                 color = (255, 220, 100)
                 r, pitch, yaw = p.get("rpy_deg", (0.0, 0.0, 0.0))
-                extra = f"R:{r:+.0f}° P:{pitch:+.0f}° Y:{yaw:+.0f}°"
+                tag_err = p.get("pose_err", 0.0)
+                extra = f"R:{r:+.0f}° P:{pitch:+.0f}° Y:{yaw:+.0f}° (fit:{tag_err:.2f})"
             else:
-                color = (100, 255, 100)
                 ray_diff = p.get("ray_diff_cm")
-                reproj = p.get("reproj_px")
-                ray_str = f"{ray_diff:5.2f}cm" if ray_diff is not None else "--"
-                rep_str = f"{reproj:4.1f}px" if reproj is not None else "--"
-                extra = f"{ray_str:<9} {rep_str}"
+                ray_angle = p.get("ray_angle_deg")
+                est_err = p.get("est_err_cm")
+
+                ray_str = f"{ray_diff:4.1f}cm" if ray_diff is not None else "--"
+                angle_str = f"{ray_angle:4.1f}°" if ray_angle is not None else "--"
+                err_str = f"±{est_err:4.1f}cm" if est_err is not None else "--"
+
+                # Color-code by estimated error: Green (<2cm), Yellow (2-5cm), Red (>5cm)
+                if est_err is not None:
+                    color = (100, 255, 100) if est_err < 2.5 else ((50, 220, 255) if est_err < 5.0 else (50, 80, 255))
+                else:
+                    color = (180, 180, 180)
+                extra = f"{ray_str:<9} {angle_str:<7} {err_str}"
 
             row_str = f"{pid:<5} {name:<7} | {euclid_cm:5.1f}cm | {x:+6.1f} {y_pos:+6.1f} {z:+6.1f} | {extra}"
-            cv2.putText(panel, row_str, (16, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, color, 1, cv2.LINE_AA)
+            cv2.putText(panel, row_str, (16, y), cv2.FONT_HERSHEY_SIMPLEX, 0.35, color, 1, cv2.LINE_AA)
             y += 21
 
     return panel
@@ -515,8 +557,23 @@ def main() -> int:
             if args.undistort and np.any(calib1.dist_coeffs):
                 frame1 = cv2.undistort(frame1, calib1.camera_matrix, calib1.dist_coeffs)
 
-            gray0 = cv2.cvtColor(frame0, cv2.COLOR_BGR2GRAY)
-            gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+            if frame0.ndim == 2:
+                gray0 = frame0
+                frame0 = cv2.cvtColor(frame0, cv2.COLOR_GRAY2BGR)
+            elif frame0.shape[2] == 4:
+                gray0 = cv2.cvtColor(frame0, cv2.COLOR_BGRA2GRAY)
+                frame0 = cv2.cvtColor(frame0, cv2.COLOR_BGRA2BGR)
+            else:
+                gray0 = cv2.cvtColor(frame0, cv2.COLOR_BGR2GRAY)
+
+            if frame1.ndim == 2:
+                gray1 = frame1
+                frame1 = cv2.cvtColor(frame1, cv2.COLOR_GRAY2BGR)
+            elif frame1.shape[2] == 4:
+                gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGRA2GRAY)
+                frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGRA2BGR)
+            else:
+                gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 
             # Detect all AprilTags in both cameras
             tags0 = detect_all_tags(gray0, calib0.camera_matrix, detector, marker_sizes, ref_marker_size)
@@ -633,7 +690,7 @@ def main() -> int:
                 matched_pairs = associate_stereo_detections(objs0, objs1)
 
                 for idx, (d0, d1) in enumerate(matched_pairs):
-                    pt_tag, reproj_px, ray_diff_cm = triangulate_points(
+                    pt_tag, reproj_px, ray_diff_cm, ray_angle_deg, est_depth_err_cm = triangulate_points(
                         tuple(d0["center_px"]), tuple(d1["center_px"]),
                         P0, P1, calib0.camera_matrix, calib1.camera_matrix,
                         R_c0_t, t_c0_t, R_c1_t, t_c1_t
@@ -654,26 +711,31 @@ def main() -> int:
                         "xyz_cm": [pt_rel[0] * 100.0, pt_rel[1] * 100.0, pt_rel[2] * 100.0],
                         "rpy_deg": (0.0, 0.0, 0.0),
                         "ray_diff_cm": ray_diff_cm,
+                        "ray_angle_deg": ray_angle_deg,
+                        "est_err_cm": est_depth_err_cm,
                         "reproj_px": reproj_px,
                         "is_tag": False,
                     })
 
-                    # Draw triangulated 3D overlay with Euclidean distance and ray difference
+                    # Color code box by health: Green (<2.5cm error), Orange (2.5-5cm), Red (>5cm)
+                    box_col = (0, 255, 0) if est_depth_err_cm < 2.5 else ((0, 200, 255) if est_depth_err_cm < 5.0 else (0, 80, 255))
+
+                    # Draw triangulated 3D overlay with Euclidean distance, ray difference and estimated error bound
                     b0 = [int(v) for v in d0["bbox_xyxy"]]
-                    cv2.rectangle(annotated0, (b0[0], b0[1]), (b0[2], b0[3]), (0, 255, 0), 2)
-                    lbl0_top = f"[{obj_id}] {d0['class']} d={dist_rel*100:.1f}cm"
-                    lbl0_bot = f"ray_diff={ray_diff_cm:.1f}cm err={reproj_px:.1f}px"
+                    cv2.rectangle(annotated0, (b0[0], b0[1]), (b0[2], b0[3]), box_col, 2)
+                    lbl0_top = f"[{obj_id}] {d0['class']} d={dist_rel*100:.1f}cm (±{est_depth_err_cm:.1f}cm)"
+                    lbl0_bot = f"skew={ray_diff_cm:.1f}cm ang={ray_angle_deg:.0f}°"
                     cv2.putText(annotated0, lbl0_top, (b0[0], max(16, b0[1] - 18)),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, box_col, 2)
                     cv2.putText(annotated0, lbl0_bot, (b0[0], max(32, b0[1] - 4)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1)
 
                     b1 = [int(v) for v in d1["bbox_xyxy"]]
-                    cv2.rectangle(annotated1, (b1[0], b1[1]), (b1[2], b1[3]), (0, 255, 0), 2)
-                    lbl1_top = f"[{obj_id}] {d1['class']} d={dist_rel*100:.1f}cm"
-                    lbl1_bot = f"ray_diff={ray_diff_cm:.1f}cm err={reproj_px:.1f}px"
+                    cv2.rectangle(annotated1, (b1[0], b1[1]), (b1[2], b1[3]), box_col, 2)
+                    lbl1_top = f"[{obj_id}] {d1['class']} d={dist_rel*100:.1f}cm (±{est_depth_err_cm:.1f}cm)"
+                    lbl1_bot = f"skew={ray_diff_cm:.1f}cm ang={ray_angle_deg:.0f}°"
                     cv2.putText(annotated1, lbl1_top, (b1[0], max(16, b1[1] - 18)),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, box_col, 2)
                     cv2.putText(annotated1, lbl1_bot, (b1[0], max(32, b1[1] - 4)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1)
             else:

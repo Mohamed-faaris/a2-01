@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "bottle_dimensions": {
+    "height_cm": 24.099999999999998,
+    "radius_cm": 4.5
+  },
+  "comparisons": [
+    {
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 43.48,
+      "err_real_surface_no_comp_cm": 43.51,
+      "err_real_surface_WITH_radius_comp_cm": 43.48,
+      "err_custom_calib_focal_drift_cm": 44.09
+    },
+    {
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 22.37,
+      "err_real_surface_no_comp_cm": 22.76,
+      "err_real_surface_WITH_radius_comp_cm": 22.37,
+      "err_custom_calib_focal_drift_cm": 22.54
+    },
+    {
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 35.56,
+      "err_real_surface_no_comp_cm": 36.2,
+      "err_real_surface_WITH_radius_comp_cm": 35.55,
+      "err_custom_calib_focal_drift_cm": 36.9
+    }
+  ]
+}

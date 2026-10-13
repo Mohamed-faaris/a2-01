@@ -1,0 +1,65 @@
+{
+  "marker": {
+    "id": 1,
+    "size_m": 0.124,
+    "center_position": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "corner_origin_position": [
+      0.062,
+      -0.062,
+      0.0
+    ]
+  },
+  "bottles": [
+    {
+      "name": "bottle_red",
+      "color_name": "red",
+      "color": [
+        0.85,
+        0.1,
+        0.1
+      ],
+      "position": [
+        -0.14254598811526376,
+        0.34162143208968576,
+        0.0
+      ],
+      "radius": 0.045,
+      "height": 0.241,
+      "gt_x_rel_tag_corner_m": 0.20454598811526375,
+      "gt_y_rel_tag_corner_m": 0.40362143208968576,
+      "gt_z_rel_tag_corner_m": 0.0,
+      "gt_center_depth_m": 1.1568657707686105,
+      "gt_surface_depth_m": 1.1131140110303643
+    },
+    {
+      "name": "bottle_blue",
+      "color_name": "blue",
+      "color": [
+        0.1,
+        0.2,
+        0.85
+      ],
+      "position": [
+        0.20979909127171076,
+        0.23979877262955548,
+        0.0
+      ],
+      "radius": 0.045,
+      "height": 0.241,
+      "gt_x_rel_tag_corner_m": -0.14779909127171076,
+      "gt_y_rel_tag_corner_m": 0.30179877262955546,
+      "gt_z_rel_tag_corner_m": 0.0,
+      "gt_center_depth_m": 1.0882291595904372,
+      "gt_surface_depth_m": 1.0445829524782386
+    }
+  ],
+  "camera_position": [
+    -0.0687962719115127,
+    -0.8344005479663797,
+    0.28580836121681996
+  ]
+}

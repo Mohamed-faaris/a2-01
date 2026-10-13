@@ -1,0 +1,166 @@
+{
+  "num_scenes": 5,
+  "bottle_height_cm": 24.099999999999998,
+  "bottle_diameter_cm": 9.0,
+  "mean_error_cm": {
+    "case_A_ideal_simulation_center": 32.9,
+    "case_B_real_sensor_surface_no_compensation": 33.19,
+    "case_C_real_sensor_WITH_radius_compensation": 32.9,
+    "case_D_custom_calibrator_focal_drift": 33.38
+  },
+  "rows": [
+    {
+      "scene_id": "001",
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 31.31,
+      "err_real_surface_no_comp_cm": 31.75,
+      "err_real_surface_WITH_comp_cm": 31.31,
+      "err_custom_calib_focal_drift_cm": 31.11
+    },
+    {
+      "scene_id": "001",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 43.87,
+      "err_real_surface_no_comp_cm": 43.31,
+      "err_real_surface_WITH_comp_cm": 43.88,
+      "err_custom_calib_focal_drift_cm": 44.2
+    },
+    {
+      "scene_id": "001",
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 38.46,
+      "err_real_surface_no_comp_cm": 38.42,
+      "err_real_surface_WITH_comp_cm": 38.46,
+      "err_custom_calib_focal_drift_cm": 37.57
+    },
+    {
+      "scene_id": "002",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 43.48,
+      "err_real_surface_no_comp_cm": 43.51,
+      "err_real_surface_WITH_comp_cm": 43.48,
+      "err_custom_calib_focal_drift_cm": 44.09
+    },
+    {
+      "scene_id": "002",
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 22.37,
+      "err_real_surface_no_comp_cm": 22.76,
+      "err_real_surface_WITH_comp_cm": 22.37,
+      "err_custom_calib_focal_drift_cm": 22.54
+    },
+    {
+      "scene_id": "002",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 35.56,
+      "err_real_surface_no_comp_cm": 36.2,
+      "err_real_surface_WITH_comp_cm": 35.55,
+      "err_custom_calib_focal_drift_cm": 36.9
+    },
+    {
+      "scene_id": "003",
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 34.94,
+      "err_real_surface_no_comp_cm": 35.07,
+      "err_real_surface_WITH_comp_cm": 34.94,
+      "err_custom_calib_focal_drift_cm": 34.43
+    },
+    {
+      "scene_id": "003",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 31.95,
+      "err_real_surface_no_comp_cm": 32.13,
+      "err_real_surface_WITH_comp_cm": 31.95,
+      "err_custom_calib_focal_drift_cm": 33.07
+    },
+    {
+      "scene_id": "003",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 24.15,
+      "err_real_surface_no_comp_cm": 24.9,
+      "err_real_surface_WITH_comp_cm": 24.15,
+      "err_custom_calib_focal_drift_cm": 25.98
+    },
+    {
+      "scene_id": "004",
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 35.51,
+      "err_real_surface_no_comp_cm": 35.35,
+      "err_real_surface_WITH_comp_cm": 35.51,
+      "err_custom_calib_focal_drift_cm": 34.72
+    },
+    {
+      "scene_id": "004",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 33.78,
+      "err_real_surface_no_comp_cm": 34.13,
+      "err_real_surface_WITH_comp_cm": 33.78,
+      "err_custom_calib_focal_drift_cm": 34.97
+    },
+    {
+      "scene_id": "004",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 26.1,
+      "err_real_surface_no_comp_cm": 27.07,
+      "err_real_surface_WITH_comp_cm": 26.09,
+      "err_custom_calib_focal_drift_cm": 28.05
+    },
+    {
+      "scene_id": "005",
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 27.61,
+      "err_real_surface_no_comp_cm": 28.45,
+      "err_real_surface_WITH_comp_cm": 27.61,
+      "err_custom_calib_focal_drift_cm": 27.97
+    },
+    {
+      "scene_id": "005",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 40.52,
+      "err_real_surface_no_comp_cm": 40.01,
+      "err_real_surface_WITH_comp_cm": 40.52,
+      "err_custom_calib_focal_drift_cm": 40.81
+    },
+    {
+      "scene_id": "005",
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 31.89,
+      "err_real_surface_no_comp_cm": 31.84,
+      "err_real_surface_WITH_comp_cm": 31.9,
+      "err_custom_calib_focal_drift_cm": 32.8
+    },
+    {
+      "scene_id": "005",
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 34.18,
+      "err_real_surface_no_comp_cm": 34.42,
+      "err_real_surface_WITH_comp_cm": 34.18,
+      "err_custom_calib_focal_drift_cm": 33.75
+    },
+    {
+      "scene_id": "005",
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 23.59,
+      "err_real_surface_no_comp_cm": 24.86,
+      "err_real_surface_WITH_comp_cm": 23.58,
+      "err_custom_calib_focal_drift_cm": 24.53
+    }
+  ]
+}

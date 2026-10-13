@@ -1,0 +1,49 @@
+{
+  "status": "PASS",
+  "bottle_dimensions": {
+    "height_cm": 24.099999999999998,
+    "radius_cm": 4.5
+  },
+  "comparisons": [
+    {
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 27.61,
+      "err_real_surface_no_comp_cm": 28.45,
+      "err_real_surface_WITH_radius_comp_cm": 27.61,
+      "err_custom_calib_focal_drift_cm": 27.97
+    },
+    {
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 40.52,
+      "err_real_surface_no_comp_cm": 40.01,
+      "err_real_surface_WITH_radius_comp_cm": 40.52,
+      "err_custom_calib_focal_drift_cm": 40.81
+    },
+    {
+      "bottle": "bottle_blue",
+      "color": "blue",
+      "err_ideal_center_cm": 31.89,
+      "err_real_surface_no_comp_cm": 31.84,
+      "err_real_surface_WITH_radius_comp_cm": 31.9,
+      "err_custom_calib_focal_drift_cm": 32.8
+    },
+    {
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 34.18,
+      "err_real_surface_no_comp_cm": 34.42,
+      "err_real_surface_WITH_radius_comp_cm": 34.18,
+      "err_custom_calib_focal_drift_cm": 33.75
+    },
+    {
+      "bottle": "bottle_red",
+      "color": "red",
+      "err_ideal_center_cm": 23.59,
+      "err_real_surface_no_comp_cm": 24.86,
+      "err_real_surface_WITH_radius_comp_cm": 23.58,
+      "err_custom_calib_focal_drift_cm": 24.53
+    }
+  ]
+}
