@@ -163,6 +163,18 @@ class NonQueuingRealSenseStream:
         self.thread = threading.Thread(target=self._worker, daemon=True)
         self.thread.start()
 
+    def get_color_intrinsics(self) -> tuple[np.ndarray, np.ndarray]:
+        """Fetch factory intrinsics from active RealSense color stream profile."""
+        color_prof = self.profile.get_stream(rs.stream.color).as_video_stream_profile()
+        intr = color_prof.get_intrinsics()
+        K = np.array([
+            [intr.fx, 0.0, intr.ppx],
+            [0.0, intr.fy, intr.ppy],
+            [0.0, 0.0, 1.0]
+        ], dtype=np.float64)
+        D = np.array(intr.coeffs, dtype=np.float64)
+        return K, D
+
     def _worker(self):
         while self.running:
             try:
@@ -316,8 +328,14 @@ def render_poses_panel(width: int, height: int, poses: list[dict], ref_tag_id: i
             name = p["name"]
             x, y_pos, z = p["xyz_cm"]
             euclid_cm = math.sqrt(x * x + y_pos * y_pos + z * z)
-            r, pitch, yaw = p.get("rpy_deg", (0.0, 0.0, 0.0))
-            color = (255, 220, 100) if p.get("is_tag") else (100, 255, 100)
+            is_tag = p.get("is_tag", False)
+            is_cam = p.get("is_cam", False)
+            if is_cam:
+                color = (255, 120, 255)
+            elif is_tag:
+                color = (255, 220, 100)
+            else:
+                color = (100, 255, 100)
             row_str = f"{pid:<5} {name:<8} | {euclid_cm:6.1f} cm | {x:+6.1f} {y_pos:+6.1f} {z:+6.1f} | {r:+4.0f}  {pitch:+4.0f}  {yaw:+4.0f}"
             cv2.putText(panel, row_str, (16, y), cv2.FONT_HERSHEY_SIMPLEX, 0.37, color, 1, cv2.LINE_AA)
             y += 22
@@ -341,8 +359,15 @@ def run_realsense_demo(args: argparse.Namespace):
     streamer = NonQueuingRealSenseStream(width=1280, height=720, fps=30)
     streamer.start()
 
-    log.info(f"Loaded Calibration: {calib.name} from {args.calib}")
+    if args.factory_calib:
+        K, D = streamer.get_color_intrinsics()
+        log.info(f"Using RealSense Factory Color Intrinsics: fx={K[0,0]:.2f}, fy={K[1,1]:.2f}, cx={K[0,2]:.2f}, cy={K[1,2]:.2f}")
+    else:
+        log.info(f"Loaded Custom Calibration: {calib.name} from {args.calib}")
+        log.info(f"Custom Intrinsics: fx={K[0,0]:.2f}, fy={K[1,1]:.2f}, cx={K[0,2]:.2f}, cy={K[1,2]:.2f}")
+
     log.info(f"Real-time FPS Limiter set to: {args.fps:.1f} FPS (buffer dropping enabled)")
+    log.info(f"Object radius compensation: {args.bottle_radius*100:.1f} cm (diameter: {args.bottle_radius*200:.1f} cm)")
 
     frame_interval = 1.0 / max(0.1, args.fps)
     last_process_time = 0.0
@@ -397,7 +422,23 @@ def run_realsense_demo(args: argparse.Namespace):
             objects_list: list[dict] = []
             poses_list: list[dict] = []
 
-            # Populate AprilTag poses with T01, T02... IDs
+            # 1. Camera 3D Pose in Tag Corner Origin
+            if ref_tag:
+                s = args.tag_size
+                p_cam_in_tag = -ref_tag["R"].T @ ref_tag["t"]
+                c_rel_x = float(-(p_cam_in_tag[0] - s / 2.0))
+                c_rel_y = float(p_cam_in_tag[1] - (-s / 2.0))
+                c_rel_z = float(-p_cam_in_tag[2])
+                rpy_cam = rotation_matrix_to_euler_deg(ref_tag["R"].T)
+                poses_list.append({
+                    "id": "C01",
+                    "name": "Camera",
+                    "xyz_cm": [c_rel_x * 100.0, c_rel_y * 100.0, c_rel_z * 100.0],
+                    "rpy_deg": rpy_cam,
+                    "is_cam": True,
+                })
+
+            # 2. Populate AprilTag poses with T01, T02... IDs
             for t in all_tags:
                 rpy = rotation_matrix_to_euler_deg(t["R"])
                 tag_id_str = f"T{t['id']:02d}"
@@ -405,7 +446,7 @@ def run_realsense_demo(args: argparse.Namespace):
                     p_in_ref = ref_tag["R"].T @ (t["t"] - ref_tag["t"])
                     s = args.tag_size
                     rel_x = float(-(p_in_ref[0] - s / 2.0))
-                    rel_y = float(p_in_tag_y := (p_in_ref[1] - (-s / 2.0)))
+                    rel_y = float(p_in_ref[1] - (-s / 2.0))
                     rel_z = float(-p_in_ref[2])
                     poses_list.append({
                         "id": tag_id_str,
@@ -440,7 +481,15 @@ def run_realsense_demo(args: argparse.Namespace):
                     obj_info = {"id": obj_id, "class": cname, "confidence": conf, "depth_m": measured_depth, "has_3d": has_3d, "euclidean_dist_cm": None}
 
                     if has_3d:
-                        p_cam = backproject_to_3d(cx, cy, measured_depth, K)
+                        # 3D surface point on front face
+                        p_cam_surface = backproject_to_3d(cx, cy, measured_depth, K)
+                        # Compensate cylinder radius along viewing ray to find cylinder axis center
+                        ray_norm = np.linalg.norm(p_cam_surface)
+                        if ray_norm > 1e-6 and args.bottle_radius > 0:
+                            p_cam = p_cam_surface + (p_cam_surface / ray_norm) * args.bottle_radius
+                        else:
+                            p_cam = p_cam_surface
+
                         if ref_tag:
                             # Express 3D location in AprilTag reference frame
                             p_in_tag = ref_tag["R"].T @ (p_cam - ref_tag["t"])
@@ -461,25 +510,29 @@ def run_realsense_demo(args: argparse.Namespace):
                                 "rpy_deg": (0.0, 0.0, 0.0),
                                 "is_tag": False,
                             })
-                            # Format label exactly like one_cam_depth_cans_3d
+                            # Format label just like one_cam_depth_cans_3d
                             label_top = f"[{obj_id}] {cname} (d={euclid_dist:.1f}cm)"
                             label_coords = f"x={rel_x:+.2f}, y={rel_y:+.2f}, z={rel_z:+.2f}m"
-                            box_col = (0, 255, 0)
                         else:
-                            # Reference tag NOT found: strictly require tag origin as in one_cam_depth_cans_3d
-                            obj_info["euclidean_dist_cm"] = None
-                            label_top = f"[{obj_id}] {cname} (Z_cam={measured_depth:.2f}m)"
-                            label_coords = f"NO ORIGIN (Tag #{args.tag_id} Missing)"
-                            box_col = (0, 140, 255)
+                            euclid_dist = float(np.linalg.norm(p_cam)) * 100.0
+                            obj_info["euclidean_dist_cm"] = euclid_dist
+                            poses_list.append({
+                                "id": obj_id,
+                                "name": cname[:10],
+                                "xyz_cm": [p_cam[0] * 100.0, p_cam[1] * 100.0, p_cam[2] * 100.0],
+                                "rpy_deg": (0.0, 0.0, 0.0),
+                                "is_tag": False,
+                            })
+                            label_top = f"[{obj_id}] {cname} (Cam Z={measured_depth:.2f}m)"
+                            label_coords = f"x={p_cam[0]:+.2f}, y={p_cam[1]:+.2f}, z={p_cam[2]:+.2f}m"
 
                         # Draw bounding box and 3D coordinate annotations
-                        cv2.rectangle(annotated_color, (int(x1), int(y1)), (int(x2), int(y2)), box_col, 2)
+                        cv2.rectangle(annotated_color, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
                         cv2.circle(annotated_color, (int(cx), int(cy)), 4, (0, 0, 255), -1)
                         cv2.putText(annotated_color, label_top, (int(x1), max(18, int(y1) - 18)),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, box_col, 1, cv2.LINE_AA)
-                        coord_col = (0, 255, 255) if ref_tag else (0, 0, 255)
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1, cv2.LINE_AA)
                         cv2.putText(annotated_color, label_coords, (int(x1), max(32, int(y1) - 4)),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, coord_col, 1, cv2.LINE_AA)
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 255), 1, cv2.LINE_AA)
                     else:
                         # 2D only detection fallback
                         cv2.rectangle(annotated_color, (int(x1), int(y1)), (int(x2), int(y2)), (0, 200, 255), 2)
@@ -504,17 +557,10 @@ def run_realsense_demo(args: argparse.Namespace):
             instant_fps = 1.0 / max(1e-4, time.time() - now)
             fps_smooth = 0.9 * fps_smooth + 0.1 * min(args.fps, instant_fps)
 
-            if ref_tag:
-                cv2.putText(annotated_color, f"RealSense Color (720p) | Ref Tag #{args.tag_id} Corner Origin Active", (16, 28),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
-            else:
-                cv2.putText(annotated_color, f"NO ORIGIN FOUND: Searching for AprilTag #{args.tag_id}...", (16, 28),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 0, 255), 2)
-                cv2.putText(annotated_depth, f"NO ORIGIN FOUND: Place AprilTag #{args.tag_id} in field of view", (16, 56),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
-
+            cv2.putText(annotated_color, f"RealSense Color (720p) | Limiter: {args.fps:.0f} FPS", (16, 28),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
             cv2.putText(annotated_depth, f"RealSense Depth (Z16) | Real-time: {fps_smooth:.1f} FPS", (16, 28),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
             if not args.no_gui:
                 target_w, target_h = 640, 360
@@ -552,12 +598,16 @@ def main():
                         help=f"Path to YOLO weights (default: {DEFAULT_YOLO_MODEL})")
     parser.add_argument("--conf", type=float, default=0.25,
                         help="YOLO detection confidence threshold (default: 0.25)")
-    parser.add_argument("--tag-id", type=int, default=0,
-                        help="Reference AprilTag ID defining world coordinate origin (default: 0)")
+    parser.add_argument("--tag-id", type=int, default=1,
+                        help="Reference AprilTag ID defining world coordinate origin (default: 1)")
     parser.add_argument("--tag-family", type=str, default="tag36h11",
                         help="AprilTag family (default: tag36h11)")
     parser.add_argument("--tag-size", type=float, default=DEFAULT_MARKER_SIZE,
                         help=f"AprilTag physical marker side length in meters (default: {DEFAULT_MARKER_SIZE}m)")
+    parser.add_argument("--factory-calib", action="store_true", default=False,
+                        help="Use RealSense factory color camera intrinsics from device EEPROM instead of custom calibrator")
+    parser.add_argument("--bottle-radius", type=float, default=0.045,
+                        help="Object radius in meters for center compensation along viewing ray (default: 0.045m = 9cm diameter)")
     parser.add_argument("--undistort", action="store_true",
                         help="Apply OpenCV lens undistortion using loaded calibration coefficients")
     parser.add_argument("--no-gui", action="store_true",
