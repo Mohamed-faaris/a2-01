@@ -1,5 +1,7 @@
 # AprilTag Relative Pose Viewer
 
+> **Note**: This repository is intended for experimental and exploratory lab work. Please do not use it in production environments without thorough review.
+
 Detect AprilTags from a webcam or video and show each detected tag in a left-side table with columns `ID, d, x, y, z, rx, ry, rz`, relative to the **lowest visible tag ID**. `d` is Euclidean distance from the origin; translation and distance are in metres and rotation is in degrees. The origin is selected again every frame, so it changes if the lowest-ID tag leaves view.
 
 ## Run
