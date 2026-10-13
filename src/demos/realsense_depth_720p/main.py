@@ -461,29 +461,25 @@ def run_realsense_demo(args: argparse.Namespace):
                                 "rpy_deg": (0.0, 0.0, 0.0),
                                 "is_tag": False,
                             })
-                            # Format label just like one_cam_depth_cans_3d
+                            # Format label exactly like one_cam_depth_cans_3d
                             label_top = f"[{obj_id}] {cname} (d={euclid_dist:.1f}cm)"
                             label_coords = f"x={rel_x:+.2f}, y={rel_y:+.2f}, z={rel_z:+.2f}m"
+                            box_col = (0, 255, 0)
                         else:
-                            euclid_dist = float(np.linalg.norm(p_cam)) * 100.0
-                            obj_info["euclidean_dist_cm"] = euclid_dist
-                            poses_list.append({
-                                "id": obj_id,
-                                "name": cname[:10],
-                                "xyz_cm": [p_cam[0] * 100.0, p_cam[1] * 100.0, p_cam[2] * 100.0],
-                                "rpy_deg": (0.0, 0.0, 0.0),
-                                "is_tag": False,
-                            })
-                            label_top = f"[{obj_id}] {cname} (Cam Z={measured_depth:.2f}m)"
-                            label_coords = f"x={p_cam[0]:+.2f}, y={p_cam[1]:+.2f}, z={p_cam[2]:+.2f}m"
+                            # Reference tag NOT found: strictly require tag origin as in one_cam_depth_cans_3d
+                            obj_info["euclidean_dist_cm"] = None
+                            label_top = f"[{obj_id}] {cname} (Z_cam={measured_depth:.2f}m)"
+                            label_coords = f"NO ORIGIN (Tag #{args.tag_id} Missing)"
+                            box_col = (0, 140, 255)
 
                         # Draw bounding box and 3D coordinate annotations
-                        cv2.rectangle(annotated_color, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+                        cv2.rectangle(annotated_color, (int(x1), int(y1)), (int(x2), int(y2)), box_col, 2)
                         cv2.circle(annotated_color, (int(cx), int(cy)), 4, (0, 0, 255), -1)
                         cv2.putText(annotated_color, label_top, (int(x1), max(18, int(y1) - 18)),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1, cv2.LINE_AA)
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, box_col, 1, cv2.LINE_AA)
+                        coord_col = (0, 255, 255) if ref_tag else (0, 0, 255)
                         cv2.putText(annotated_color, label_coords, (int(x1), max(32, int(y1) - 4)),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 255), 1, cv2.LINE_AA)
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, coord_col, 1, cv2.LINE_AA)
                     else:
                         # 2D only detection fallback
                         cv2.rectangle(annotated_color, (int(x1), int(y1)), (int(x2), int(y2)), (0, 200, 255), 2)
@@ -508,10 +504,17 @@ def run_realsense_demo(args: argparse.Namespace):
             instant_fps = 1.0 / max(1e-4, time.time() - now)
             fps_smooth = 0.9 * fps_smooth + 0.1 * min(args.fps, instant_fps)
 
-            cv2.putText(annotated_color, f"RealSense Color (720p) | Limiter: {args.fps:.0f} FPS", (16, 28),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            if ref_tag:
+                cv2.putText(annotated_color, f"RealSense Color (720p) | Ref Tag #{args.tag_id} Corner Origin Active", (16, 28),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2)
+            else:
+                cv2.putText(annotated_color, f"NO ORIGIN FOUND: Searching for AprilTag #{args.tag_id}...", (16, 28),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 0, 255), 2)
+                cv2.putText(annotated_depth, f"NO ORIGIN FOUND: Place AprilTag #{args.tag_id} in field of view", (16, 56),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+
             cv2.putText(annotated_depth, f"RealSense Depth (Z16) | Real-time: {fps_smooth:.1f} FPS", (16, 28),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
 
             if not args.no_gui:
                 target_w, target_h = 640, 360
