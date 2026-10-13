@@ -176,9 +176,10 @@ class NonQueuingRealSenseStream:
         return K, D
 
     def _worker(self):
+        consecutive_timeouts = 0
         while self.running:
             try:
-                frameset = self.pipeline.wait_for_frames(timeout_ms=500)
+                frameset = self.pipeline.wait_for_frames(timeout_ms=1000)
                 aligned = self.align.process(frameset)
                 df = aligned.get_depth_frame()
                 cf = aligned.get_color_frame()
@@ -189,14 +190,27 @@ class NonQueuingRealSenseStream:
                         self.latest_color = c_data
                         self.latest_depth = d_data
                         self.latest_depth_frame = df
-            except Exception:
-                pass
+                    consecutive_timeouts = 0
+            except Exception as e:
+                consecutive_timeouts += 1
+                if consecutive_timeouts == 5:
+                    log.warning("RealSense frame timeout (USB buffer delay). Still waiting for frames...")
 
     def get_latest_frames(self):
         with self.lock:
             if self.latest_color is None or self.latest_depth_frame is None:
                 return None, None, None
             return self.latest_color.copy(), self.latest_depth.copy(), self.latest_depth_frame
+
+    def wait_until_ready(self, timeout_sec: float = 6.0) -> bool:
+        """Block until the first valid frames arrive from the sensor."""
+        t0 = time.time()
+        while time.time() - t0 < timeout_sec:
+            with self.lock:
+                if self.latest_color is not None and self.latest_depth_frame is not None:
+                    return True
+            time.sleep(0.05)
+        return False
 
     def stop(self):
         self.running = False
@@ -358,6 +372,11 @@ def run_realsense_demo(args: argparse.Namespace):
 
     streamer = NonQueuingRealSenseStream(width=1280, height=720, fps=30)
     streamer.start()
+
+    if not streamer.wait_until_ready(timeout_sec=5.0):
+        log.warning("No frames received from RealSense within 5s. If USB is stuck, try unplugging and reconnecting.")
+    else:
+        log.info("RealSense video and depth streams active and verified.")
 
     if args.factory_calib:
         K, D = streamer.get_color_intrinsics()
