@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import math
 import queue
 import sys
 import threading
@@ -97,12 +98,15 @@ class CameraCalibration:
     def _check_stream_type(calib: CameraCalibration, expected_stream_type: str | None = None) -> None:
         if calib.stream_type:
             log.info(f"Loaded calibration '{calib.name}' stream type: '{calib.stream_type}' (Card: {calib.card_name or 'Unknown'})")
-            if expected_stream_type and expected_stream_type.lower() not in calib.stream_type.lower():
+            # Consider color variants like "Color (MJPEG)", "RGB / Color", "YUYV" as color streams
+            is_color_calib = any(c in calib.stream_type.lower() for c in ("color", "rgb", "bgr", "mjpeg", "yuyv"))
+            is_expected_color = any(c in (expected_stream_type or "").lower() for c in ("color", "rgb", "bgr"))
+            if is_expected_color and not is_color_calib:
                 log.warning(
-                    f"Stream type mismatch for {calib.name}! Expected '{expected_stream_type}', but calibrator produced '{calib.stream_type}'."
+                    f"Stream type mismatch for {calib.name}! Expected color stream, but calibrator produced '{calib.stream_type}'."
                 )
             else:
-                log.info(f"Calibration {calib.name} stream type verified as '{calib.stream_type}'.")
+                log.info(f"Calibration {calib.name} stream type verified: '{calib.stream_type}'.")
         else:
             log.warning(f"Calibration {calib.name} does not specify 'stream_type'. Assuming default {expected_stream_type or 'RGB / Color'}.")
 
