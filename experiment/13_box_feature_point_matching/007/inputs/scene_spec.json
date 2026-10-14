@@ -1,0 +1,59 @@
+{
+  "id": "007",
+  "description": "Substantial height disparity (cam0 looking upward from desk, cam1 looking downward)",
+  "cam0": {
+    "loc": [
+      -0.15,
+      -0.78,
+      -0.16
+    ],
+    "roll": -2.0
+  },
+  "cam1": {
+    "loc": [
+      0.18,
+      -0.76,
+      0.22
+    ],
+    "roll": 2.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      8.0,
+      -6.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -6.0,
+      8.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 4.0,
+    "loc": [
+      -1.0,
+      -1.8,
+      2.8
+    ],
+    "rot": [
+      55,
+      -10,
+      -20
+    ],
+    "ambient": 0.5
+  }
+}

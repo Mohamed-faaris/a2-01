@@ -1,0 +1,359 @@
+{
+  "scene_id": "021",
+  "description": "Massive 3D diagonal height & lateral offset (Cam 0 high-left +0.35m Z, Cam 1 low-right -0.12m Z)",
+  "image_planes": [
+    "choco_pie",
+    "kelloggs"
+  ],
+  "image_resolution": [
+    1280,
+    960
+  ],
+  "focal_length_px": 950.0,
+  "points": [
+    {
+      "name": "choco_lotte_logo",
+      "plane": "choco_pie",
+      "description": "Center of 'LOTTE' logo",
+      "uv_norm": [
+        0.187,
+        0.85
+      ],
+      "world_pos_m": [
+        -0.2341,
+        0.01,
+        0.0884
+      ],
+      "cam0_px": [
+        356.99,
+        422.72
+      ],
+      "cam1_px": [
+        424.38,
+        406.0
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_letter_C",
+      "plane": "choco_pie",
+      "description": "Capital letter 'C' in 'Choco'",
+      "uv_norm": [
+        0.27,
+        0.62
+      ],
+      "world_pos_m": [
+        -0.227,
+        0.0034,
+        0.0379
+      ],
+      "cam0_px": [
+        375.56,
+        484.14
+      ],
+      "cam1_px": [
+        424.62,
+        455.26
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_letter_P",
+      "plane": "choco_pie",
+      "description": "Capital letter 'P' in 'Pie'",
+      "uv_norm": [
+        0.24,
+        0.38
+      ],
+      "world_pos_m": [
+        -0.2466,
+        -0.0034,
+        -0.0075
+      ],
+      "cam0_px": [
+        358.63,
+        543.82
+      ],
+      "cam1_px": [
+        401.67,
+        502.34
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_marshmallow",
+      "plane": "choco_pie",
+      "description": "White marshmallow filling center",
+      "uv_norm": [
+        0.63,
+        0.28
+      ],
+      "world_pos_m": [
+        -0.1615,
+        -0.0063,
+        -0.0514
+      ],
+      "cam0_px": [
+        468.82,
+        571.33
+      ],
+      "cam1_px": [
+        474.52,
+        545.25
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_badge_12packs",
+      "plane": "choco_pie",
+      "description": "Gold '12 PACKS' badge text",
+      "uv_norm": [
+        0.73,
+        0.13
+      ],
+      "world_pos_m": [
+        -0.1462,
+        -0.0106,
+        -0.0872
+      ],
+      "cam0_px": [
+        490.6,
+        606.07
+      ],
+      "cam1_px": [
+        485.32,
+        584.29
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_letter_K",
+      "plane": "kelloggs",
+      "description": "Capital 'K' in red Kellogg's logo",
+      "uv_norm": [
+        0.45,
+        0.8
+      ],
+      "world_pos_m": [
+        0.1343,
+        -0.0103,
+        0.0687
+      ],
+      "cam0_px": [
+        779.77,
+        389.55
+      ],
+      "cam1_px": [
+        788.42,
+        383.88
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_veg_symbol",
+      "plane": "kelloggs",
+      "description": "Green vegetarian indicator square dot",
+      "uv_norm": [
+        0.9,
+        0.88
+      ],
+      "world_pos_m": [
+        0.1901,
+        -0.013,
+        0.1038
+      ],
+      "cam0_px": [
+        836.15,
+        345.41
+      ],
+      "cam1_px": [
+        856.28,
+        332.4
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_corn_C",
+      "plane": "kelloggs",
+      "description": "Bold black letter 'C' in CORN",
+      "uv_norm": [
+        0.74,
+        0.52
+      ],
+      "world_pos_m": [
+        0.1912,
+        -0.0007,
+        0.0134
+      ],
+      "cam0_px": [
+        821.48,
+        433.27
+      ],
+      "cam1_px": [
+        864.52,
+        448.58
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_milk_splash",
+      "plane": "kelloggs",
+      "description": "Upper central splash of white milk",
+      "uv_norm": [
+        0.48,
+        0.38
+      ],
+      "world_pos_m": [
+        0.1649,
+        0.0041,
+        -0.0289
+      ],
+      "cam0_px": [
+        792.51,
+        476.32
+      ],
+      "cam1_px": [
+        833.77,
+        504.77
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_power_badge",
+      "plane": "kelloggs",
+      "description": "Top center of red POWER BREAKFAST box",
+      "uv_norm": [
+        0.82,
+        0.32
+      ],
+      "world_pos_m": [
+        0.2146,
+        0.0062,
+        -0.0307
+      ],
+      "cam0_px": [
+        833.74,
+        468.65
+      ],
+      "cam1_px": [
+        898.85,
+        504.26
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    }
+  ],
+  "cam0_world_matrix": [
+    [
+      0.9094744920730591,
+      0.17210273444652557,
+      -0.37846639752388,
+      -0.3199999928474426
+    ],
+    [
+      -0.41575974225997925,
+      0.3764747679233551,
+      -0.8278952836990356,
+      -0.699999988079071
+    ],
+    [
+      1.4901161193847656e-08,
+      0.9103006720542908,
+      0.4139476418495178,
+      0.3499999940395355
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "cam1_world_matrix": [
+    [
+      0.9178571105003357,
+      0.05843320116400719,
+      0.39258629083633423,
+      0.3199999928474426
+    ],
+    [
+      0.3969111740589142,
+      -0.13512678444385529,
+      -0.9078558087348938,
+      -0.7400000095367432
+    ],
+    [
+      3.725290742551124e-09,
+      0.9891037940979004,
+      -0.14721985161304474,
+      -0.11999999731779099
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "choco_world_matrix": [
+    [
+      0.9659258127212524,
+      -0.03602065145969391,
+      0.2563002407550812,
+      -0.18000000715255737
+    ],
+    [
+      0.0,
+      0.9902680516242981,
+      0.13917310535907745,
+      0.0
+    ],
+    [
+      -0.258819043636322,
+      -0.1344308853149414,
+      0.9565255045890808,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "kelloggs_world_matrix": [
+    [
+      0.9659258127212524,
+      -0.03602065145969391,
+      -0.2563002407550812,
+      0.1599999964237213
+    ],
+    [
+      0.0,
+      0.9902680516242981,
+      -0.13917310535907745,
+      0.0
+    ],
+    [
+      0.258819043636322,
+      0.1344308853149414,
+      0.9565255045890808,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ]
+}

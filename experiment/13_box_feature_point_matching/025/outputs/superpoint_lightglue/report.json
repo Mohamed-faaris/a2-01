@@ -1,0 +1,104 @@
+{
+  "scene_id": "025",
+  "method": "superpoint_lightglue",
+  "description": "Ultra wide stereo baseline (62 deg convergence baseline) across wide optical field",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 10,
+  "pass_rate_pct": 100.0,
+  "mean_error_px": 0.7,
+  "median_error_px": 0.51,
+  "max_error_px": 1.74,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        476.42,
+        403.86
+      ],
+      "error_px": 0.24,
+      "status": "PASS",
+      "num_plane_matches": 267
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        472.69,
+        451.25
+      ],
+      "error_px": 0.28,
+      "status": "PASS",
+      "num_plane_matches": 267
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        451.87,
+        494.49
+      ],
+      "error_px": 0.52,
+      "status": "PASS",
+      "num_plane_matches": 267
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        503.44,
+        540.86
+      ],
+      "error_px": 0.08,
+      "status": "PASS",
+      "num_plane_matches": 267
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        508.52,
+        578.97
+      ],
+      "error_px": 0.07,
+      "status": "PASS",
+      "num_plane_matches": 267
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        760.64,
+        385.62
+      ],
+      "error_px": 0.49,
+      "status": "PASS",
+      "num_plane_matches": 188
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        820.58,
+        325.43
+      ],
+      "error_px": 1.74,
+      "status": "PASS",
+      "num_plane_matches": 188
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        838.87,
+        448.39
+      ],
+      "error_px": 1.12,
+      "status": "PASS",
+      "num_plane_matches": 188
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        814.19,
+        508.15
+      ],
+      "error_px": 0.76,
+      "status": "PASS",
+      "num_plane_matches": 188
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        877.39,
+        505.48
+      ],
+      "error_px": 1.67,
+      "status": "PASS",
+      "num_plane_matches": 188
+    }
+  }
+}

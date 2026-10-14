@@ -1,0 +1,59 @@
+{
+  "id": "018",
+  "description": "Extreme in-plane optical roll (Cam 0 rolled +35 deg, Cam 1 rolled -30 deg, 65 deg total roll disparity)",
+  "cam0": {
+    "loc": [
+      -0.15,
+      -0.78,
+      0.05
+    ],
+    "roll": 35.0
+  },
+  "cam1": {
+    "loc": [
+      0.15,
+      -0.78,
+      0.05
+    ],
+    "roll": -30.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      6.0,
+      10.0,
+      15.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -6.0,
+      -10.0,
+      -15.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 3.8,
+    "loc": [
+      0.5,
+      -2.0,
+      3.0
+    ],
+    "rot": [
+      50,
+      0,
+      10
+    ],
+    "ambient": 0.55
+  }
+}

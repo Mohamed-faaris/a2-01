@@ -1,0 +1,59 @@
+{
+  "id": "019",
+  "description": "Severe dark ambient (0.08) with intense point specular highlight directly on logos",
+  "cam0": {
+    "loc": [
+      -0.14,
+      -0.76,
+      0.02
+    ],
+    "roll": 0.0
+  },
+  "cam1": {
+    "loc": [
+      0.16,
+      -0.74,
+      0.04
+    ],
+    "roll": 0.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.02,
+      0.0
+    ],
+    "rot": [
+      -5.0,
+      -12.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      -0.02,
+      0.0
+    ],
+    "rot": [
+      5.0,
+      12.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "POINT",
+    "energy": 300.0,
+    "loc": [
+      -0.05,
+      -0.42,
+      0.18
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ],
+    "ambient": 0.08
+  }
+}

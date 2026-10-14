@@ -1,0 +1,59 @@
+{
+  "id": "009",
+  "description": "Far distance (1.25m), smaller packaging footprint in image plane",
+  "cam0": {
+    "loc": [
+      -0.2,
+      -1.25,
+      0.08
+    ],
+    "roll": 0.0
+  },
+  "cam1": {
+    "loc": [
+      0.22,
+      -1.22,
+      0.06
+    ],
+    "roll": 0.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.19,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      10.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.18,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      -10.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 3.0,
+    "loc": [
+      0.0,
+      -2.0,
+      2.5
+    ],
+    "rot": [
+      50,
+      0,
+      0
+    ],
+    "ambient": 0.65
+  }
+}

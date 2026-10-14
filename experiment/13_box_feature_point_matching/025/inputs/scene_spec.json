@@ -1,0 +1,59 @@
+{
+  "id": "025",
+  "description": "Ultra wide stereo baseline (62 deg convergence baseline) across wide optical field",
+  "cam0": {
+    "loc": [
+      -0.56,
+      -0.62,
+      0.08
+    ],
+    "roll": -6.0
+  },
+  "cam1": {
+    "loc": [
+      0.52,
+      -0.64,
+      -0.06
+    ],
+    "roll": 6.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -10.0,
+      18.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      10.0,
+      -18.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 4.5,
+    "loc": [
+      2.2,
+      -0.8,
+      2.5
+    ],
+    "rot": [
+      40,
+      30,
+      45
+    ],
+    "ambient": 0.45
+  }
+}

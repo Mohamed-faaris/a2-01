@@ -1,0 +1,104 @@
+{
+  "scene_id": "024",
+  "method": "template_patch_matching",
+  "description": "Extreme compound twist (yaw 32 deg, pitch 22 deg, roll 12 deg simultaneously on both planes)",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 8,
+  "pass_rate_pct": 80.0,
+  "mean_error_px": 9.19,
+  "median_error_px": 1.75,
+  "max_error_px": 41.35,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        395.0,
+        347.0
+      ],
+      "error_px": 29.22,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.824
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        424.0,
+        411.0
+      ],
+      "error_px": 2.03,
+      "status": "PASS",
+      "ncc_score": 0.696
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        365.0,
+        426.0
+      ],
+      "error_px": 41.35,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.484
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        479.0,
+        531.0
+      ],
+      "error_px": 11.3,
+      "status": "PASS",
+      "ncc_score": 0.967
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        485.0,
+        557.0
+      ],
+      "error_px": 1.1,
+      "status": "PASS",
+      "ncc_score": 0.858
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        795.0,
+        416.0
+      ],
+      "error_px": 0.08,
+      "status": "PASS",
+      "ncc_score": 0.716
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        856.0,
+        351.0
+      ],
+      "error_px": 0.95,
+      "status": "PASS",
+      "ncc_score": 0.688
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        872.0,
+        468.0
+      ],
+      "error_px": 0.8,
+      "status": "PASS",
+      "ncc_score": 0.598
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        847.0,
+        534.0
+      ],
+      "error_px": 1.47,
+      "status": "PASS",
+      "ncc_score": 0.564
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        916.0,
+        521.0
+      ],
+      "error_px": 3.63,
+      "status": "PASS",
+      "ncc_score": 0.557
+    }
+  }
+}

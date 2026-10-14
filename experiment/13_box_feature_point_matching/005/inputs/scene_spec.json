@@ -1,0 +1,59 @@
+{
+  "id": "005",
+  "description": "Low ambient / dim lighting with sharp specular point glare, slight camera roll",
+  "cam0": {
+    "loc": [
+      -0.16,
+      -0.88,
+      -0.06
+    ],
+    "roll": 3.0
+  },
+  "cam1": {
+    "loc": [
+      0.19,
+      -0.86,
+      -0.03
+    ],
+    "roll": -3.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.02,
+      0.0
+    ],
+    "rot": [
+      -5.0,
+      -8.0,
+      4.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      -0.02,
+      0.0
+    ],
+    "rot": [
+      6.0,
+      10.0,
+      -3.0
+    ]
+  },
+  "light": {
+    "type": "POINT",
+    "energy": 140.0,
+    "loc": [
+      0.0,
+      -0.5,
+      0.3
+    ],
+    "rot": [
+      0,
+      0,
+      0
+    ],
+    "ambient": 0.25
+  }
+}

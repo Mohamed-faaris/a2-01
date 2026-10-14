@@ -1,0 +1,59 @@
+{
+  "id": "021",
+  "description": "Massive 3D diagonal height & lateral offset (Cam 0 high-left +0.35m Z, Cam 1 low-right -0.12m Z)",
+  "cam0": {
+    "loc": [
+      -0.32,
+      -0.7,
+      0.35
+    ],
+    "roll": 4.0
+  },
+  "cam1": {
+    "loc": [
+      0.32,
+      -0.74,
+      -0.12
+    ],
+    "roll": -4.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -8.0,
+      15.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      8.0,
+      -15.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 4.0,
+    "loc": [
+      1.5,
+      -1.0,
+      2.5
+    ],
+    "rot": [
+      45,
+      20,
+      25
+    ],
+    "ambient": 0.5
+  }
+}

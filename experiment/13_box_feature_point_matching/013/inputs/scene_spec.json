@@ -1,0 +1,59 @@
+{
+  "id": "013",
+  "description": "Grazing incidence angle (both planes yawed 34 deg away from camera axis)",
+  "cam0": {
+    "loc": [
+      -0.22,
+      -0.74,
+      0.06
+    ],
+    "roll": 0.0
+  },
+  "cam1": {
+    "loc": [
+      0.22,
+      -0.74,
+      0.06
+    ],
+    "roll": 0.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.06,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      34.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      -0.06,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      -34.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 4.2,
+    "loc": [
+      -2.0,
+      -0.8,
+      1.5
+    ],
+    "rot": [
+      30,
+      -40,
+      -60
+    ],
+    "ambient": 0.4
+  }
+}

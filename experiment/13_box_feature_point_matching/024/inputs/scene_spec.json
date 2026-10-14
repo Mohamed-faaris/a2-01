@@ -1,0 +1,59 @@
+{
+  "id": "024",
+  "description": "Extreme compound twist (yaw 32 deg, pitch 22 deg, roll 12 deg simultaneously on both planes)",
+  "cam0": {
+    "loc": [
+      -0.22,
+      -0.72,
+      0.12
+    ],
+    "roll": -8.0
+  },
+  "cam1": {
+    "loc": [
+      0.24,
+      -0.72,
+      0.1
+    ],
+    "roll": 8.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.04,
+      0.0
+    ],
+    "rot": [
+      22.0,
+      32.0,
+      12.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      -0.04,
+      0.0
+    ],
+    "rot": [
+      -22.0,
+      -32.0,
+      -12.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 4.2,
+    "loc": [
+      -1.8,
+      -1.2,
+      2.2
+    ],
+    "rot": [
+      45,
+      -25,
+      -40
+    ],
+    "ambient": 0.45
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "id": "006",
+  "description": "Extreme yaw rotation (planes rotated 28 deg), narrow stereo baseline",
+  "cam0": {
+    "loc": [
+      -0.08,
+      -0.82,
+      0.02
+    ],
+    "roll": 0.0
+  },
+  "cam1": {
+    "loc": [
+      0.1,
+      -0.82,
+      0.02
+    ],
+    "roll": 0.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.17,
+      0.04,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      28.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      -0.04,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      -28.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 3.2,
+    "loc": [
+      1.5,
+      -1.2,
+      2.2
+    ],
+    "rot": [
+      40,
+      20,
+      20
+    ],
+    "ambient": 0.55
+  }
+}

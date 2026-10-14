@@ -1,0 +1,104 @@
+{
+  "scene_id": "013",
+  "method": "template_patch_matching",
+  "description": "Grazing incidence angle (both planes yawed 34 deg away from camera axis)",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 5,
+  "pass_rate_pct": 50.0,
+  "mean_error_px": 26.87,
+  "median_error_px": 17.11,
+  "max_error_px": 97.84,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        430.0,
+        349.0
+      ],
+      "error_px": 23.09,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.787
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        402.0,
+        434.0
+      ],
+      "error_px": 43.12,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.685
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        389.0,
+        421.0
+      ],
+      "error_px": 39.31,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.56
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        473.0,
+        531.0
+      ],
+      "error_px": 1.67,
+      "status": "PASS",
+      "ncc_score": 0.97
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        475.0,
+        571.0
+      ],
+      "error_px": 2.19,
+      "status": "PASS",
+      "ncc_score": 0.889
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        767.0,
+        411.0
+      ],
+      "error_px": 0.99,
+      "status": "PASS",
+      "ncc_score": 0.598
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        856.0,
+        373.0
+      ],
+      "error_px": 46.93,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.777
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        878.0,
+        452.0
+      ],
+      "error_px": 11.12,
+      "status": "PASS",
+      "ncc_score": 0.501
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        855.0,
+        529.0
+      ],
+      "error_px": 2.41,
+      "status": "PASS",
+      "ncc_score": 0.6
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        846.0,
+        451.0
+      ],
+      "error_px": 97.84,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.439
+    }
+  }
+}

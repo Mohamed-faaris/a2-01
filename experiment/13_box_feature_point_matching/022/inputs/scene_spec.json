@@ -1,0 +1,59 @@
+{
+  "id": "022",
+  "description": "Ultra close-up macro distance (0.45m), wide FOV perspective divergence",
+  "cam0": {
+    "loc": [
+      -0.09,
+      -0.45,
+      0.02
+    ],
+    "roll": 0.0
+  },
+  "cam1": {
+    "loc": [
+      0.09,
+      -0.45,
+      0.02
+    ],
+    "roll": 0.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.15,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      2.0,
+      -6.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.14,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -2.0,
+      6.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 3.2,
+    "loc": [
+      0.5,
+      -1.0,
+      2.0
+    ],
+    "rot": [
+      40,
+      10,
+      15
+    ],
+    "ambient": 0.6
+  }
+}

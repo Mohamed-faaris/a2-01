@@ -1,0 +1,114 @@
+{
+  "scene_id": "017",
+  "method": "fundamental_matrix_guided",
+  "description": "Ultra grazing incidence angle: Planes pitched back 42 deg and yawed 25 deg",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 10,
+  "pass_rate_pct": 100.0,
+  "mean_error_px": 2.03,
+  "median_error_px": 1.51,
+  "max_error_px": 4.82,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        432.0,
+        369.0
+      ],
+      "error_px": 0.88,
+      "epipolar_line_residual_px": 0.57,
+      "ncc_score": 0.646,
+      "status": "PASS"
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        421.0,
+        415.0
+      ],
+      "error_px": 1.04,
+      "epipolar_line_residual_px": 0.63,
+      "ncc_score": 0.564,
+      "status": "PASS"
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        380.0,
+        452.0
+      ],
+      "error_px": 1.5,
+      "epipolar_line_residual_px": 0.64,
+      "ncc_score": 0.552,
+      "status": "PASS"
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        457.0,
+        519.0
+      ],
+      "error_px": 1.44,
+      "epipolar_line_residual_px": 0.1,
+      "ncc_score": 0.845,
+      "status": "PASS"
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        465.0,
+        561.0
+      ],
+      "error_px": 2.69,
+      "epipolar_line_residual_px": 0.18,
+      "ncc_score": 0.805,
+      "status": "PASS"
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        809.0,
+        426.0
+      ],
+      "error_px": 0.74,
+      "epipolar_line_residual_px": 1.1,
+      "ncc_score": 0.584,
+      "status": "PASS"
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        879.0,
+        374.0
+      ],
+      "error_px": 2.71,
+      "epipolar_line_residual_px": 2.34,
+      "ncc_score": 0.373,
+      "status": "PASS"
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        885.0,
+        477.0
+      ],
+      "error_px": 3.0,
+      "epipolar_line_residual_px": 0.76,
+      "ncc_score": 0.433,
+      "status": "PASS"
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        857.0,
+        536.0
+      ],
+      "error_px": 4.82,
+      "epipolar_line_residual_px": 0.19,
+      "ncc_score": 0.358,
+      "status": "PASS"
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        928.0,
+        528.0
+      ],
+      "error_px": 1.52,
+      "epipolar_line_residual_px": 0.34,
+      "ncc_score": 0.476,
+      "status": "PASS"
+    }
+  }
+}

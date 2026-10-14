@@ -1,0 +1,59 @@
+{
+  "id": "010",
+  "description": "Significant in-plane optical roll (Cam 0 rolled +15 deg, Cam 1 rolled -14 deg)",
+  "cam0": {
+    "loc": [
+      -0.18,
+      -0.8,
+      0.04
+    ],
+    "roll": 15.0
+  },
+  "cam1": {
+    "loc": [
+      0.18,
+      -0.78,
+      0.04
+    ],
+    "roll": -14.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      5.0,
+      5.0,
+      10.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -5.0,
+      -5.0,
+      -8.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 3.8,
+    "loc": [
+      1.2,
+      -1.5,
+      2.4
+    ],
+    "rot": [
+      45,
+      20,
+      20
+    ],
+    "ambient": 0.5
+  }
+}

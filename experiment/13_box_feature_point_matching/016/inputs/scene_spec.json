@@ -1,0 +1,59 @@
+{
+  "id": "016",
+  "description": "Extreme baseline convergence angle (55 deg stereo baseline), standard lighting",
+  "cam0": {
+    "loc": [
+      -0.48,
+      -0.65,
+      0.04
+    ],
+    "roll": -5.0
+  },
+  "cam1": {
+    "loc": [
+      0.45,
+      -0.68,
+      -0.02
+    ],
+    "roll": 5.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      10.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      -10.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 3.5,
+    "loc": [
+      1.0,
+      -1.0,
+      2.0
+    ],
+    "rot": [
+      45,
+      15,
+      30
+    ],
+    "ambient": 0.5
+  }
+}

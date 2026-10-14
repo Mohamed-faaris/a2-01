@@ -1,0 +1,104 @@
+{
+  "scene_id": "004",
+  "method": "template_patch_matching",
+  "description": "Wide baseline angle (~36 deg convergence), low-angle harsh directional side light",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 6,
+  "pass_rate_pct": 60.0,
+  "mean_error_px": 16.86,
+  "median_error_px": 11.77,
+  "max_error_px": 54.16,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        385.0,
+        382.0
+      ],
+      "error_px": 17.06,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.678
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        371.0,
+        400.0
+      ],
+      "error_px": 54.16,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.417
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        396.0,
+        488.0
+      ],
+      "error_px": 7.03,
+      "status": "PASS",
+      "ncc_score": 0.468
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        471.0,
+        526.0
+      ],
+      "error_px": 3.61,
+      "status": "PASS",
+      "ncc_score": 0.901
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        490.0,
+        564.0
+      ],
+      "error_px": 1.26,
+      "status": "PASS",
+      "ncc_score": 0.812
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        822.0,
+        397.0
+      ],
+      "error_px": 8.16,
+      "status": "PASS",
+      "ncc_score": 0.468
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        904.0,
+        394.0
+      ],
+      "error_px": 37.77,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.91
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        895.0,
+        472.0
+      ],
+      "error_px": 16.05,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.461
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        850.0,
+        535.0
+      ],
+      "error_px": 14.28,
+      "status": "PASS",
+      "ncc_score": 0.409
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        913.0,
+        535.0
+      ],
+      "error_px": 9.26,
+      "status": "PASS",
+      "ncc_score": 0.547
+    }
+  }
+}

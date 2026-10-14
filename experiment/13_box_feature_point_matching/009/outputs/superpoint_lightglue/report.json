@@ -1,0 +1,104 @@
+{
+  "scene_id": "009",
+  "method": "superpoint_lightglue",
+  "description": "Far distance (1.25m), smaller packaging footprint in image plane",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 10,
+  "pass_rate_pct": 100.0,
+  "mean_error_px": 0.18,
+  "median_error_px": 0.15,
+  "max_error_px": 0.55,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        456.65,
+        416.24
+      ],
+      "error_px": 0.1,
+      "status": "PASS",
+      "num_plane_matches": 226
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        464.98,
+        453.37
+      ],
+      "error_px": 0.05,
+      "status": "PASS",
+      "num_plane_matches": 226
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        454.32,
+        488.39
+      ],
+      "error_px": 0.1,
+      "status": "PASS",
+      "num_plane_matches": 226
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        517.34,
+        516.5
+      ],
+      "error_px": 0.3,
+      "status": "PASS",
+      "num_plane_matches": 226
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        530.73,
+        542.7
+      ],
+      "error_px": 0.55,
+      "status": "PASS",
+      "num_plane_matches": 226
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        764.1,
+        425.12
+      ],
+      "error_px": 0.19,
+      "status": "PASS",
+      "num_plane_matches": 160
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        810.92,
+        401.12
+      ],
+      "error_px": 0.24,
+      "status": "PASS",
+      "num_plane_matches": 160
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        804.91,
+        473.01
+      ],
+      "error_px": 0.03,
+      "status": "PASS",
+      "num_plane_matches": 160
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        780.9,
+        504.46
+      ],
+      "error_px": 0.07,
+      "status": "PASS",
+      "num_plane_matches": 160
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        820.18,
+        509.72
+      ],
+      "error_px": 0.19,
+      "status": "PASS",
+      "num_plane_matches": 160
+    }
+  }
+}

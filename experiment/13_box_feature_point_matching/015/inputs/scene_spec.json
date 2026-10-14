@@ -1,0 +1,59 @@
+{
+  "id": "015",
+  "description": "High pitch steep overhead perspective (~38 deg pitch down) under bright diffused daylight",
+  "cam0": {
+    "loc": [
+      -0.16,
+      -0.65,
+      0.52
+    ],
+    "roll": 2.0
+  },
+  "cam1": {
+    "loc": [
+      0.18,
+      -0.65,
+      0.48
+    ],
+    "roll": -2.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.17,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -20.0,
+      8.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.17,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -20.0,
+      -8.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 4.8,
+    "loc": [
+      0.2,
+      -1.5,
+      3.2
+    ],
+    "rot": [
+      65,
+      0,
+      5
+    ],
+    "ambient": 0.5
+  }
+}

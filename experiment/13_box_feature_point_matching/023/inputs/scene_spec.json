@@ -1,0 +1,59 @@
+{
+  "id": "023",
+  "description": "Long standoff distance (1.65m), low target pixel resolution",
+  "cam0": {
+    "loc": [
+      -0.26,
+      -1.65,
+      0.1
+    ],
+    "roll": 0.0
+  },
+  "cam1": {
+    "loc": [
+      0.28,
+      -1.62,
+      0.08
+    ],
+    "roll": 0.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.2,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      12.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.19,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      -12.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 3.5,
+    "loc": [
+      0.0,
+      -2.0,
+      3.0
+    ],
+    "rot": [
+      55,
+      0,
+      0
+    ],
+    "ambient": 0.6
+  }
+}

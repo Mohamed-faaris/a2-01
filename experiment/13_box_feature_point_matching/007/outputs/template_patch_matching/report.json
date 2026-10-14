@@ -1,0 +1,104 @@
+{
+  "scene_id": "007",
+  "method": "template_patch_matching",
+  "description": "Substantial height disparity (cam0 looking upward from desk, cam1 looking downward)",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 3,
+  "pass_rate_pct": 30.0,
+  "mean_error_px": 27.75,
+  "median_error_px": 22.7,
+  "max_error_px": 66.86,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        354.0,
+        397.0
+      ],
+      "error_px": 4.17,
+      "status": "PASS",
+      "ncc_score": 0.716
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        382.0,
+        444.0
+      ],
+      "error_px": 0.95,
+      "status": "PASS",
+      "ncc_score": 0.614
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        402.0,
+        542.0
+      ],
+      "error_px": 49.0,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.486
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        497.0,
+        483.0
+      ],
+      "error_px": 30.95,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.634
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        557.0,
+        596.0
+      ],
+      "error_px": 66.86,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.666
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        839.0,
+        404.0
+      ],
+      "error_px": 2.4,
+      "status": "PASS",
+      "ncc_score": 0.565
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        932.0,
+        377.0
+      ],
+      "error_px": 16.18,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.486
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        894.0,
+        499.0
+      ],
+      "error_px": 21.11,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.477
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        881.0,
+        535.0
+      ],
+      "error_px": 61.55,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.382
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        888.0,
+        535.0
+      ],
+      "error_px": 24.29,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.413
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "id": "012",
+  "description": "Asymmetric focal positioning: Cam 0 centered on Kellogg's, Cam 1 centered on Choco Pie",
+  "cam0": {
+    "loc": [
+      0.14,
+      -0.8,
+      0.02
+    ],
+    "roll": 1.0
+  },
+  "cam1": {
+    "loc": [
+      -0.14,
+      -0.8,
+      0.02
+    ],
+    "roll": -1.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.19,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      3.0,
+      -10.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.17,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -3.0,
+      10.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 3.5,
+    "loc": [
+      0.5,
+      -1.5,
+      2.2
+    ],
+    "rot": [
+      40,
+      10,
+      15
+    ],
+    "ambient": 0.55
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "scene_id": "017",
+  "method": "orb_homography",
+  "description": "Ultra grazing incidence angle: Planes pitched back 42 deg and yawed 25 deg",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 10,
+  "pass_rate_pct": 100.0,
+  "mean_error_px": 0.44,
+  "median_error_px": 0.29,
+  "max_error_px": 1.01,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        431.11,
+        369.45
+      ],
+      "error_px": 0.17,
+      "status": "PASS",
+      "num_plane_matches": 338
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        420.28,
+        415.64
+      ],
+      "error_px": 0.08,
+      "status": "PASS",
+      "num_plane_matches": 338
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        381.53,
+        452.82
+      ],
+      "error_px": 0.27,
+      "status": "PASS",
+      "num_plane_matches": 338
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        458.6,
+        519.38
+      ],
+      "error_px": 0.31,
+      "status": "PASS",
+      "num_plane_matches": 338
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        462.67,
+        561.21
+      ],
+      "error_px": 0.67,
+      "status": "PASS",
+      "num_plane_matches": 338
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        808.46,
+        426.23
+      ],
+      "error_px": 0.86,
+      "status": "PASS",
+      "num_plane_matches": 120
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        881.37,
+        372.09
+      ],
+      "error_px": 0.67,
+      "status": "PASS",
+      "num_plane_matches": 120
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        887.75,
+        476.24
+      ],
+      "error_px": 0.22,
+      "status": "PASS",
+      "num_plane_matches": 120
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        851.31,
+        536.21
+      ],
+      "error_px": 1.01,
+      "status": "PASS",
+      "num_plane_matches": 120
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        926.52,
+        527.77
+      ],
+      "error_px": 0.17,
+      "status": "PASS",
+      "num_plane_matches": 120
+    }
+  }
+}

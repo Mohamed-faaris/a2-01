@@ -1,0 +1,59 @@
+{
+  "id": "003",
+  "description": "Elevated pitch angle (top-down view ~26 deg), warm direct sun, zero occlusion",
+  "cam0": {
+    "loc": [
+      -0.15,
+      -0.76,
+      0.35
+    ],
+    "roll": 0.0
+  },
+  "cam1": {
+    "loc": [
+      0.18,
+      -0.76,
+      0.32
+    ],
+    "roll": 0.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.17,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -15.0,
+      6.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.17,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      -15.0,
+      -6.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 4.5,
+    "loc": [
+      0.5,
+      -2.0,
+      3.0
+    ],
+    "rot": [
+      60,
+      0,
+      10
+    ],
+    "ambient": 0.4
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "scene_id": "010",
+  "method": "superpoint_lightglue",
+  "description": "Significant in-plane optical roll (Cam 0 rolled +15 deg, Cam 1 rolled -14 deg)",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 10,
+  "pass_rate_pct": 100.0,
+  "mean_error_px": 0.22,
+  "median_error_px": 0.18,
+  "max_error_px": 0.44,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        362.68,
+        389.06
+      ],
+      "error_px": 0.42,
+      "status": "PASS",
+      "num_plane_matches": 417
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        382.4,
+        444.52
+      ],
+      "error_px": 0.26,
+      "status": "PASS",
+      "num_plane_matches": 417
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        371.85,
+        498.69
+      ],
+      "error_px": 0.09,
+      "status": "PASS",
+      "num_plane_matches": 417
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        473.78,
+        530.87
+      ],
+      "error_px": 0.17,
+      "status": "PASS",
+      "num_plane_matches": 417
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        498.06,
+        567.04
+      ],
+      "error_px": 0.38,
+      "status": "PASS",
+      "num_plane_matches": 417
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        819.09,
+        392.41
+      ],
+      "error_px": 0.06,
+      "status": "PASS",
+      "num_plane_matches": 349
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        896.7,
+        359.71
+      ],
+      "error_px": 0.44,
+      "status": "PASS",
+      "num_plane_matches": 349
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        875.43,
+        473.1
+      ],
+      "error_px": 0.15,
+      "status": "PASS",
+      "num_plane_matches": 349
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        832.22,
+        519.05
+      ],
+      "error_px": 0.07,
+      "status": "PASS",
+      "num_plane_matches": 349
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        894.16,
+        534.66
+      ],
+      "error_px": 0.2,
+      "status": "PASS",
+      "num_plane_matches": 349
+    }
+  }
+}

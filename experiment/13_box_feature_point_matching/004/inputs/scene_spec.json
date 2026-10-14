@@ -1,0 +1,59 @@
+{
+  "id": "004",
+  "description": "Wide baseline angle (~36 deg convergence), low-angle harsh directional side light",
+  "cam0": {
+    "loc": [
+      -0.36,
+      -0.72,
+      0.0
+    ],
+    "roll": -3.0
+  },
+  "cam1": {
+    "loc": [
+      0.32,
+      -0.75,
+      0.08
+    ],
+    "roll": 4.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.19,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      10.0,
+      -5.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.17,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      -10.0,
+      5.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 5.0,
+    "loc": [
+      -2.5,
+      -0.3,
+      0.9
+    ],
+    "rot": [
+      20,
+      -50,
+      -80
+    ],
+    "ambient": 0.3
+  }
+}

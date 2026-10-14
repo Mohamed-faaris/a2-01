@@ -1,0 +1,104 @@
+{
+  "scene_id": "022",
+  "method": "template_patch_matching",
+  "description": "Ultra close-up macro distance (0.45m), wide FOV perspective divergence",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 7,
+  "pass_rate_pct": 70.0,
+  "mean_error_px": 19.65,
+  "median_error_px": 3.8,
+  "max_error_px": 75.98,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        155.0,
+        299.0
+      ],
+      "error_px": 75.98,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.366
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        190.0,
+        427.0
+      ],
+      "error_px": 63.38,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.847
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        249.0,
+        541.0
+      ],
+      "error_px": 6.52,
+      "status": "PASS",
+      "ncc_score": 0.901
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        420.0,
+        560.0
+      ],
+      "error_px": 1.28,
+      "status": "PASS",
+      "ncc_score": 0.981
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        472.0,
+        617.0
+      ],
+      "error_px": 1.17,
+      "status": "PASS",
+      "ncc_score": 0.972
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        944.0,
+        321.0
+      ],
+      "error_px": 2.03,
+      "status": "PASS",
+      "ncc_score": 0.613
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        1095.0,
+        287.0
+      ],
+      "error_px": 3.82,
+      "status": "PASS",
+      "ncc_score": 0.607
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        1019.0,
+        477.0
+      ],
+      "error_px": 3.78,
+      "status": "PASS",
+      "ncc_score": 0.537
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        929.0,
+        548.0
+      ],
+      "error_px": 2.11,
+      "status": "PASS",
+      "ncc_score": 0.873
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        998.0,
+        587.0
+      ],
+      "error_px": 36.38,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.463
+    }
+  }
+}

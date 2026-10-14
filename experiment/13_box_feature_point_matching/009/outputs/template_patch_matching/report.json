@@ -1,0 +1,104 @@
+{
+  "scene_id": "009",
+  "method": "template_patch_matching",
+  "description": "Far distance (1.25m), smaller packaging footprint in image plane",
+  "total_points": 10,
+  "matched_points": 10,
+  "passed_points": 10,
+  "pass_rate_pct": 100.0,
+  "mean_error_px": 0.66,
+  "median_error_px": 0.58,
+  "max_error_px": 1.87,
+  "point_details": {
+    "choco_lotte_logo": {
+      "est_cam1_px": [
+        456.0,
+        416.0
+      ],
+      "error_px": 0.59,
+      "status": "PASS",
+      "ncc_score": 0.838
+    },
+    "choco_letter_C": {
+      "est_cam1_px": [
+        465.0,
+        454.0
+      ],
+      "error_px": 0.63,
+      "status": "PASS",
+      "ncc_score": 0.836
+    },
+    "choco_letter_P": {
+      "est_cam1_px": [
+        454.0,
+        488.0
+      ],
+      "error_px": 0.41,
+      "status": "PASS",
+      "ncc_score": 0.861
+    },
+    "choco_marshmallow": {
+      "est_cam1_px": [
+        517.0,
+        516.0
+      ],
+      "error_px": 0.34,
+      "status": "PASS",
+      "ncc_score": 0.985
+    },
+    "choco_badge_12packs": {
+      "est_cam1_px": [
+        530.0,
+        542.0
+      ],
+      "error_px": 0.58,
+      "status": "PASS",
+      "ncc_score": 0.967
+    },
+    "kelloggs_letter_K": {
+      "est_cam1_px": [
+        764.0,
+        425.0
+      ],
+      "error_px": 0.08,
+      "status": "PASS",
+      "ncc_score": 0.845
+    },
+    "kelloggs_veg_symbol": {
+      "est_cam1_px": [
+        811.0,
+        400.0
+      ],
+      "error_px": 0.88,
+      "status": "PASS",
+      "ncc_score": 0.782
+    },
+    "kelloggs_corn_C": {
+      "est_cam1_px": [
+        805.0,
+        473.0
+      ],
+      "error_px": 0.06,
+      "status": "PASS",
+      "ncc_score": 0.634
+    },
+    "kelloggs_milk_splash": {
+      "est_cam1_px": [
+        782.0,
+        504.0
+      ],
+      "error_px": 1.19,
+      "status": "PASS",
+      "ncc_score": 0.747
+    },
+    "kelloggs_power_badge": {
+      "est_cam1_px": [
+        822.0,
+        509.0
+      ],
+      "error_px": 1.87,
+      "status": "PASS",
+      "ncc_score": 0.69
+    }
+  }
+}

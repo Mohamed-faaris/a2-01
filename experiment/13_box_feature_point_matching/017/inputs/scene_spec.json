@@ -1,0 +1,59 @@
+{
+  "id": "017",
+  "description": "Ultra grazing incidence angle: Planes pitched back 42 deg and yawed 25 deg",
+  "cam0": {
+    "loc": [
+      -0.18,
+      -0.72,
+      0.12
+    ],
+    "roll": 0.0
+  },
+  "cam1": {
+    "loc": [
+      0.18,
+      -0.72,
+      0.12
+    ],
+    "roll": 0.0
+  },
+  "choco_plane": {
+    "loc": [
+      -0.18,
+      0.05,
+      0.0
+    ],
+    "rot": [
+      -42.0,
+      25.0,
+      0.0
+    ]
+  },
+  "kelloggs_plane": {
+    "loc": [
+      0.16,
+      -0.05,
+      0.0
+    ],
+    "rot": [
+      -42.0,
+      -25.0,
+      0.0
+    ]
+  },
+  "light": {
+    "type": "SUN",
+    "energy": 4.0,
+    "loc": [
+      -1.5,
+      -1.2,
+      2.5
+    ],
+    "rot": [
+      35,
+      -20,
+      -45
+    ],
+    "ambient": 0.45
+  }
+}
