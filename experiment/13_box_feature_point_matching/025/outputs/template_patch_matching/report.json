@@ -2,103 +2,553 @@
   "scene_id": "025",
   "method": "template_patch_matching",
   "description": "Ultra wide stereo baseline (62 deg convergence baseline) across wide optical field",
-  "total_points": 10,
-  "matched_points": 10,
-  "passed_points": 4,
-  "pass_rate_pct": 40.0,
-  "mean_error_px": 41.75,
-  "median_error_px": 21.38,
-  "max_error_px": 136.74,
+  "total_points": 60,
+  "matched_points": 60,
+  "passed_points": 11,
+  "pass_rate_pct": 18.3,
+  "mean_error_px": 72.16,
+  "median_error_px": 68.69,
+  "max_error_px": 163.49,
   "point_details": {
-    "choco_lotte_logo": {
+    "choco_pie_pt_00": {
       "est_cam1_px": [
-        465.0,
-        402.0
+        415.0,
+        492.0
       ],
-      "error_px": 11.35,
-      "status": "PASS",
-      "ncc_score": 0.52
-    },
-    "choco_letter_C": {
-      "est_cam1_px": [
-        422.0,
-        483.0
-      ],
-      "error_px": 59.62,
+      "error_px": 23.81,
       "status": "FAIL_HIGH_ERROR",
-      "ncc_score": 0.566
+      "ncc_score": 0.735
     },
-    "choco_letter_P": {
+    "choco_pie_pt_01": {
+      "est_cam1_px": [
+        436.0,
+        461.0
+      ],
+      "error_px": 31.84,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.455
+    },
+    "choco_pie_pt_02": {
+      "est_cam1_px": [
+        431.0,
+        508.0
+      ],
+      "error_px": 44.03,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.47
+    },
+    "choco_pie_pt_03": {
+      "est_cam1_px": [
+        424.0,
+        497.0
+      ],
+      "error_px": 53.56,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.449
+    },
+    "choco_pie_pt_04": {
+      "est_cam1_px": [
+        462.0,
+        419.0
+      ],
+      "error_px": 16.2,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.527
+    },
+    "choco_pie_pt_05": {
+      "est_cam1_px": [
+        416.0,
+        513.0
+      ],
+      "error_px": 23.21,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.608
+    },
+    "choco_pie_pt_06": {
       "est_cam1_px": [
         426.0,
-        484.0
+        480.0
       ],
-      "error_px": 27.43,
+      "error_px": 24.28,
       "status": "FAIL_HIGH_ERROR",
-      "ncc_score": 0.484
+      "ncc_score": 0.185
     },
-    "choco_marshmallow": {
+    "choco_pie_pt_07": {
       "est_cam1_px": [
-        499.0,
-        538.0
+        440.0,
+        444.0
       ],
-      "error_px": 5.26,
+      "error_px": 45.99,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.708
+    },
+    "choco_pie_pt_08": {
+      "est_cam1_px": [
+        414.0,
+        499.0
+      ],
+      "error_px": 55.05,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.515
+    },
+    "choco_pie_pt_09": {
+      "est_cam1_px": [
+        425.0,
+        497.0
+      ],
+      "error_px": 35.73,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.555
+    },
+    "choco_pie_pt_10": {
+      "est_cam1_px": [
+        377.0,
+        556.0
+      ],
+      "error_px": 75.4,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.333
+    },
+    "choco_pie_pt_11": {
+      "est_cam1_px": [
+        541.0,
+        500.0
+      ],
+      "error_px": 35.05,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.635
+    },
+    "choco_pie_pt_12": {
+      "est_cam1_px": [
+        428.0,
+        419.0
+      ],
+      "error_px": 41.03,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.27
+    },
+    "choco_pie_pt_13": {
+      "est_cam1_px": [
+        500.0,
+        515.0
+      ],
+      "error_px": 2.9,
       "status": "PASS",
-      "ncc_score": 0.872
+      "ncc_score": 0.769
     },
-    "choco_badge_12packs": {
+    "choco_pie_pt_14": {
       "est_cam1_px": [
-        509.0,
-        581.0
+        594.0,
+        481.0
       ],
-      "error_px": 2.05,
+      "error_px": 1.01,
       "status": "PASS",
-      "ncc_score": 0.695
+      "ncc_score": 0.835
     },
-    "kelloggs_letter_K": {
+    "choco_pie_pt_15": {
       "est_cam1_px": [
-        748.0,
-        395.0
+        279.0,
+        559.0
       ],
-      "error_px": 15.34,
+      "error_px": 128.91,
       "status": "FAIL_HIGH_ERROR",
-      "ncc_score": 0.434
+      "ncc_score": 0.41
     },
-    "kelloggs_veg_symbol": {
+    "choco_pie_pt_16": {
       "est_cam1_px": [
-        845.0,
-        369.0
+        390.0,
+        555.0
       ],
-      "error_px": 49.5,
+      "error_px": 28.28,
       "status": "FAIL_HIGH_ERROR",
-      "ncc_score": 0.782
+      "ncc_score": 0.185
     },
-    "kelloggs_corn_C": {
+    "choco_pie_pt_17": {
       "est_cam1_px": [
-        748.0,
-        411.0
+        530.0,
+        625.0
       ],
-      "error_px": 97.17,
+      "error_px": 33.73,
       "status": "FAIL_HIGH_ERROR",
-      "ncc_score": 0.512
+      "ncc_score": 0.552
     },
-    "kelloggs_milk_splash": {
+    "choco_pie_pt_18": {
       "est_cam1_px": [
-        825.0,
-        514.0
+        496.0,
+        651.0
       ],
-      "error_px": 13.04,
+      "error_px": 66.81,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.49
+    },
+    "choco_pie_pt_19": {
+      "est_cam1_px": [
+        522.0,
+        582.0
+      ],
+      "error_px": 4.42,
       "status": "PASS",
-      "ncc_score": 0.356
+      "ncc_score": 0.559
     },
-    "kelloggs_power_badge": {
+    "choco_pie_pt_20": {
+      "est_cam1_px": [
+        541.0,
+        534.0
+      ],
+      "error_px": 14.73,
+      "status": "PASS",
+      "ncc_score": 0.775
+    },
+    "choco_pie_pt_21": {
+      "est_cam1_px": [
+        481.0,
+        389.0
+      ],
+      "error_px": 10.33,
+      "status": "PASS",
+      "ncc_score": 0.389
+    },
+    "choco_pie_pt_22": {
+      "est_cam1_px": [
+        533.0,
+        559.0
+      ],
+      "error_px": 0.36,
+      "status": "PASS",
+      "ncc_score": 0.768
+    },
+    "choco_pie_pt_23": {
+      "est_cam1_px": [
+        467.0,
+        424.0
+      ],
+      "error_px": 62.14,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.72
+    },
+    "choco_pie_pt_24": {
+      "est_cam1_px": [
+        477.0,
+        388.0
+      ],
+      "error_px": 8.61,
+      "status": "PASS",
+      "ncc_score": 0.401
+    },
+    "choco_pie_pt_25": {
+      "est_cam1_px": [
+        478.0,
+        545.0
+      ],
+      "error_px": 3.82,
+      "status": "PASS",
+      "ncc_score": 0.58
+    },
+    "choco_pie_pt_26": {
+      "est_cam1_px": [
+        591.0,
+        499.0
+      ],
+      "error_px": 0.93,
+      "status": "PASS",
+      "ncc_score": 0.819
+    },
+    "choco_pie_pt_27": {
+      "est_cam1_px": [
+        487.0,
+        393.0
+      ],
+      "error_px": 10.06,
+      "status": "PASS",
+      "ncc_score": 0.406
+    },
+    "choco_pie_pt_28": {
+      "est_cam1_px": [
+        455.0,
+        386.0
+      ],
+      "error_px": 18.92,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.328
+    },
+    "choco_pie_pt_29": {
+      "est_cam1_px": [
+        508.0,
+        524.0
+      ],
+      "error_px": 2.32,
+      "status": "PASS",
+      "ncc_score": 0.764
+    },
+    "kelloggs_pt_00": {
+      "est_cam1_px": [
+        742.0,
+        461.0
+      ],
+      "error_px": 105.22,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.607
+    },
+    "kelloggs_pt_01": {
+      "est_cam1_px": [
+        826.0,
+        550.0
+      ],
+      "error_px": 61.92,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.336
+    },
+    "kelloggs_pt_02": {
+      "est_cam1_px": [
+        713.0,
+        443.0
+      ],
+      "error_px": 124.84,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.487
+    },
+    "kelloggs_pt_03": {
+      "est_cam1_px": [
+        849.0,
+        542.0
+      ],
+      "error_px": 23.51,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.418
+    },
+    "kelloggs_pt_04": {
+      "est_cam1_px": [
+        831.0,
+        485.0
+      ],
+      "error_px": 78.81,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.373
+    },
+    "kelloggs_pt_05": {
+      "est_cam1_px": [
+        826.0,
+        553.0
+      ],
+      "error_px": 78.41,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.443
+    },
+    "kelloggs_pt_06": {
+      "est_cam1_px": [
+        729.0,
+        449.0
+      ],
+      "error_px": 144.98,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.492
+    },
+    "kelloggs_pt_07": {
+      "est_cam1_px": [
+        824.0,
+        540.0
+      ],
+      "error_px": 75.69,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.43
+    },
+    "kelloggs_pt_08": {
+      "est_cam1_px": [
+        725.0,
+        494.0
+      ],
+      "error_px": 157.65,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.348
+    },
+    "kelloggs_pt_09": {
+      "est_cam1_px": [
+        733.0,
+        492.0
+      ],
+      "error_px": 117.8,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.393
+    },
+    "kelloggs_pt_10": {
+      "est_cam1_px": [
+        735.0,
+        433.0
+      ],
+      "error_px": 135.91,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.393
+    },
+    "kelloggs_pt_11": {
       "est_cam1_px": [
         746.0,
-        462.0
+        459.0
       ],
-      "error_px": 136.74,
+      "error_px": 109.6,
       "status": "FAIL_HIGH_ERROR",
-      "ncc_score": 0.46
+      "ncc_score": 0.584
+    },
+    "kelloggs_pt_12": {
+      "est_cam1_px": [
+        732.0,
+        450.0
+      ],
+      "error_px": 141.8,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.481
+    },
+    "kelloggs_pt_13": {
+      "est_cam1_px": [
+        736.0,
+        474.0
+      ],
+      "error_px": 150.29,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.359
+    },
+    "kelloggs_pt_14": {
+      "est_cam1_px": [
+        720.0,
+        450.0
+      ],
+      "error_px": 135.45,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.488
+    },
+    "kelloggs_pt_15": {
+      "est_cam1_px": [
+        821.0,
+        538.0
+      ],
+      "error_px": 70.56,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.397
+    },
+    "kelloggs_pt_16": {
+      "est_cam1_px": [
+        824.0,
+        537.0
+      ],
+      "error_px": 72.18,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.443
+    },
+    "kelloggs_pt_17": {
+      "est_cam1_px": [
+        723.0,
+        458.0
+      ],
+      "error_px": 143.6,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.44
+    },
+    "kelloggs_pt_18": {
+      "est_cam1_px": [
+        712.0,
+        455.0
+      ],
+      "error_px": 127.83,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.497
+    },
+    "kelloggs_pt_19": {
+      "est_cam1_px": [
+        718.0,
+        455.0
+      ],
+      "error_px": 135.97,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.478
+    },
+    "kelloggs_pt_20": {
+      "est_cam1_px": [
+        802.0,
+        463.0
+      ],
+      "error_px": 106.87,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.402
+    },
+    "kelloggs_pt_21": {
+      "est_cam1_px": [
+        735.0,
+        476.0
+      ],
+      "error_px": 131.89,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.43
+    },
+    "kelloggs_pt_22": {
+      "est_cam1_px": [
+        736.0,
+        492.0
+      ],
+      "error_px": 120.9,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.4
+    },
+    "kelloggs_pt_23": {
+      "est_cam1_px": [
+        723.0,
+        523.0
+      ],
+      "error_px": 163.49,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.362
+    },
+    "kelloggs_pt_24": {
+      "est_cam1_px": [
+        738.0,
+        463.0
+      ],
+      "error_px": 101.6,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.627
+    },
+    "kelloggs_pt_25": {
+      "est_cam1_px": [
+        740.0,
+        471.0
+      ],
+      "error_px": 145.8,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.44
+    },
+    "kelloggs_pt_26": {
+      "est_cam1_px": [
+        723.0,
+        452.0
+      ],
+      "error_px": 140.44,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.472
+    },
+    "kelloggs_pt_27": {
+      "est_cam1_px": [
+        777.0,
+        508.0
+      ],
+      "error_px": 114.24,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.299
+    },
+    "kelloggs_pt_28": {
+      "est_cam1_px": [
+        826.0,
+        559.0
+      ],
+      "error_px": 71.67,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.445
+    },
+    "kelloggs_pt_29": {
+      "est_cam1_px": [
+        732.0,
+        476.0
+      ],
+      "error_px": 137.19,
+      "status": "FAIL_HIGH_ERROR",
+      "ncc_score": 0.489
     }
   }
 }

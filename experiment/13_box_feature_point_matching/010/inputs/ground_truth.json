@@ -12,241 +12,1381 @@
   "focal_length_px": 950.0,
   "points": [
     {
-      "name": "choco_lotte_logo",
+      "name": "choco_pie_pt_00",
       "plane": "choco_pie",
-      "description": "Center of 'LOTTE' logo",
+      "uv_norm": [
+        0.1446,
+        0.3866
+      ],
+      "world_pos_m": [
+        -0.266,
+        -0.0131,
+        -0.0157
+      ],
+      "cam0_px": [
+        315.17,
+        504.28
+      ],
+      "cam1_px": [
+        346.74,
+        494.95
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_01",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.2618,
+        0.4506
+      ],
+      "world_pos_m": [
+        -0.2371,
+        -0.0092,
+        -0.0051
+      ],
+      "cam0_px": [
+        353.47,
+        490.09
+      ],
+      "cam1_px": [
+        378.27,
+        483.24
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_02",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.4115,
+        0.3576
+      ],
+      "world_pos_m": [
+        -0.2038,
+        -0.0016,
+        -0.0272
+      ],
+      "cam0_px": [
+        397.05,
+        516.07
+      ],
+      "cam1_px": [
+        416.9,
+        508.04
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_03",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.2145,
+        0.5669
+      ],
+      "world_pos_m": [
+        -0.2458,
+        -0.0128,
+        0.0196
+      ],
+      "cam0_px": [
+        341.21,
+        459.35
+      ],
+      "cam1_px": [
+        366.88,
+        455.49
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_04",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.2394,
+        0.7587
+      ],
+      "world_pos_m": [
+        -0.236,
+        -0.0146,
+        0.0583
+      ],
+      "cam0_px": [
+        353.25,
+        410.51
+      ],
+      "cam1_px": [
+        375.4,
+        411.73
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_05",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.1571,
+        0.3198
+      ],
+      "world_pos_m": [
+        -0.2645,
+        -0.0116,
+        -0.0296
+      ],
+      "cam0_px": [
+        317.74,
+        521.62
+      ],
+      "cam1_px": [
+        349.43,
+        510.37
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_06",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.1147,
+        0.5116
+      ],
+      "world_pos_m": [
+        -0.2705,
+        -0.0162,
+        0.0104
+      ],
+      "cam0_px": [
+        308.21,
+        471.39
+      ],
+      "cam1_px": [
+        339.96,
+        465.78
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_07",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.3516,
+        0.5901
+      ],
+      "world_pos_m": [
+        -0.2131,
+        -0.0075,
+        0.0215
+      ],
+      "cam0_px": [
+        384.2,
+        456.62
+      ],
+      "cam1_px": [
+        403.58,
+        453.44
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_08",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.3591,
+        0.3837
+      ],
+      "world_pos_m": [
+        -0.2156,
+        -0.0042,
+        -0.0208
+      ],
+      "cam0_px": [
+        381.86,
+        508.71
+      ],
+      "cam1_px": [
+        403.32,
+        500.83
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_09",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.3142,
+        0.343
+      ],
+      "world_pos_m": [
+        -0.227,
+        -0.0054,
+        -0.0282
+      ],
+      "cam0_px": [
+        367.28,
+        518.19
+      ],
+      "cam1_px": [
+        391.02,
+        508.96
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_10",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.0599,
+        0.314
+      ],
+      "world_pos_m": [
+        -0.2875,
+        -0.0156,
+        -0.0288
+      ],
+      "cam0_px": [
+        286.33,
+        521.59
+      ],
+      "cam1_px": [
+        323.89,
+        509.3
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_11",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.5761,
+        0.6017
+      ],
+      "world_pos_m": [
+        -0.16,
+        0.0017,
+        0.0192
+      ],
+      "cam0_px": [
+        451.06,
+        458.82
+      ],
+      "cam1_px": [
+        463.74,
+        456.15
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_12",
+      "plane": "choco_pie",
       "uv_norm": [
         0.187,
-        0.85
+        0.7413
       ],
       "world_pos_m": [
-        -0.2464,
-        -0.0181,
-        0.0781
+        -0.2487,
+        -0.0165,
+        0.0558
       ],
       "cam0_px": [
-        338.68,
-        385.1
+        336.3,
+        413.49
       ],
       "cam1_px": [
-        362.28,
-        389.19
+        361.24,
+        414.55
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "choco_letter_C",
+      "name": "choco_pie_pt_13",
       "plane": "choco_pie",
-      "description": "Capital letter 'C' in 'Choco'",
       "uv_norm": [
-        0.27,
-        0.62
+        0.5761,
+        0.3808
       ],
       "world_pos_m": [
-        -0.2317,
+        -0.1646,
+        0.0049,
+        -0.0259
+      ],
+      "cam0_px": [
+        445.88,
+        512.96
+      ],
+      "cam1_px": [
+        460.87,
+        506.81
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_14",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.9726,
+        0.689
+      ],
+      "world_pos_m": [
+        -0.0648,
+        0.0169,
+        0.0287
+      ],
+      "cam0_px": [
+        562.63,
+        446.7
+      ],
+      "cam1_px": [
+        572.15,
+        445.43
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_15",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.0748,
+        0.064
+      ],
+      "world_pos_m": [
+        -0.2891,
         -0.0113,
-        0.0293
+        -0.0802
       ],
       "cam0_px": [
-        359.75,
-        447.05
+        286.04,
+        585.98
       ],
       "cam1_px": [
-        382.16,
-        444.6
+        325.76,
+        565.55
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "choco_letter_P",
+      "name": "choco_pie_pt_16",
       "plane": "choco_pie",
-      "description": "Capital letter 'P' in 'Pie'",
       "uv_norm": [
-        0.24,
-        0.38
+        0.0748,
+        0.1047
       ],
       "world_pos_m": [
-        -0.2437,
-        -0.009,
-        -0.0191
+        -0.2883,
+        -0.0119,
+        -0.0719
       ],
       "cam0_px": [
-        345.15,
-        507.63
+        286.87,
+        575.6
       ],
       "cam1_px": [
-        371.81,
-        498.77
+        326.09,
+        556.52
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "choco_marshmallow",
+      "name": "choco_pie_pt_17",
       "plane": "choco_pie",
-      "description": "White marshmallow filling center",
       "uv_norm": [
-        0.63,
-        0.28
+        0.8554,
+        0.1221
       ],
       "world_pos_m": [
-        -0.1539,
-        0.0086,
-        -0.0477
+        -0.1041,
+        0.0203,
+        -0.0846
       ],
       "cam0_px": [
-        458.93,
-        538.16
+        517.43,
+        577.89
       ],
       "cam1_px": [
-        473.89,
-        531.0
+        531.52,
+        572.21
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "choco_badge_12packs",
+      "name": "choco_pie_pt_18",
       "plane": "choco_pie",
-      "description": "Gold '12 PACKS' badge text",
       "uv_norm": [
-        0.73,
-        0.13
+        0.9227,
+        0.1076
       ],
       "world_pos_m": [
-        -0.1335,
-        0.0149,
-        -0.0804
+        -0.0886,
+        0.0233,
+        -0.089
       ],
       "cam0_px": [
-        483.42,
-        575.02
+        535.03,
+        581.76
       ],
       "cam1_px": [
-        498.36,
-        567.27
+        549.19,
+        577.16
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "kelloggs_letter_K",
-      "plane": "kelloggs",
-      "description": "Capital 'K' in red Kellogg's logo",
+      "name": "choco_pie_pt_19",
+      "plane": "choco_pie",
       "uv_norm": [
-        0.45,
-        0.8
+        0.7805,
+        0.1424
       ],
       "world_pos_m": [
-        0.1476,
-        0.0082,
-        0.0726
+        -0.1214,
+        0.0169,
+        -0.0789
       ],
       "cam0_px": [
-        797.52,
-        397.54
+        497.61,
+        572.52
       ],
       "cam1_px": [
-        819.15,
-        392.43
+        511.93,
+        565.76
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "kelloggs_veg_symbol",
-      "plane": "kelloggs",
-      "description": "Green vegetarian indicator square dot",
+      "name": "choco_pie_pt_20",
+      "plane": "choco_pie",
       "uv_norm": [
-        0.9,
-        0.88
+        0.8354,
+        0.3198
       ],
       "world_pos_m": [
-        0.2083,
-        0.0014,
-        0.0976
+        -0.1048,
+        0.0165,
+        -0.0438
       ],
       "cam0_px": [
-        863.33,
-        370.21
+        516.82,
+        531.34
       ],
       "cam1_px": [
-        897.13,
-        359.62
+        529.2,
+        527.09
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "kelloggs_corn_C",
-      "plane": "kelloggs",
-      "description": "Bold black letter 'C' in CORN",
+      "name": "choco_pie_pt_21",
+      "plane": "choco_pie",
       "uv_norm": [
-        0.74,
-        0.52
+        0.2494,
+        0.9273
       ],
       "world_pos_m": [
-        0.1928,
-        -0.0042,
-        0.0078
+        -0.2302,
+        -0.0166,
+        0.0925
       ],
       "cam0_px": [
-        849.07,
-        469.31
+        360.13,
+        367.0
       ],
       "cam1_px": [
-        875.57,
-        473.15
+        379.79,
+        372.48
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "kelloggs_milk_splash",
-      "plane": "kelloggs",
-      "description": "Upper central splash of white milk",
+      "name": "choco_pie_pt_22",
+      "plane": "choco_pie",
       "uv_norm": [
-        0.48,
-        0.38
+        0.818,
+        0.2616
       ],
       "world_pos_m": [
-        0.1594,
-        -0.0025,
-        -0.0295
+        -0.1101,
+        0.0167,
+        -0.0554
       ],
       "cam0_px": [
-        813.44,
-        511.0
+        510.69,
+        544.84
       ],
       "cam1_px": [
-        832.27,
-        519.0
+        523.67,
+        539.85
       ],
       "visible_cam0": true,
       "visible_cam1": true
     },
     {
-      "name": "kelloggs_power_badge",
-      "plane": "kelloggs",
-      "description": "Top center of red POWER BREAKFAST box",
+      "name": "choco_pie_pt_23",
+      "plane": "choco_pie",
       "uv_norm": [
-        0.82,
-        0.32
+        0.5536,
+        0.689
       ],
       "world_pos_m": [
-        0.2075,
-        -0.0106,
-        -0.04
+        -0.1635,
+        -0.0005,
+        0.0375
       ],
       "cam0_px": [
-        866.64,
-        522.34
+        446.6,
+        436.7
       ],
       "cam1_px": [
-        894.19,
-        534.46
+        458.83,
+        435.38
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_24",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.212,
+        0.9273
+      ],
+      "world_pos_m": [
+        -0.239,
+        -0.0182,
+        0.0933
+      ],
+      "cam0_px": [
+        348.33,
+        365.69
+      ],
+      "cam1_px": [
+        369.74,
+        371.62
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_25",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.5187,
+        0.2006
+      ],
+      "world_pos_m": [
+        -0.1818,
+        0.0051,
+        -0.0616
+      ],
+      "cam0_px": [
+        425.12,
+        556.07
+      ],
+      "cam1_px": [
+        443.4,
+        546.13
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_26",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.9925,
+        0.6105
+      ],
+      "world_pos_m": [
+        -0.0617,
+        0.0188,
+        0.0123
+      ],
+      "cam0_px": [
+        565.89,
+        465.61
+      ],
+      "cam1_px": [
+        576.22,
+        464.18
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_27",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.2918,
+        0.9215
+      ],
+      "world_pos_m": [
+        -0.2203,
+        -0.0148,
+        0.0905
+      ],
+      "cam0_px": [
+        373.26,
+        369.97
+      ],
+      "cam1_px": [
+        391.14,
+        374.83
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_28",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.1397,
+        0.907
+      ],
+      "world_pos_m": [
+        -0.2564,
+        -0.0209,
+        0.0907
+      ],
+      "cam0_px": [
+        324.74,
+        368.5
+      ],
+      "cam1_px": [
+        350.14,
+        374.73
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "choco_pie_pt_29",
+      "plane": "choco_pie",
+      "uv_norm": [
+        0.6185,
+        0.3721
+      ],
+      "world_pos_m": [
+        -0.1547,
+        0.0068,
+        -0.0286
+      ],
+      "cam0_px": [
+        457.82,
+        515.74
+      ],
+      "cam1_px": [
+        472.05,
+        509.83
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_00",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8036,
+        0.5661
+      ],
+      "world_pos_m": [
+        0.2007,
+        -0.0043,
+        0.0198
+      ],
+      "cam0_px": [
+        857.41,
+        455.97
+      ],
+      "cam1_px": [
+        886.11,
+        458.07
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_01",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8036,
+        0.209
+      ],
+      "world_pos_m": [
+        0.2072,
+        -0.0129,
+        -0.0673
+      ],
+      "cam0_px": [
+        867.22,
+        552.72
+      ],
+      "cam1_px": [
+        893.51,
+        569.38
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_02",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.6865,
+        0.4689
+      ],
+      "world_pos_m": [
+        0.1863,
+        -0.0044,
+        -0.0053
+      ],
+      "cam0_px": [
+        842.37,
+        483.9
+      ],
+      "cam1_px": [
+        867.0,
+        489.57
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_03",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7143,
+        0.209
+      ],
+      "world_pos_m": [
+        0.1949,
+        -0.0112,
+        -0.0684
+      ],
+      "cam0_px": [
+        853.7,
+        554.06
+      ],
+      "cam1_px": [
+        877.26,
+        569.93
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_04",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7302,
+        0.1955
+      ],
+      "world_pos_m": [
+        0.1973,
+        -0.0118,
+        -0.0715
+      ],
+      "cam0_px": [
+        856.48,
+        557.5
+      ],
+      "cam1_px": [
+        880.41,
+        574.06
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_05",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8869,
+        0.1955
+      ],
+      "world_pos_m": [
+        0.219,
+        -0.0149,
+        -0.0696
+      ],
+      "cam0_px": [
+        880.18,
+        555.13
+      ],
+      "cam1_px": [
+        909.13,
+        573.11
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_06",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8532,
+        0.4011
+      ],
+      "world_pos_m": [
+        0.2106,
+        -0.0092,
+        -0.0198
+      ],
+      "cam0_px": [
+        869.42,
+        499.88
+      ],
+      "cam1_px": [
+        898.58,
+        508.78
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_07",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.877,
+        0.2113
+      ],
+      "world_pos_m": [
+        0.2173,
+        -0.0143,
+        -0.0658
+      ],
+      "cam0_px": [
+        878.25,
+        550.99
+      ],
+      "cam1_px": [
+        906.96,
+        568.19
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_08",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7579,
+        0.2305
+      ],
+      "world_pos_m": [
+        0.2005,
+        -0.0115,
+        -0.0626
+      ],
+      "cam0_px": [
+        859.72,
+        547.56
+      ],
+      "cam1_px": [
+        884.72,
+        562.94
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_09",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7083,
+        0.3729
+      ],
+      "world_pos_m": [
+        0.1911,
+        -0.0071,
+        -0.0285
+      ],
+      "cam0_px": [
+        848.3,
+        509.62
+      ],
+      "cam1_px": [
+        872.85,
+        519.01
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_10",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.875,
+        0.4531
+      ],
+      "world_pos_m": [
+        0.2126,
+        -0.0084,
+        -0.0069
+      ],
+      "cam0_px": [
+        871.28,
+        485.51
+      ],
+      "cam1_px": [
+        901.48,
+        492.29
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_11",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8532,
+        0.5672
+      ],
+      "world_pos_m": [
+        0.2076,
+        -0.0052,
+        0.0207
+      ],
+      "cam0_px": [
+        864.86,
+        454.99
+      ],
+      "cam1_px": [
+        895.11,
+        457.04
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_12",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8313,
+        0.3842
+      ],
+      "world_pos_m": [
+        0.2079,
+        -0.0092,
+        -0.0242
+      ],
+      "cam0_px": [
+        866.58,
+        504.78
+      ],
+      "cam1_px": [
+        894.92,
+        514.28
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_13",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7579,
+        0.2463
+      ],
+      "world_pos_m": [
+        0.2002,
+        -0.0111,
+        -0.0587
+      ],
+      "cam0_px": [
+        859.28,
+        543.27
+      ],
+      "cam1_px": [
+        884.4,
+        558.0
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_14",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.754,
+        0.4192
+      ],
+      "world_pos_m": [
+        0.1965,
+        -0.0069,
+        -0.0166
+      ],
+      "cam0_px": [
+        853.95,
+        496.4
+      ],
+      "cam1_px": [
+        880.15,
+        504.19
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_15",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8433,
+        0.2305
+      ],
+      "world_pos_m": [
+        0.2123,
+        -0.0132,
+        -0.0616
+      ],
+      "cam0_px": [
+        872.63,
+        546.28
+      ],
+      "cam1_px": [
+        900.34,
+        562.36
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_16",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.871,
+        0.2328
+      ],
+      "world_pos_m": [
+        0.2161,
+        -0.0137,
+        -0.0607
+      ],
+      "cam0_px": [
+        876.75,
+        545.25
+      ],
+      "cam1_px": [
+        905.4,
+        561.45
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_17",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7817,
+        0.3729
+      ],
+      "world_pos_m": [
+        0.2012,
+        -0.0085,
+        -0.0276
+      ],
+      "cam0_px": [
+        859.4,
+        508.55
+      ],
+      "cam1_px": [
+        886.12,
+        518.3
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_18",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.6528,
+        0.4181
+      ],
+      "world_pos_m": [
+        0.1826,
+        -0.0049,
+        -0.0181
+      ],
+      "cam0_px": [
+        838.66,
+        498.15
+      ],
+      "cam1_px": [
+        862.0,
+        505.59
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_19",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7282,
+        0.4011
+      ],
+      "world_pos_m": [
+        0.1933,
+        -0.0068,
+        -0.0213
+      ],
+      "cam0_px": [
+        850.54,
+        501.68
+      ],
+      "cam1_px": [
+        875.86,
+        510.07
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_20",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8333,
+        0.2463
+      ],
+      "world_pos_m": [
+        0.2106,
+        -0.0126,
+        -0.0578
+      ],
+      "cam0_px": [
+        870.68,
+        542.14
+      ],
+      "cam1_px": [
+        898.17,
+        557.46
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_21",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.6865,
+        0.2859
+      ],
+      "world_pos_m": [
+        0.1896,
+        -0.0088,
+        -0.05
+      ],
+      "cam0_px": [
+        847.38,
+        533.56
+      ],
+      "cam1_px": [
+        870.69,
+        546.19
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_22",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.744,
+        0.3706
+      ],
+      "world_pos_m": [
+        0.196,
+        -0.0079,
+        -0.0286
+      ],
+      "cam0_px": [
+        853.76,
+        509.72
+      ],
+      "cam1_px": [
+        879.33,
+        519.38
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_23",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8135,
+        0.2305
+      ],
+      "world_pos_m": [
+        0.2082,
+        -0.0126,
+        -0.0619
+      ],
+      "cam0_px": [
+        868.13,
+        546.73
+      ],
+      "cam1_px": [
+        894.87,
+        562.56
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_24",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7579,
+        0.5661
+      ],
+      "world_pos_m": [
+        0.1944,
+        -0.0034,
+        0.0193
+      ],
+      "cam0_px": [
+        850.51,
+        456.6
+      ],
+      "cam1_px": [
+        877.86,
+        458.69
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_25",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8194,
+        0.2915
+      ],
+      "world_pos_m": [
+        0.2079,
+        -0.0112,
+        -0.047
+      ],
+      "cam0_px": [
+        867.34,
+        530.08
+      ],
+      "cam1_px": [
+        894.68,
+        543.39
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_26",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7877,
+        0.4011
+      ],
+      "world_pos_m": [
+        0.2015,
+        -0.008,
+        -0.0206
+      ],
+      "cam0_px": [
+        859.53,
+        500.82
+      ],
+      "cam1_px": [
+        886.62,
+        509.46
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_27",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7778,
+        0.1955
+      ],
+      "world_pos_m": [
+        0.2039,
+        -0.0128,
+        -0.0709
+      ],
+      "cam0_px": [
+        863.69,
+        556.78
+      ],
+      "cam1_px": [
+        889.07,
+        573.77
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_28",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.8433,
+        0.1955
+      ],
+      "world_pos_m": [
+        0.2129,
+        -0.014,
+        -0.0701
+      ],
+      "cam0_px": [
+        873.59,
+        555.79
+      ],
+      "cam1_px": [
+        901.08,
+        573.38
+      ],
+      "visible_cam0": true,
+      "visible_cam1": true
+    },
+    {
+      "name": "kelloggs_pt_29",
+      "plane": "kelloggs",
+      "uv_norm": [
+        0.7143,
+        0.2915
+      ],
+      "world_pos_m": [
+        0.1934,
+        -0.0092,
+        -0.0483
+      ],
+      "cam0_px": [
+        851.44,
+        531.63
+      ],
+      "cam1_px": [
+        875.58,
+        544.23
       ],
       "visible_cam0": true,
       "visible_cam1": true

@@ -2,103 +2,553 @@
   "scene_id": "024",
   "method": "sift_homography",
   "description": "Extreme compound twist (yaw 32 deg, pitch 22 deg, roll 12 deg simultaneously on both planes)",
-  "total_points": 10,
-  "matched_points": 10,
-  "passed_points": 10,
+  "total_points": 60,
+  "matched_points": 60,
+  "passed_points": 60,
   "pass_rate_pct": 100.0,
   "mean_error_px": 0.1,
   "median_error_px": 0.11,
-  "max_error_px": 0.19,
+  "max_error_px": 0.16,
   "point_details": {
-    "choco_lotte_logo": {
+    "choco_pie_pt_00": {
       "est_cam1_px": [
-        421.65,
-        359.06
+        378.56,
+        435.07
       ],
-      "error_px": 0.12,
+      "error_px": 0.13,
       "status": "PASS",
-      "num_plane_matches": 209
+      "num_plane_matches": 232
     },
-    "choco_letter_C": {
+    "choco_pie_pt_01": {
       "est_cam1_px": [
-        423.03,
-        412.89
+        408.71,
+        440.81
       ],
       "error_px": 0.1,
       "status": "PASS",
-      "num_plane_matches": 209
+      "num_plane_matches": 232
     },
-    "choco_letter_P": {
+    "choco_pie_pt_02": {
       "est_cam1_px": [
-        398.92,
-        449.55
+        434.72,
+        477.18
+      ],
+      "error_px": 0.1,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_03": {
+      "est_cam1_px": [
+        406.63,
+        414.2
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_04": {
+      "est_cam1_px": [
+        426.65,
+        383.66
       ],
       "error_px": 0.12,
       "status": "PASS",
-      "num_plane_matches": 209
+      "num_plane_matches": 232
     },
-    "choco_marshmallow": {
+    "choco_pie_pt_05": {
       "est_cam1_px": [
-        476.25,
-        519.92
+        376.78,
+        447.89
       ],
-      "error_px": 0.14,
+      "error_px": 0.13,
       "status": "PASS",
-      "num_plane_matches": 209
+      "num_plane_matches": 232
     },
-    "choco_badge_12packs": {
+    "choco_pie_pt_06": {
       "est_cam1_px": [
-        485.9,
-        556.47
+        380.51,
+        409.58
       ],
-      "error_px": 0.19,
+      "error_px": 0.13,
       "status": "PASS",
-      "num_plane_matches": 209
+      "num_plane_matches": 232
     },
-    "kelloggs_letter_K": {
+    "choco_pie_pt_07": {
       "est_cam1_px": [
-        795.03,
-        415.99
-      ],
-      "error_px": 0.07,
-      "status": "PASS",
-      "num_plane_matches": 367
-    },
-    "kelloggs_veg_symbol": {
-      "est_cam1_px": [
-        856.86,
-        350.39
-      ],
-      "error_px": 0.12,
-      "status": "PASS",
-      "num_plane_matches": 367
-    },
-    "kelloggs_corn_C": {
-      "est_cam1_px": [
-        872.8,
-        467.99
-      ],
-      "error_px": 0.02,
-      "status": "PASS",
-      "num_plane_matches": 367
-    },
-    "kelloggs_milk_splash": {
-      "est_cam1_px": [
-        845.53,
-        534.43
+        439.1,
+        429.84
       ],
       "error_px": 0.08,
       "status": "PASS",
-      "num_plane_matches": 367
+      "num_plane_matches": 232
     },
-    "kelloggs_power_badge": {
+    "choco_pie_pt_08": {
       "est_cam1_px": [
-        912.64,
-        522.48
+        425.21,
+        465.59
+      ],
+      "error_px": 0.09,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_09": {
+      "est_cam1_px": [
+        412.46,
+        465.95
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_10": {
+      "est_cam1_px": [
+        355.39,
+        435.36
+      ],
+      "error_px": 0.14,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_11": {
+      "est_cam1_px": [
+        490.58,
+        460.19
+      ],
+      "error_px": 0.04,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_12": {
+      "est_cam1_px": [
+        413.32,
+        379.17
+      ],
+      "error_px": 0.12,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_13": {
+      "est_cam1_px": [
+        472.52,
+        496.54
+      ],
+      "error_px": 0.06,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_14": {
+      "est_cam1_px": [
+        588.82,
+        503.28
+      ],
+      "error_px": 0.14,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_15": {
+      "est_cam1_px": [
+        342.98,
+        477.54
+      ],
+      "error_px": 0.16,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_16": {
+      "est_cam1_px": [
+        345.46,
+        471.17
+      ],
+      "error_px": 0.16,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_17": {
+      "est_cam1_px": [
+        512.02,
+        574.84
+      ],
+      "error_px": 0.13,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_18": {
+      "est_cam1_px": [
+        525.16,
+        586.16
+      ],
+      "error_px": 0.14,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_19": {
+      "est_cam1_px": [
+        497.69,
+        561.59
+      ],
+      "error_px": 0.13,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_20": {
+      "est_cam1_px": [
+        524.25,
+        542.51
+      ],
+      "error_px": 0.04,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_21": {
+      "est_cam1_px": [
+        442.31,
+        353.71
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_22": {
+      "est_cam1_px": [
+        515.54,
+        548.95
+      ],
+      "error_px": 0.08,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_23": {
+      "est_cam1_px": [
+        492.87,
+        441.97
       ],
       "error_px": 0.07,
       "status": "PASS",
-      "num_plane_matches": 367
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_24": {
+      "est_cam1_px": [
+        433.54,
+        348.13
+      ],
+      "error_px": 0.13,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_25": {
+      "est_cam1_px": [
+        446.21,
+        516.83
+      ],
+      "error_px": 0.12,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_26": {
+      "est_cam1_px": [
+        585.72,
+        519.08
+      ],
+      "error_px": 0.12,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_27": {
+      "est_cam1_px": [
+        451.78,
+        361.15
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_28": {
+      "est_cam1_px": [
+        415.02,
+        341.23
+      ],
+      "error_px": 0.13,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "choco_pie_pt_29": {
+      "est_cam1_px": [
+        481.12,
+        503.89
+      ],
+      "error_px": 0.06,
+      "status": "PASS",
+      "num_plane_matches": 232
+    },
+    "kelloggs_pt_00": {
+      "est_cam1_px": [
+        878.03,
+        448.17
+      ],
+      "error_px": 0.01,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_01": {
+      "est_cam1_px": [
+        924.83,
+        560.46
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_02": {
+      "est_cam1_px": [
+        869.88,
+        488.45
+      ],
+      "error_px": 0.06,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_03": {
+      "est_cam1_px": [
+        908.23,
+        568.51
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_04": {
+      "est_cam1_px": [
+        913.01,
+        571.6
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_05": {
+      "est_cam1_px": [
+        942.58,
+        557.35
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_06": {
+      "est_cam1_px": [
+        907.83,
+        493.58
+      ],
+      "error_px": 0.07,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_07": {
+      "est_cam1_px": [
+        938.4,
+        552.94
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_08": {
+      "est_cam1_px": [
+        913.36,
+        557.45
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_09": {
+      "est_cam1_px": [
+        885.64,
+        516.06
+      ],
+      "error_px": 0.09,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_10": {
+      "est_cam1_px": [
+        904.9,
+        475.31
+      ],
+      "error_px": 0.04,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_11": {
+      "est_cam1_px": [
+        886.44,
+        442.99
+      ],
+      "error_px": 0.02,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_12": {
+      "est_cam1_px": [
+        906.12,
+        500.97
+      ],
+      "error_px": 0.06,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_13": {
+      "est_cam1_px": [
+        911.21,
+        552.23
+      ],
+      "error_px": 0.1,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_14": {
+      "est_cam1_px": [
+        887.8,
+        497.35
+      ],
+      "error_px": 0.06,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_15": {
+      "est_cam1_px": [
+        929.3,
+        549.64
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_16": {
+      "est_cam1_px": [
+        934.21,
+        546.3
+      ],
+      "error_px": 0.1,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_17": {
+      "est_cam1_px": [
+        898.69,
+        509.22
+      ],
+      "error_px": 0.07,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_18": {
+      "est_cam1_px": [
+        870.32,
+        507.11
+      ],
+      "error_px": 0.06,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_19": {
+      "est_cam1_px": [
+        885.56,
+        505.39
+      ],
+      "error_px": 0.07,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_20": {
+      "est_cam1_px": [
+        925.21,
+        545.31
+      ],
+      "error_px": 0.1,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_21": {
+      "est_cam1_px": [
+        892.97,
+        545.77
+      ],
+      "error_px": 0.09,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_22": {
+      "est_cam1_px": [
+        892.25,
+        513.48
+      ],
+      "error_px": 0.08,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_23": {
+      "est_cam1_px": [
+        923.69,
+        552.38
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_24": {
+      "est_cam1_px": [
+        870.23,
+        452.6
+      ],
+      "error_px": 0.01,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_25": {
+      "est_cam1_px": [
+        916.4,
+        531.77
+      ],
+      "error_px": 0.09,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_26": {
+      "est_cam1_px": [
+        896.08,
+        499.81
+      ],
+      "error_px": 0.07,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_27": {
+      "est_cam1_px": [
+        921.88,
+        567.32
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_28": {
+      "est_cam1_px": [
+        934.24,
+        561.37
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
+    },
+    "kelloggs_pt_29": {
+      "est_cam1_px": [
+        897.24,
+        541.45
+      ],
+      "error_px": 0.11,
+      "status": "PASS",
+      "num_plane_matches": 359
     }
   }
 }

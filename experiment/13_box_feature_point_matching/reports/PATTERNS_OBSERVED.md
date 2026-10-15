@@ -1,24 +1,24 @@
 # PATTERNS OBSERVED: Experiment 13 (Box / Planar Feature Point Matching)
 
 ## 1. Overview
-This experiment evaluated multiple uncalibrated computer vision feature matching and point transfer pipelines across **25 distinct synthetic benchmark scenes** (totaling **250 ground-truth evaluation points**):
+This experiment evaluated multiple uncalibrated computer vision feature matching and point transfer pipelines across **25 distinct synthetic benchmark scenes** on **dense landmark sets** (**60 ground-truth evaluation points per scene**, 30 per packaging plane, totaling **1,500 evaluation points**):
 - **Scenes 001–005**: Foundational baseline scenes (mild/moderate baselines, elevation, diffuse light).
 - **Scenes 006–015**: Challenging realistic variations (severe yaw, height disparity, optical roll, specular point glare, extreme standoff distances).
 - **Scenes 016–025**: **Extreme stress tests** (ultra-wide convergence baselines up to 62°, ultra-grazing incidence up to 42° pitch + 25° yaw, severe 65° optical roll disparity, extreme shadow cross-lighting, macro close-up, and overexposure blowout).
 
-Zero occlusion was maintained throughout, with both image planes (Choco Pie and Kellogg's) rendered simultaneously in every scene.
+Zero occlusion was maintained throughout, with both image planes (Choco Pie and Kellogg's) rendered simultaneously in every scene. All points were evaluated strictly on the existing frozen renders without generating any new images.
 
 ---
 
-## 2. Complete Benchmark Comparison Across All 25 Scenes (250 Points)
+## 2. Complete Benchmark Comparison Across All 25 Scenes (1,500 Points)
 
 | Methodology | Model Type | Overall Pass Rate (<15px) | Mean Localization Error | Median Error | Robustness in Extreme Stress (016–025) |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **`sift_homography`** | Classical Sparse Feature | **100.0%** (250/250) | **0.12 px** | **0.11 px** | **Immune to Geometry**: Sub-pixel across all 25 scenes, including 62° convergence and 65° roll disparity. |
-| **`superpoint_lightglue`** | **Deep Learning (Transformer)** | **100.0%** (250/250) | **0.36 px** | **0.27 px** | **Superior Feature Association**: Extremely clean, outlier-free deep matches even under harsh dark glare and perspective shearing. |
-| **`orb_homography`** | Fast Binary Descriptor | **100.0%** (250/250) | **0.52 px** | **0.25 px** | **Fastest Execution**: Sub-pixel across 23/25 scenes; shows slight drift (~3.4px) under extreme 62° baseline divergence. |
-| **`fundamental_matrix_guided`** | Epipolar Constraint | **88.8%** (222/250) | **8.76 px** | **3.96 px** | **Epipolar Filter**: Strong geometric validation constraint; 1D template search along epipolar lines degrades under repetitive patterns. |
-| **`template_patch_matching`** | Direct NCC Correlation | **75.6%** (189/250) | **13.92 px** | **7.96 px** | **Severe Failure**: Drops to 30%–50% accuracy whenever viewpoint convergence exceeds 25° due to affine foreshortening. |
+| **`sift_homography`** | Classical Sparse Feature | **100.0%** (1500/1500) | **0.18 px** | **0.16 px** | **Immune to Geometry**: Flawless sub-pixel accuracy across all 1,500 dense points, including 62° convergence and 65° roll disparity. |
+| **`superpoint_lightglue`** | **Deep Learning (Transformer)** | **100.0%** (1500/1500) | **0.47 px** | **0.39 px** | **Superior Feature Association**: Extremely clean, outlier-free deep matches even under harsh dark glare, specular reflection, and perspective shearing. |
+| **`orb_homography`** | Fast Binary Descriptor | **100.0%** (1500/1500) | **0.77 px** | **0.40 px** | **Fastest Execution**: High sub-pixel accuracy; slight localized drift (~3.5px) under extreme 62° baseline divergence. |
+| **`fundamental_matrix_guided`** | Epipolar Constraint | **85.3%** (1279/1500) | **14.43 px** | **4.83 px** | **Epipolar Filter**: Strong geometric validation constraint; 1D template search along epipolar lines degrades under repetitive patterns. |
+| **`template_patch_matching`** | Direct NCC Correlation | **71.7%** (1075/1500) | **20.27 px** | **14.56 px** | **Severe Failure**: Drops to 18%–35% pass rates whenever viewpoint convergence or tilt exceeds 25° due to affine foreshortening. |
 
 ---
 
