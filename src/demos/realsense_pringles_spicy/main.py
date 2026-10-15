@@ -45,10 +45,17 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 log = logging.getLogger("realsense-pringles-spicy")
 
+try:
+    from common.markers import DEFAULT_TAG_FAMILY, DEFAULT_TAG_SIZE_M, get_marker_size
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+    from common.markers import DEFAULT_TAG_FAMILY, DEFAULT_TAG_SIZE_M, get_marker_size
+
 DEFAULT_YOLO_MODEL = "/home/mfk01/Projects/econ-systems/demos/demo2/yolo26s.pt"
 CAN_RADIUS_M = 0.0318   # 3.18 cm
 CAN_HEIGHT_M = 0.2695   # 26.95 cm
-TAG_SIZE_DEFAULT_M = 0.088
+TAG_SIZE_DEFAULT_M = DEFAULT_TAG_SIZE_M
 DEFAULT_MARKER_ID = 1
 
 # Default camera intrinsics (RealSense D415 720p color stream)

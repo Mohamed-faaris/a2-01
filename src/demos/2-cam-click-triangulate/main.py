@@ -39,22 +39,12 @@ from pupil_apriltags import Detector
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 log = logging.getLogger("2cam-click-triangulator")
 
-DEFAULT_MARKER_SIZES_M: dict[int, float] = {
-    0: 0.1240,
-    1: 0.1240,
-    2: 0.0885,
-    3: 0.0885,
-    4: 0.0885,
-    5: 0.0885,
-    6: 0.0575,
-    7: 0.0575,
-    8: 0.0575,
-    9: 0.0575,
-    10: 0.0575,
-    11: 0.0575,
-    12: 0.0575,
-    13: 0.0575,
-}
+try:
+    from common.markers import DEFAULT_MARKER_SIZES_M, DEFAULT_TAG_FAMILY, DEFAULT_TAG_SIZE_M
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+    from common.markers import DEFAULT_MARKER_SIZES_M, DEFAULT_TAG_FAMILY, DEFAULT_TAG_SIZE_M
 
 
 @dataclass

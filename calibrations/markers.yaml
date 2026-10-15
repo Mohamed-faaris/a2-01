@@ -1,0 +1,42 @@
+# Centralized AprilTag Physical Marker Configurations
+# Unit: meters (m)
+
+default_family: "tag36h11"
+default_size_m: 0.0885
+
+markers:
+  # Tag 0: 134 mm (Tabletop Origin / Benchmark Ground Plane)
+  0:
+    size_m: 0.1340
+    family: "tag36h11"
+    description: "Tabletop Reference Origin (134 mm)"
+
+  # Tag 1: 124 mm
+  1:
+    size_m: 0.1240
+    family: "tag36h11"
+    description: "Secondary Large Marker (124 mm)"
+
+  # Tags 2 to 5: 88.5 mm
+  2..5:
+    size_m: 0.0885
+    family: "tag36h11"
+    description: "Standard Medium Marker (88.5 mm)"
+
+  # Tags 6 to 13: 57.5 mm
+  6..13:
+    size_m: 0.0575
+    family: "tag36h11"
+    description: "Compact Marker (57.5 mm)"
+
+  # Tags 20 to 31: 41 mm
+  20..31:
+    size_m: 0.0410
+    family: "tag36h11"
+    description: "Mini Precision Marker (41 mm)"
+
+  # Tags 40 to 45: 66 mm
+  40..45:
+    size_m: 0.0660
+    family: "tag36h11"
+    description: "Mid-size Marker (66 mm)"

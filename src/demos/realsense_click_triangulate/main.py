@@ -45,50 +45,24 @@ log = logging.getLogger("realsense-click-triangulator")
 
 DEFAULT_CALIB_DIR = "calibrations/calibarotor0/outputs/rl720"
 
-DEFAULT_TAG_FAMILY = "tag36h11"
-
-# Default AprilTag physical marker sizes in meters
-# Mappings:
-#   Tag 0: 134 mm (0.1340 m)
-#   Tag 1: 124 mm (0.1240 m)
-#   Tags 2-5: 88.5 mm (0.0885 m)
-#   Tags 6-13: 57.5 mm (0.0575 m)
-#   Tags 20-31: 41 mm (0.0410 m)
-#   Tags 40-45: 66 mm (0.0660 m)
-DEFAULT_MARKER_SIZES_M: dict[int, float] = {
-    # 134 mm
-    0: 0.1340,
-    # 124 mm
-    1: 0.1240,
-    # 88.5 mm
-    2: 0.0885,
-    3: 0.0885,
-    4: 0.0885,
-    5: 0.0885,
-    # 57.5 mm
-    6: 0.0575,
-    7: 0.0575,
-    8: 0.0575,
-    9: 0.0575,
-    10: 0.0575,
-    11: 0.0575,
-    12: 0.0575,
-    13: 0.0575,
-    # 41 mm (IDs 20 - 31)
-    **{i: 0.0410 for i in range(20, 32)},
-    # 66 mm (IDs 40 - 45)
-    **{i: 0.0660 for i in range(40, 46)},
-}
-
-# Marker metadata including family and physical size description
-DEFAULT_MARKER_METADATA: dict[int, dict[str, str | float]] = {
-    tag_id: {
-        "family": DEFAULT_TAG_FAMILY,
-        "size_m": size_m,
-        "size_mm": round(size_m * 1000.0, 1),
-    }
-    for tag_id, size_m in DEFAULT_MARKER_SIZES_M.items()
-}
+try:
+    from common.markers import (
+        DEFAULT_MARKER_METADATA,
+        DEFAULT_MARKER_SIZES_M,
+        DEFAULT_TAG_FAMILY,
+        DEFAULT_TAG_SIZE_M,
+        parse_marker_size_overrides,
+    )
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+    from common.markers import (
+        DEFAULT_MARKER_METADATA,
+        DEFAULT_MARKER_SIZES_M,
+        DEFAULT_TAG_FAMILY,
+        DEFAULT_TAG_SIZE_M,
+        parse_marker_size_overrides,
+    )
 
 
 @dataclass
