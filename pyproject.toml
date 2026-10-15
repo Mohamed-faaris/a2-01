@@ -23,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 april-tag-viewer = "april_tag_relative_viewer.main:main"
+realsense-pringles-spicy = "demos.realsense_pringles_spicy.main:run_live_realsense_demo"
 
 [build-system]
 requires = ["uv_build>=0.12.18,<0.13.0"]
