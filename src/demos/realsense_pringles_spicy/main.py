@@ -58,32 +58,42 @@ DEFAULT_CX = 640.0
 DEFAULT_CY = 360.0
 
 
-def is_spicy_pringles(patch_bgr: np.ndarray) -> tuple[bool, float, str]:
-    """Classify if a detected cylinder patch matches Pringles Spicy (Extra Hot).
-    Extra Hot features dark black/deep red flame textures with yellow/red accents.
+def classify_pringles_flavor(patch_bgr: np.ndarray) -> tuple[str, bool, tuple[int, int, int]]:
+    """Classify if a detected cylinder patch matches:
+      1. 'Pringles Original' (Bright Iconic Red) -> (0, 0, 255)
+      2. 'Pringles Spicy' (Extra Hot Dark Flame) -> (0, 69, 255)
+      3. Other Pringles flavor
     """
     if patch_bgr is None or patch_bgr.size == 0:
-        return False, 0.0, "unknown"
+        return "Pringles", False, (0, 255, 255)
     
     hsv = cv2.cvtColor(patch_bgr, cv2.COLOR_BGR2HSV)
     
-    # Red mask (two ranges in HSV)
-    mask1 = cv2.inRange(hsv, np.array([0, 50, 40]), np.array([10, 255, 255]))
-    mask2 = cv2.inRange(hsv, np.array([170, 50, 40]), np.array([180, 255, 255]))
+    # Red mask
+    mask1 = cv2.inRange(hsv, np.array([0, 70, 50]), np.array([12, 255, 255]))
+    mask2 = cv2.inRange(hsv, np.array([168, 70, 50]), np.array([180, 255, 255]))
     red_mask = mask1 | mask2
     
-    # Dark/Black mask (value < 65)
+    # Dark/Black mask
     dark_mask = cv2.inRange(hsv, np.array([0, 0, 0]), np.array([180, 255, 75]))
     
-    total_px = patch_bgr.shape[0] * patch_bgr.shape[1]
-    red_ratio = np.count_nonzero(red_mask) / float(total_px)
-    dark_ratio = np.count_nonzero(dark_mask) / float(total_px)
+    total_px = float(patch_bgr.shape[0] * patch_bgr.shape[1])
+    red_pct = np.count_nonzero(red_mask) / total_px * 100.0
+    dark_pct = np.count_nonzero(dark_mask) / total_px * 100.0
     
-    # Extra Hot / Spicy has high black content + prominent dark red flame highlights
-    is_spicy = (dark_ratio > 0.15 and red_ratio > 0.08) or (dark_ratio > 0.35)
-    score = (dark_ratio * 0.6 + red_ratio * 0.4)
-    label = "Pringles Spicy (Extra Hot)" if is_spicy else "Pringles (Other Flavor)"
-    return is_spicy, score, label
+    b, g, r = patch_bgr[:, :, 0].mean(), patch_bgr[:, :, 1].mean(), patch_bgr[:, :, 2].mean()
+    rb_ratio = r / max(1.0, b)
+    rg_ratio = r / max(1.0, g)
+
+    # Classification rules based on spectral distribution:
+    if dark_pct > 0.8 and red_pct < 18.0:
+        return "Pringles Spicy (Extra Hot)", True, (0, 69, 255)  # Orange-Red for Spicy
+    elif red_pct > 24.0 and rb_ratio > 1.5:
+        return "Pringles Original (Red)", True, (0, 0, 255)      # Pure Crimson Red for Original
+    elif rb_ratio > 1.2:
+        return "Pringles Original", True, (0, 0, 255)
+    else:
+        return "Pringles (Other Flavor)", False, (0, 255, 255)   # Yellow for Other
 
 
 def backproject_pixel(u: float, v: float, z: float, fx: float, fy: float, cx: float, cy: float) -> np.ndarray:
@@ -324,7 +334,10 @@ def process_frame(
     # 2. YOLO Object Detection
     res = yolo_model.predict(source=img_bgr, conf=0.005, verbose=False)[0]
     raw_boxes = []
-    target_classes = {"bottle", "cup", "can", "vase", "toothbrush", "cell phone"}
+    target_classes = {
+        "bottle", "cup", "can", "vase", "toothbrush", "cell phone",
+        "snowboard", "skateboard", "skis", "traffic light"
+    }
     for b in res.boxes:
         cls_id = int(b.cls[0].item())
         if res.names[cls_id] in target_classes:
@@ -350,7 +363,7 @@ def process_frame(
     can_detections = []
     for (x1, y1, x2, y2, conf) in clean_boxes:
         patch_bgr = img_bgr[y1:y2, x1:x2]
-        is_spicy, score, label = is_spicy_pringles(patch_bgr)
+        label, is_target, wire_color = classify_pringles_flavor(patch_bgr)
         
         # Depth patch
         sub_d = depth_map[y1:y2, x1:x2]
@@ -410,8 +423,8 @@ def process_frame(
         unc = [float(np.sqrt(max(1e-4, cov[i, i]))) for i in range(3)]
 
         # Render 3D Wireframes
-        color = (0, 69, 255) if is_spicy else (0, 255, 255)  # Orange-red for Spicy, Yellow for other
-        lbl = f"PRINGLES SPICY" if is_spicy else "Pringles"
+        color = wire_color
+        lbl = label
 
         if show_box:
             u_vec = np.cross(est_axis, np.array([1, 0, 0]))
@@ -430,7 +443,8 @@ def process_frame(
 
         can_detections.append({
             "label": lbl,
-            "is_spicy": is_spicy,
+            "is_spicy": ("Spicy" in lbl),
+            "is_target": is_target,
             "state": "standing" if standing else "rolling",
             "pos_cam": est_center,
             "pos_table": pos_table,
@@ -486,8 +500,9 @@ def run_live_realsense_demo(args: argparse.Namespace):
         log.info(f"Loaded {len(mock_frames)} simulated tabletop scenes.")
 
     window_name = "RealSense Pringles Spicy 3D Cylinder Construction Demo"
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(window_name, 1920, 1080)
+    if not getattr(args, "headless", False):
+        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window_name, 1920, 1080)
 
     show_box = True
     show_cylinder = True
@@ -541,9 +556,11 @@ def run_live_realsense_demo(args: argparse.Namespace):
             bot_row = np.hstack([q3, q4])
             canvas = np.vstack([top_row, bot_row])
 
-            cv2.imshow(window_name, canvas)
-
-            key = cv2.waitKey(1) & 0xFF
+            if not getattr(args, "headless", False):
+                cv2.imshow(window_name, canvas)
+                key = cv2.waitKey(1) & 0xFF
+            else:
+                key = 255
             if key == 27 or key == ord('q'):
                 break
             elif key == ord('b'):
@@ -556,18 +573,26 @@ def run_live_realsense_demo(args: argparse.Namespace):
                 cv2.imwrite("pringles_spicy_demo_snapshot.png", canvas)
                 log.info("Saved snapshot: pringles_spicy_demo_snapshot.png")
 
+            if getattr(args, "snapshot", None):
+                cv2.imwrite(args.snapshot, canvas)
+                log.info(f"Saved snapshot to {args.snapshot} and exiting.")
+                break
+
             t1 = time.time()
             fps = 0.9 * fps + 0.1 * (1.0 / max(1e-4, t1 - t0))
 
     finally:
         if pipeline:
             pipeline.stop()
-        cv2.destroyAllWindows()
+        if not getattr(args, "headless", False):
+            cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Live RealSense Pringles Spicy 3D Cylinder Construction Demo")
     parser.add_argument("--yolo-model", type=str, default=DEFAULT_YOLO_MODEL)
     parser.add_argument("--mock", action="store_true", help="Force simulated tabletop playback")
+    parser.add_argument("--snapshot", type=str, default=None, help="Save single frame snapshot and exit")
+    parser.add_argument("--headless", action="store_true", help="Run without opening GUI window")
     args = parser.parse_args()
     run_live_realsense_demo(args)
