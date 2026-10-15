@@ -1,0 +1,47 @@
+{
+  "boxernet_aleatoric_lifting": {
+    "total_cans_evaluated": 108,
+    "pass_rate_pct": 91.7,
+    "mean_error_cm": 1.74,
+    "median_error_cm": 0.73,
+    "p90_error_cm": 3.77,
+    "min_error_cm": 0.27,
+    "max_error_cm": 5.82
+  },
+  "cylinder_3d_pointcloud_ransac": {
+    "total_cans_evaluated": 108,
+    "pass_rate_pct": 91.7,
+    "mean_error_cm": 1.74,
+    "median_error_cm": 0.73,
+    "p90_error_cm": 3.77,
+    "min_error_cm": 0.27,
+    "max_error_cm": 5.82
+  },
+  "realsense_surface_depth_compensated": {
+    "total_cans_evaluated": 108,
+    "pass_rate_pct": 62.0,
+    "mean_error_cm": 4.18,
+    "median_error_cm": 3.54,
+    "p90_error_cm": 7.26,
+    "min_error_cm": 0.65,
+    "max_error_cm": 14.23
+  },
+  "realsense_surface_depth_raw": {
+    "total_cans_evaluated": 108,
+    "pass_rate_pct": 34.3,
+    "mean_error_cm": 5.17,
+    "median_error_cm": 4.58,
+    "p90_error_cm": 7.74,
+    "min_error_cm": 2.34,
+    "max_error_cm": 14.61
+  },
+  "exp13_feature_matching_transfer": {
+    "total_cans_evaluated": 108,
+    "pass_rate_pct": 92.6,
+    "mean_error_cm": 1.74,
+    "median_error_cm": 0.81,
+    "p90_error_cm": 3.81,
+    "min_error_cm": 0.17,
+    "max_error_cm": 5.85
+  }
+}

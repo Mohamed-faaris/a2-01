@@ -1,0 +1,79 @@
+{
+  "experiment_id": "020",
+  "method": "realsense_surface_depth_compensated",
+  "can_count": 10,
+  "mean_error_3d_cm": 5.55,
+  "pass_rate_pct": 50.0,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 2.11,
+      "pass": true
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 9.52,
+      "pass": false
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "error_3d_cm": 13.4,
+      "pass": false
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 9.45,
+      "pass": false
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 3.55,
+      "pass": true
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 4.9,
+      "pass": false
+    },
+    {
+      "can_name": "can_7",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 2.91,
+      "pass": true
+    },
+    {
+      "can_name": "can_8",
+      "flavor": "French_Onion",
+      "state": "rolling",
+      "error_3d_cm": 4.03,
+      "pass": false
+    },
+    {
+      "can_name": "can_9",
+      "flavor": "Paprika",
+      "state": "rolling",
+      "error_3d_cm": 2.57,
+      "pass": true
+    },
+    {
+      "can_name": "can_10",
+      "flavor": "Extra_Hot",
+      "state": "rolling",
+      "error_3d_cm": 3.04,
+      "pass": true
+    }
+  ]
+}

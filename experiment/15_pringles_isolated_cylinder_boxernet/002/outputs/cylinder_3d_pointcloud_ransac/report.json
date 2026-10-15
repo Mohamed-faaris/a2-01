@@ -1,0 +1,22 @@
+{
+  "experiment_id": "002",
+  "method": "cylinder_3d_pointcloud_ransac",
+  "can_count": 1,
+  "mean_error_3d_cm": 1.57,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 1.57,
+      "uncertainty": {
+        "sigma_x_cm": 7.589,
+        "sigma_y_cm": 2.607,
+        "sigma_z_cm": 1.273,
+        "cov_trace_cm2": 66.012
+      },
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "experiment_id": "001",
+  "model_file": "/home/mfk01/Projects/econ-systems/demos/a2-01/assets/pringles_isolated/pringles_original.glb",
+  "flavor": "Original",
+  "ground_truth_center_cam_m": [
+    0.08,
+    -0.0559,
+    1.1141
+  ],
+  "estimated_cylinder_center_cam_m": [
+    0.0795,
+    -0.076,
+    1.113
+  ],
+  "error_3d_cm": 2.01,
+  "boxernet_aleatoric_uncertainty": {
+    "sigma_x_cm": 81.759,
+    "sigma_y_cm": 76.144,
+    "sigma_z_cm": 87.09,
+    "predicted_confidence": "high"
+  },
+  "cylinder_dimensions_m": {
+    "radius": 0.0318,
+    "height": 0.2695
+  },
+  "pass": true
+}

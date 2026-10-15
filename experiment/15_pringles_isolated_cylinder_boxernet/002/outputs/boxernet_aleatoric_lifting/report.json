@@ -1,0 +1,21 @@
+{
+  "experiment_id": "002",
+  "method": "boxernet_aleatoric_lifting",
+  "can_count": 1,
+  "mean_error_3d_cm": 1.57,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 1.57,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 99.178,
+        "sigma_y_cm": 120.881,
+        "sigma_z_cm": 86.902
+      },
+      "pass": true
+    }
+  ]
+}

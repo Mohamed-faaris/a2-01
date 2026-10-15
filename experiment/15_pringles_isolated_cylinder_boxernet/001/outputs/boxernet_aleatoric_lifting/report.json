@@ -1,0 +1,21 @@
+{
+  "experiment_id": "001",
+  "method": "boxernet_aleatoric_lifting",
+  "can_count": 1,
+  "mean_error_3d_cm": 2.01,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_orig",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 2.01,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 84.92,
+        "sigma_y_cm": 98.93,
+        "sigma_z_cm": 126.632
+      },
+      "pass": true
+    }
+  ]
+}

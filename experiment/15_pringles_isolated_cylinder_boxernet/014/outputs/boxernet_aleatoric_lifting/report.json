@@ -1,0 +1,93 @@
+{
+  "experiment_id": "014",
+  "method": "boxernet_aleatoric_lifting",
+  "can_count": 7,
+  "mean_error_3d_cm": 1.91,
+  "pass_rate_pct": 85.7,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.68,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 109.661,
+        "sigma_y_cm": 103.325,
+        "sigma_z_cm": 105.17
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "error_3d_cm": 0.63,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 110.46,
+        "sigma_y_cm": 103.848,
+        "sigma_z_cm": 105.955
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 0.45,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 111.312,
+        "sigma_y_cm": 103.65,
+        "sigma_z_cm": 106.532
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.56,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 113.088,
+        "sigma_y_cm": 102.948,
+        "sigma_z_cm": 106.616
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 2.9,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 105.33,
+        "sigma_y_cm": 109.527,
+        "sigma_z_cm": 104.101
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 4.48,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 104.745,
+        "sigma_y_cm": 108.27,
+        "sigma_z_cm": 105.875
+      },
+      "pass": false
+    },
+    {
+      "can_name": "can_7",
+      "flavor": "Extra_Hot",
+      "state": "rolling",
+      "error_3d_cm": 3.66,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 104.795,
+        "sigma_y_cm": 106.716,
+        "sigma_z_cm": 106.944
+      },
+      "pass": true
+    }
+  ]
+}

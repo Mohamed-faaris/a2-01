@@ -1,0 +1,100 @@
+{
+  "experiment_id": "013",
+  "method": "cylinder_3d_pointcloud_ransac",
+  "can_count": 7,
+  "mean_error_3d_cm": 1.41,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.68,
+      "uncertainty": {
+        "sigma_x_cm": 3.228,
+        "sigma_y_cm": 8.811,
+        "sigma_z_cm": 3.237,
+        "cov_trace_cm2": 98.538
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 0.7,
+      "uncertainty": {
+        "sigma_x_cm": 3.73,
+        "sigma_y_cm": 9.098,
+        "sigma_z_cm": 3.099,
+        "cov_trace_cm2": 106.286
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "error_3d_cm": 0.44,
+      "uncertainty": {
+        "sigma_x_cm": 3.957,
+        "sigma_y_cm": 9.196,
+        "sigma_z_cm": 3.066,
+        "cov_trace_cm2": 109.627
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.58,
+      "uncertainty": {
+        "sigma_x_cm": 3.708,
+        "sigma_y_cm": 9.051,
+        "sigma_z_cm": 3.155,
+        "cov_trace_cm2": 105.616
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 0.69,
+      "uncertainty": {
+        "sigma_x_cm": 3.269,
+        "sigma_y_cm": 8.713,
+        "sigma_z_cm": 3.262,
+        "cov_trace_cm2": 97.244
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 3.46,
+      "uncertainty": {
+        "sigma_x_cm": 8.713,
+        "sigma_y_cm": 2.933,
+        "sigma_z_cm": 4.49,
+        "cov_trace_cm2": 104.684
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_7",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 3.31,
+      "uncertainty": {
+        "sigma_x_cm": 9.081,
+        "sigma_y_cm": 2.944,
+        "sigma_z_cm": 3.642,
+        "cov_trace_cm2": 104.407
+      },
+      "pass": true
+    }
+  ]
+}

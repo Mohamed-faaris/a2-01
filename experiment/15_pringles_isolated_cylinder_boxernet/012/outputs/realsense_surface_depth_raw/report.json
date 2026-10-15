@@ -1,0 +1,51 @@
+{
+  "experiment_id": "012",
+  "method": "realsense_surface_depth_raw",
+  "can_count": 6,
+  "mean_error_3d_cm": 4.43,
+  "pass_rate_pct": 33.3,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "error_3d_cm": 4.09,
+      "pass": false
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 4.94,
+      "pass": false
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 3.53,
+      "pass": true
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 4.46,
+      "pass": false
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "French_Onion",
+      "state": "rolling",
+      "error_3d_cm": 5.61,
+      "pass": false
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 3.96,
+      "pass": true
+    }
+  ]
+}

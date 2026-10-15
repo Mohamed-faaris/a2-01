@@ -1,0 +1,30 @@
+{
+  "experiment_id": "005",
+  "method": "exp13_feature_matching_transfer",
+  "can_count": 3,
+  "mean_error_3d_cm": 1.11,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_orig",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.62,
+      "pass": true
+    },
+    {
+      "can_name": "can_paprika",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 0.51,
+      "pass": true
+    },
+    {
+      "can_name": "can_eh",
+      "flavor": "Extra_Hot",
+      "state": "rolling",
+      "error_3d_cm": 2.2,
+      "pass": true
+    }
+  ]
+}

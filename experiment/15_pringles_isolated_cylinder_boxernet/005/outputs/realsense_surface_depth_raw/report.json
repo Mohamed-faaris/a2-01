@@ -1,0 +1,30 @@
+{
+  "experiment_id": "005",
+  "method": "realsense_surface_depth_raw",
+  "can_count": 3,
+  "mean_error_3d_cm": 3.0,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_orig",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 2.55,
+      "pass": true
+    },
+    {
+      "can_name": "can_paprika",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 3.39,
+      "pass": true
+    },
+    {
+      "can_name": "can_eh",
+      "flavor": "Extra_Hot",
+      "state": "rolling",
+      "error_3d_cm": 3.06,
+      "pass": true
+    }
+  ]
+}

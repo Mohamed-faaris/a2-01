@@ -1,0 +1,16 @@
+{
+  "experiment_id": "001",
+  "method": "realsense_surface_depth_compensated",
+  "can_count": 1,
+  "mean_error_3d_cm": 0.68,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_orig",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.68,
+      "pass": true
+    }
+  ]
+}

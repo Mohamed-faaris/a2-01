@@ -1,0 +1,21 @@
+{
+  "experiment_id": "003",
+  "method": "boxernet_aleatoric_lifting",
+  "can_count": 1,
+  "mean_error_3d_cm": 2.58,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_fo",
+      "flavor": "French_Onion",
+      "state": "rolling",
+      "error_3d_cm": 2.58,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 105.595,
+        "sigma_y_cm": 110.552,
+        "sigma_z_cm": 118.065
+      },
+      "pass": true
+    }
+  ]
+}

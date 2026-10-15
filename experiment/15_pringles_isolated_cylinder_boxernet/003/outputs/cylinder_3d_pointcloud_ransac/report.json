@@ -1,0 +1,22 @@
+{
+  "experiment_id": "003",
+  "method": "cylinder_3d_pointcloud_ransac",
+  "can_count": 1,
+  "mean_error_3d_cm": 2.58,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_fo",
+      "flavor": "French_Onion",
+      "state": "rolling",
+      "error_3d_cm": 2.58,
+      "uncertainty": {
+        "sigma_x_cm": 7.266,
+        "sigma_y_cm": 2.935,
+        "sigma_z_cm": 4.416,
+        "cov_trace_cm2": 80.908
+      },
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "experiment_id": "004",
+  "method": "cylinder_3d_pointcloud_ransac",
+  "can_count": 1,
+  "mean_error_3d_cm": 1.84,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_paprika",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 1.84,
+      "uncertainty": {
+        "sigma_x_cm": 1.768,
+        "sigma_y_cm": 6.358,
+        "sigma_z_cm": 1.959,
+        "cov_trace_cm2": 47.391
+      },
+      "pass": true
+    }
+  ]
+}

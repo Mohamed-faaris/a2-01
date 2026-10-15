@@ -1,0 +1,113 @@
+{
+  "experiment_id": "016",
+  "method": "cylinder_3d_pointcloud_ransac",
+  "can_count": 8,
+  "mean_error_3d_cm": 1.71,
+  "pass_rate_pct": 87.5,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.28,
+      "uncertainty": {
+        "sigma_x_cm": 4.014,
+        "sigma_y_cm": 8.715,
+        "sigma_z_cm": 3.512,
+        "cov_trace_cm2": 104.39
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 0.45,
+      "uncertainty": {
+        "sigma_x_cm": 3.603,
+        "sigma_y_cm": 9.253,
+        "sigma_z_cm": 3.064,
+        "cov_trace_cm2": 107.989
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "error_3d_cm": 0.71,
+      "uncertainty": {
+        "sigma_x_cm": 4.537,
+        "sigma_y_cm": 9.273,
+        "sigma_z_cm": 3.402,
+        "cov_trace_cm2": 118.15
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.38,
+      "uncertainty": {
+        "sigma_x_cm": 4.23,
+        "sigma_y_cm": 9.176,
+        "sigma_z_cm": 3.538,
+        "cov_trace_cm2": 114.597
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 0.27,
+      "uncertainty": {
+        "sigma_x_cm": 3.669,
+        "sigma_y_cm": 8.921,
+        "sigma_z_cm": 4.097,
+        "cov_trace_cm2": 109.838
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 2.8,
+      "uncertainty": {
+        "sigma_x_cm": 9.958,
+        "sigma_y_cm": 3.112,
+        "sigma_z_cm": 3.732,
+        "cov_trace_cm2": 122.778
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_7",
+      "flavor": "Paprika",
+      "state": "rolling",
+      "error_3d_cm": 5.82,
+      "uncertainty": {
+        "sigma_x_cm": 9.833,
+        "sigma_y_cm": 3.058,
+        "sigma_z_cm": 4.205,
+        "cov_trace_cm2": 123.715
+      },
+      "pass": false
+    },
+    {
+      "can_name": "can_8",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 2.97,
+      "uncertainty": {
+        "sigma_x_cm": 10.281,
+        "sigma_y_cm": 3.163,
+        "sigma_z_cm": 3.769,
+        "cov_trace_cm2": 129.899
+      },
+      "pass": true
+    }
+  ]
+}

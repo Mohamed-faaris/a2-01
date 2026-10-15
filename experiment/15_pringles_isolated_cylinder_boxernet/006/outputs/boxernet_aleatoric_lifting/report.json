@@ -1,0 +1,45 @@
+{
+  "experiment_id": "006",
+  "method": "boxernet_aleatoric_lifting",
+  "can_count": 3,
+  "mean_error_3d_cm": 1.97,
+  "pass_rate_pct": 66.7,
+  "evaluations": [
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 1.18,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 86.69,
+        "sigma_y_cm": 71.973,
+        "sigma_z_cm": 102.389
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_fo",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.59,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 87.163,
+        "sigma_y_cm": 72.358,
+        "sigma_z_cm": 108.997
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_orig",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 4.13,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 89.464,
+        "sigma_y_cm": 75.678,
+        "sigma_z_cm": 111.399
+      },
+      "pass": false
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "experiment_id": "007",
+  "method": "boxernet_aleatoric_lifting",
+  "can_count": 3,
+  "mean_error_3d_cm": 2.07,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_eh",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "error_3d_cm": 0.63,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 116.644,
+        "sigma_y_cm": 105.652,
+        "sigma_z_cm": 70.891
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_paprika",
+      "flavor": "Paprika",
+      "state": "rolling",
+      "error_3d_cm": 2.82,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 132.71,
+        "sigma_y_cm": 104.046,
+        "sigma_z_cm": 71.046
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 2.77,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 134.17,
+        "sigma_y_cm": 106.877,
+        "sigma_z_cm": 70.126
+      },
+      "pass": true
+    }
+  ]
+}

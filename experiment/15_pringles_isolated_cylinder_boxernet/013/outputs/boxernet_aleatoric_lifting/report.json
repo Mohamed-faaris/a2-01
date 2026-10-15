@@ -1,0 +1,93 @@
+{
+  "experiment_id": "013",
+  "method": "boxernet_aleatoric_lifting",
+  "can_count": 7,
+  "mean_error_3d_cm": 1.41,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.68,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 65.05,
+        "sigma_y_cm": 84.945,
+        "sigma_z_cm": 74.242
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 0.7,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 64.485,
+        "sigma_y_cm": 85.3,
+        "sigma_z_cm": 75.546
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "error_3d_cm": 0.44,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 64.325,
+        "sigma_y_cm": 85.605,
+        "sigma_z_cm": 76.082
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.58,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 64.461,
+        "sigma_y_cm": 85.638,
+        "sigma_z_cm": 75.657
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 0.69,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 64.983,
+        "sigma_y_cm": 85.675,
+        "sigma_z_cm": 74.927
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 3.46,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 67.19,
+        "sigma_y_cm": 84.198,
+        "sigma_z_cm": 97.868
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_7",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 3.31,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 66.996,
+        "sigma_y_cm": 85.324,
+        "sigma_z_cm": 99.128
+      },
+      "pass": true
+    }
+  ]
+}

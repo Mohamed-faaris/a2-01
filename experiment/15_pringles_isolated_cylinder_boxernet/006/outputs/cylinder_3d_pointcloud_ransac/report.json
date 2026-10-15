@@ -1,0 +1,48 @@
+{
+  "experiment_id": "006",
+  "method": "cylinder_3d_pointcloud_ransac",
+  "can_count": 3,
+  "mean_error_3d_cm": 1.97,
+  "pass_rate_pct": 66.7,
+  "evaluations": [
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 1.18,
+      "uncertainty": {
+        "sigma_x_cm": 1.763,
+        "sigma_y_cm": 6.424,
+        "sigma_z_cm": 2.485,
+        "cov_trace_cm2": 50.549
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_fo",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.59,
+      "uncertainty": {
+        "sigma_x_cm": 2.165,
+        "sigma_y_cm": 7.314,
+        "sigma_z_cm": 3.056,
+        "cov_trace_cm2": 67.518
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_orig",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 4.13,
+      "uncertainty": {
+        "sigma_x_cm": 7.744,
+        "sigma_y_cm": 3.232,
+        "sigma_z_cm": 4.538,
+        "cov_trace_cm2": 91.013
+      },
+      "pass": false
+    }
+  ]
+}

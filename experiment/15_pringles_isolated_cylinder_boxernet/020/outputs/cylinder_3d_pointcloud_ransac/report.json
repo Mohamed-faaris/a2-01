@@ -1,0 +1,139 @@
+{
+  "experiment_id": "020",
+  "method": "cylinder_3d_pointcloud_ransac",
+  "can_count": 10,
+  "mean_error_3d_cm": 1.72,
+  "pass_rate_pct": 90.0,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.66,
+      "uncertainty": {
+        "sigma_x_cm": 3.475,
+        "sigma_y_cm": 8.456,
+        "sigma_z_cm": 3.754,
+        "cov_trace_cm2": 97.667
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 0.35,
+      "uncertainty": {
+        "sigma_x_cm": 4.693,
+        "sigma_y_cm": 9.41,
+        "sigma_z_cm": 3.319,
+        "cov_trace_cm2": 121.59
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "error_3d_cm": 2.33,
+      "uncertainty": {
+        "sigma_x_cm": 6.288,
+        "sigma_y_cm": 10.446,
+        "sigma_z_cm": 3.869,
+        "cov_trace_cm2": 163.618
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.35,
+      "uncertainty": {
+        "sigma_x_cm": 4.473,
+        "sigma_y_cm": 9.41,
+        "sigma_z_cm": 3.405,
+        "cov_trace_cm2": 120.153
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 0.66,
+      "uncertainty": {
+        "sigma_x_cm": 3.519,
+        "sigma_y_cm": 8.776,
+        "sigma_z_cm": 3.352,
+        "cov_trace_cm2": 100.641
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.32,
+      "uncertainty": {
+        "sigma_x_cm": 3.158,
+        "sigma_y_cm": 8.74,
+        "sigma_z_cm": 3.771,
+        "cov_trace_cm2": 100.585
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_7",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 2.91,
+      "uncertainty": {
+        "sigma_x_cm": 10.257,
+        "sigma_y_cm": 3.084,
+        "sigma_z_cm": 3.16,
+        "cov_trace_cm2": 124.709
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_8",
+      "flavor": "French_Onion",
+      "state": "rolling",
+      "error_3d_cm": 4.03,
+      "uncertainty": {
+        "sigma_x_cm": 10.139,
+        "sigma_y_cm": 3.271,
+        "sigma_z_cm": 4.502,
+        "cov_trace_cm2": 133.756
+      },
+      "pass": false
+    },
+    {
+      "can_name": "can_9",
+      "flavor": "Paprika",
+      "state": "rolling",
+      "error_3d_cm": 2.57,
+      "uncertainty": {
+        "sigma_x_cm": 10.491,
+        "sigma_y_cm": 3.341,
+        "sigma_z_cm": 4.363,
+        "cov_trace_cm2": 140.262
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_10",
+      "flavor": "Extra_Hot",
+      "state": "rolling",
+      "error_3d_cm": 3.04,
+      "uncertainty": {
+        "sigma_x_cm": 10.651,
+        "sigma_y_cm": 3.134,
+        "sigma_z_cm": 4.011,
+        "cov_trace_cm2": 139.345
+      },
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "experiment_id": "004",
+  "method": "boxernet_aleatoric_lifting",
+  "can_count": 1,
+  "mean_error_3d_cm": 1.84,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_paprika",
+      "flavor": "Paprika",
+      "state": "standing",
+      "error_3d_cm": 1.84,
+      "aleatoric_sigma": {
+        "sigma_x_cm": 123.417,
+        "sigma_y_cm": 105.638,
+        "sigma_z_cm": 110.086
+      },
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "experiment_id": "006",
+  "method": "exp13_feature_matching_transfer",
+  "can_count": 3,
+  "mean_error_3d_cm": 1.9,
+  "pass_rate_pct": 66.7,
+  "evaluations": [
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 1.09,
+      "pass": true
+    },
+    {
+      "can_name": "can_fo",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.58,
+      "pass": true
+    },
+    {
+      "can_name": "can_orig",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 4.02,
+      "pass": false
+    }
+  ]
+}
