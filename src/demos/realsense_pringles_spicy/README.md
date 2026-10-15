@@ -83,7 +83,7 @@ uv run python -m demos.realsense_pringles_spicy.main --mock --headless --snapsho
               │
       ┌───────┴───────────────────────┐
       ▼                               ▼
-[AprilTag Detector]           [YOLOv8 Detection]
+[AprilTag Detector]           [YOLO26s Detection]
 (Extracts Table Plane &       (Extracts 2D RoIs: bottles,
  Coordinate Frame R, t)        cans, elongated cylinders)
       │                               │
