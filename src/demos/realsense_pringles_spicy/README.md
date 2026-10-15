@@ -46,6 +46,12 @@ uv run python -m demos.realsense_pringles_spicy.main
 uv run realsense-pringles-spicy
 ```
 
+> **Default Weights:** Uses `yolo26s.pt` (`/home/mfk01/Projects/econ-systems/demos/demo2/yolo26s.pt`).
+> You can also specify it explicitly:
+> ```bash
+> uv run python -m demos.realsense_pringles_spicy.main --yolo-model /home/mfk01/Projects/econ-systems/demos/demo2/yolo26s.pt
+> ```
+
 ### 2. Simulated Mock Playback (Offline / No Camera Required)
 ```bash
 uv run python -m demos.realsense_pringles_spicy.main --mock
