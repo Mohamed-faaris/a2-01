@@ -1,0 +1,16 @@
+{
+  "experiment_id": "002",
+  "method": "realsense_surface_depth_compensated",
+  "can_count": 1,
+  "mean_error_3d_cm": 1.56,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "error_3d_cm": 1.56,
+      "pass": true
+    }
+  ]
+}

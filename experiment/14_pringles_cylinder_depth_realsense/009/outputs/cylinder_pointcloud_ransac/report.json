@@ -1,0 +1,201 @@
+{
+  "experiment_id": "009",
+  "method": "cylinder_pointcloud_ransac",
+  "can_count": 8,
+  "mean_error_3d_cm": 3.94,
+  "pass_rate_pct": 50.0,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "Original",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        -0.28,
+        -0.0396,
+        1.6964
+      ],
+      "est_center_cam": [
+        -0.2848,
+        -0.0425,
+        1.702
+      ],
+      "error_3d_cm": 0.79,
+      "uncertainty": {
+        "sigma_x_cm": 6.567,
+        "sigma_y_cm": 10.504,
+        "sigma_z_cm": 3.974,
+        "cov_trace_cm2": 169.261
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        -0.1,
+        -0.0822,
+        1.8086
+      ],
+      "est_center_cam": [
+        -0.0211,
+        -0.0839,
+        1.811
+      ],
+      "error_3d_cm": 7.9,
+      "uncertainty": {
+        "sigma_x_cm": 6.611,
+        "sigma_y_cm": 10.165,
+        "sigma_z_cm": 3.562,
+        "cov_trace_cm2": 159.721
+      },
+      "pass": false
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        0.1,
+        -0.0822,
+        1.8086
+      ],
+      "est_center_cam": [
+        0.0227,
+        -0.0838,
+        1.8107
+      ],
+      "error_3d_cm": 7.74,
+      "uncertainty": {
+        "sigma_x_cm": 5.829,
+        "sigma_y_cm": 9.718,
+        "sigma_z_cm": 3.854,
+        "cov_trace_cm2": 143.276
+      },
+      "pass": false
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "Paprika",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        0.28,
+        -0.0467,
+        1.7151
+      ],
+      "est_center_cam": [
+        0.2843,
+        -0.049,
+        1.7191
+      ],
+      "error_3d_cm": 0.63,
+      "uncertainty": {
+        "sigma_x_cm": 6.335,
+        "sigma_y_cm": 10.769,
+        "sigma_z_cm": 3.457,
+        "cov_trace_cm2": 168.046
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "detected_state": "rolling",
+      "gt_center_cam": [
+        -0.26,
+        0.1277,
+        1.546
+      ],
+      "est_center_cam": [
+        -0.2472,
+        0.1431,
+        1.5339
+      ],
+      "error_3d_cm": 2.35,
+      "uncertainty": {
+        "sigma_x_cm": 9.981,
+        "sigma_y_cm": 4.603,
+        "sigma_z_cm": 3.349,
+        "cov_trace_cm2": 132.023
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "rolling",
+      "detected_state": "rolling",
+      "gt_center_cam": [
+        -0.08,
+        0.0993,
+        1.6208
+      ],
+      "est_center_cam": [
+        -0.0717,
+        0.126,
+        1.5833
+      ],
+      "error_3d_cm": 4.68,
+      "uncertainty": {
+        "sigma_x_cm": 11.053,
+        "sigma_y_cm": 4.341,
+        "sigma_z_cm": 4.784,
+        "cov_trace_cm2": 163.904
+      },
+      "pass": false
+    },
+    {
+      "can_name": "can_7",
+      "flavor": "French_Onion",
+      "state": "rolling",
+      "detected_state": "rolling",
+      "gt_center_cam": [
+        0.12,
+        0.1064,
+        1.6021
+      ],
+      "est_center_cam": [
+        0.106,
+        0.1372,
+        1.5649
+      ],
+      "error_3d_cm": 5.03,
+      "uncertainty": {
+        "sigma_x_cm": 10.227,
+        "sigma_y_cm": 3.741,
+        "sigma_z_cm": 5.064,
+        "cov_trace_cm2": 144.23
+      },
+      "pass": false
+    },
+    {
+      "can_name": "can_8",
+      "flavor": "Extra_Hot",
+      "state": "rolling",
+      "detected_state": "rolling",
+      "gt_center_cam": [
+        0.26,
+        0.1348,
+        1.5273
+      ],
+      "est_center_cam": [
+        0.2475,
+        0.1527,
+        1.5176
+      ],
+      "error_3d_cm": 2.39,
+      "uncertainty": {
+        "sigma_x_cm": 9.578,
+        "sigma_y_cm": 4.477,
+        "sigma_z_cm": 3.344,
+        "cov_trace_cm2": 122.969
+      },
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "experiment_id": "006",
+  "method": "exp13_feature_matching_transfer",
+  "can_count": 5,
+  "mean_error_3d_cm": 1.4,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_original",
+      "flavor": "Original",
+      "state": "standing",
+      "error_3d_cm": 0.34,
+      "pass": true
+    },
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 1.36,
+      "pass": true
+    },
+    {
+      "can_name": "can_french_onion",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 0.87,
+      "pass": true
+    },
+    {
+      "can_name": "can_extra_hot",
+      "flavor": "Extra_Hot",
+      "state": "rolling",
+      "error_3d_cm": 2.06,
+      "pass": true
+    },
+    {
+      "can_name": "can_paprika",
+      "flavor": "Paprika",
+      "state": "rolling",
+      "error_3d_cm": 2.38,
+      "pass": true
+    }
+  ]
+}

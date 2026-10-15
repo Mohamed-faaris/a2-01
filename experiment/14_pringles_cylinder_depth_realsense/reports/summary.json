@@ -1,0 +1,38 @@
+{
+  "cylinder_pointcloud_ransac": {
+    "total_cans_evaluated": 45,
+    "pass_rate_pct": 82.2,
+    "mean_error_cm": 2.43,
+    "median_error_cm": 2.07,
+    "p90_error_cm": 5.23,
+    "min_error_cm": 0.17,
+    "max_error_cm": 7.9
+  },
+  "realsense_surface_depth_compensated": {
+    "total_cans_evaluated": 45,
+    "pass_rate_pct": 57.8,
+    "mean_error_cm": 4.32,
+    "median_error_cm": 3.25,
+    "p90_error_cm": 8.23,
+    "min_error_cm": 0.87,
+    "max_error_cm": 10.54
+  },
+  "realsense_surface_depth_raw": {
+    "total_cans_evaluated": 45,
+    "pass_rate_pct": 22.2,
+    "mean_error_cm": 5.83,
+    "median_error_cm": 5.33,
+    "p90_error_cm": 9.26,
+    "min_error_cm": 2.09,
+    "max_error_cm": 11.42
+  },
+  "exp13_feature_matching_transfer": {
+    "total_cans_evaluated": 45,
+    "pass_rate_pct": 82.2,
+    "mean_error_cm": 2.43,
+    "median_error_cm": 2.12,
+    "p90_error_cm": 5.28,
+    "min_error_cm": 0.19,
+    "max_error_cm": 7.84
+  }
+}

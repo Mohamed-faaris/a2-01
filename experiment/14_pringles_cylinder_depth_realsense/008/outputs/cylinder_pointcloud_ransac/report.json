@@ -1,0 +1,177 @@
+{
+  "experiment_id": "008",
+  "method": "cylinder_pointcloud_ransac",
+  "can_count": 7,
+  "mean_error_3d_cm": 2.22,
+  "pass_rate_pct": 85.7,
+  "evaluations": [
+    {
+      "can_name": "can_1",
+      "flavor": "Original",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        -0.2973,
+        0.0027,
+        1.5421
+      ],
+      "est_center_cam": [
+        -0.3216,
+        -0.0005,
+        1.5489
+      ],
+      "error_3d_cm": 2.54,
+      "uncertainty": {
+        "sigma_x_cm": 6.058,
+        "sigma_y_cm": 9.875,
+        "sigma_z_cm": 3.637,
+        "cov_trace_cm2": 147.438
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_2",
+      "flavor": "BBQ",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        -0.1663,
+        -0.0435,
+        1.6732
+      ],
+      "est_center_cam": [
+        -0.1624,
+        -0.0464,
+        1.6791
+      ],
+      "error_3d_cm": 0.76,
+      "uncertainty": {
+        "sigma_x_cm": 6.454,
+        "sigma_y_cm": 10.167,
+        "sigma_z_cm": 3.28,
+        "cov_trace_cm2": 155.782
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_3",
+      "flavor": "Extra_Hot",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        -0.0086,
+        -0.057,
+        1.7114
+      ],
+      "est_center_cam": [
+        -0.0002,
+        -0.0441,
+        1.6724
+      ],
+      "error_3d_cm": 4.2,
+      "uncertainty": {
+        "sigma_x_cm": 4.712,
+        "sigma_y_cm": 8.742,
+        "sigma_z_cm": 2.845,
+        "cov_trace_cm2": 106.723
+      },
+      "pass": false
+    },
+    {
+      "can_name": "can_4",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        0.1749,
+        -0.0411,
+        1.6663
+      ],
+      "est_center_cam": [
+        0.1752,
+        -0.0423,
+        1.6675
+      ],
+      "error_3d_cm": 0.17,
+      "uncertainty": {
+        "sigma_x_cm": 6.141,
+        "sigma_y_cm": 11.138,
+        "sigma_z_cm": 3.99,
+        "cov_trace_cm2": 177.685
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_5",
+      "flavor": "Paprika",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        0.3226,
+        -0.0044,
+        1.5621
+      ],
+      "est_center_cam": [
+        0.3463,
+        -0.0086,
+        1.5718
+      ],
+      "error_3d_cm": 2.59,
+      "uncertainty": {
+        "sigma_x_cm": 6.092,
+        "sigma_y_cm": 9.728,
+        "sigma_z_cm": 3.762,
+        "cov_trace_cm2": 145.908
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_6",
+      "flavor": "Original",
+      "state": "rolling",
+      "detected_state": "rolling",
+      "gt_center_cam": [
+        -0.1683,
+        0.1436,
+        1.4521
+      ],
+      "est_center_cam": [
+        -0.1654,
+        0.1702,
+        1.4401
+      ],
+      "error_3d_cm": 2.93,
+      "uncertainty": {
+        "sigma_x_cm": 8.518,
+        "sigma_y_cm": 3.903,
+        "sigma_z_cm": 4.714,
+        "cov_trace_cm2": 110.014
+      },
+      "pass": true
+    },
+    {
+      "can_name": "can_7",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "detected_state": "rolling",
+      "gt_center_cam": [
+        0.171,
+        0.136,
+        1.4734
+      ],
+      "est_center_cam": [
+        0.171,
+        0.1584,
+        1.4652
+      ],
+      "error_3d_cm": 2.38,
+      "uncertainty": {
+        "sigma_x_cm": 8.898,
+        "sigma_y_cm": 4.188,
+        "sigma_z_cm": 3.906,
+        "cov_trace_cm2": 111.968
+      },
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "experiment_id": "005",
+  "method": "realsense_surface_depth_raw",
+  "can_count": 3,
+  "mean_error_3d_cm": 3.98,
+  "pass_rate_pct": 66.7,
+  "evaluations": [
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "standing",
+      "error_3d_cm": 2.26,
+      "pass": true
+    },
+    {
+      "can_name": "can_french_onion",
+      "flavor": "French_Onion",
+      "state": "standing",
+      "error_3d_cm": 2.99,
+      "pass": true
+    },
+    {
+      "can_name": "can_original",
+      "flavor": "Original",
+      "state": "rolling",
+      "error_3d_cm": 6.69,
+      "pass": false
+    }
+  ]
+}

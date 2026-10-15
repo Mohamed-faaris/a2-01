@@ -1,0 +1,16 @@
+{
+  "experiment_id": "003",
+  "method": "realsense_surface_depth_raw",
+  "can_count": 1,
+  "mean_error_3d_cm": 4.11,
+  "pass_rate_pct": 0.0,
+  "evaluations": [
+    {
+      "can_name": "can_french_onion",
+      "flavor": "French_Onion",
+      "state": "rolling",
+      "error_3d_cm": 4.11,
+      "pass": false
+    }
+  ]
+}

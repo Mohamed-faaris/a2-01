@@ -1,0 +1,33 @@
+{
+  "experiment_id": "002",
+  "method": "cylinder_pointcloud_ransac",
+  "can_count": 1,
+  "mean_error_3d_cm": 1.56,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_bbq",
+      "flavor": "BBQ",
+      "state": "rolling",
+      "detected_state": "rolling",
+      "gt_center_cam": [
+        0.05,
+        0.0097,
+        1.1302
+      ],
+      "est_center_cam": [
+        0.0499,
+        0.0245,
+        1.1351
+      ],
+      "error_3d_cm": 1.56,
+      "uncertainty": {
+        "sigma_x_cm": 7.586,
+        "sigma_y_cm": 2.607,
+        "sigma_z_cm": 1.25,
+        "cov_trace_cm2": 65.911
+      },
+      "pass": true
+    }
+  ]
+}

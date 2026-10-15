@@ -1,0 +1,33 @@
+{
+  "experiment_id": "001",
+  "method": "cylinder_pointcloud_ransac",
+  "can_count": 1,
+  "mean_error_3d_cm": 1.99,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_original",
+      "flavor": "Original",
+      "state": "standing",
+      "detected_state": "standing",
+      "gt_center_cam": [
+        0.08,
+        -0.0559,
+        1.1141
+      ],
+      "est_center_cam": [
+        0.0791,
+        -0.0758,
+        1.1138
+      ],
+      "error_3d_cm": 1.99,
+      "uncertainty": {
+        "sigma_x_cm": 2.815,
+        "sigma_y_cm": 6.042,
+        "sigma_z_cm": 2.332,
+        "cov_trace_cm2": 49.868
+      },
+      "pass": true
+    }
+  ]
+}

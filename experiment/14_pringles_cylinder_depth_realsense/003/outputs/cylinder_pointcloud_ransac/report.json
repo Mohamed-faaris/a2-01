@@ -1,0 +1,33 @@
+{
+  "experiment_id": "003",
+  "method": "cylinder_pointcloud_ransac",
+  "can_count": 1,
+  "mean_error_3d_cm": 2.04,
+  "pass_rate_pct": 100.0,
+  "evaluations": [
+    {
+      "can_name": "can_french_onion",
+      "flavor": "French_Onion",
+      "state": "rolling",
+      "detected_state": "rolling",
+      "gt_center_cam": [
+        -0.0581,
+        0.0011,
+        1.21
+      ],
+      "est_center_cam": [
+        -0.0515,
+        0.02,
+        1.2059
+      ],
+      "error_3d_cm": 2.04,
+      "uncertainty": {
+        "sigma_x_cm": 7.316,
+        "sigma_y_cm": 3.269,
+        "sigma_z_cm": 4.648,
+        "cov_trace_cm2": 85.81
+      },
+      "pass": true
+    }
+  ]
+}
