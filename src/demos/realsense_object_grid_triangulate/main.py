@@ -260,14 +260,17 @@ class NonQueuingRealSenseStream:
             pass
 
 
-def get_robust_median_depth(depth_map: np.ndarray, cx: float, cy: float, window: int = 5) -> float:
-    """Extract median depth around a pixel coordinate (cx, cy) within a square window."""
+def get_robust_median_depth(depth_map: np.ndarray, cx: float, cy: float, window: int = 6) -> float:
+    """Extract median depth around a pixel coordinate (cx, cy) within a square window, with adaptive fallback for thin/reflective surfaces."""
     h, w = depth_map.shape[:2]
-    x_min, x_max = max(0, int(cx - window)), min(w, int(cx + window + 1))
-    y_min, y_max = max(0, int(cy - window)), min(h, int(cy + window + 1))
-    sub = depth_map[y_min:y_max, x_min:x_max]
-    valid = sub[(sub > 0.05) & (sub < 5.0)]
-    return float(np.median(valid)) if len(valid) > 0 else 0.0
+    for win in [window, window * 2, window * 3]:
+        x_min, x_max = max(0, int(cx - win)), min(w, int(cx + win + 1))
+        y_min, y_max = max(0, int(cy - win)), min(h, int(cy + win + 1))
+        sub = depth_map[y_min:y_max, x_min:x_max]
+        valid = sub[(sub > 0.05) & (sub < 5.0)]
+        if len(valid) > 0:
+            return float(np.median(valid))
+    return 0.0
 
 
 def backproject_pixel(u: float, v: float, depth_m: float, K: np.ndarray) -> np.ndarray:
@@ -722,23 +725,27 @@ def render_bev_tabletop_map(
         click_px = int(cx + click_x_m * scale)
         click_py = int(cy - click_y_m * scale)
 
-        if 0 <= click_px < width and 0 <= click_py < height:
-            # 1. Line connecting Origin (cx, cy) to Clicked Position (click_px, click_py)
-            cv2.line(bev, (cx, cy), (click_px, click_py), (0, 255, 255), 2, cv2.LINE_AA)
+        # Clamp marker coordinates so click is always visibly marked on the map canvas
+        clamped_px = int(np.clip(click_px, 16, width - 16))
+        clamped_py = int(np.clip(click_py, 16, height - 16))
 
-            # 2. Prominent Click Marker (Red & Yellow Target)
-            cv2.circle(bev, (click_px, click_py), 8, (0, 0, 255), -1, cv2.LINE_AA)
-            cv2.circle(bev, (click_px, click_py), 12, (0, 255, 255), 2, cv2.LINE_AA)
-            cv2.drawMarker(bev, (click_px, click_py), (255, 255, 255), cv2.MARKER_CROSS, 18, 2, cv2.LINE_AA)
+        # 1. Line connecting Origin (cx, cy) to Clicked Position
+        cv2.line(bev, (cx, cy), (clamped_px, clamped_py), (0, 255, 255), 2, cv2.LINE_AA)
 
-            # 3. Coordinate and Distance Label
-            dist_cm = clicked_pt_info.get("dist_cm", math.hypot(c_xyz[0], c_xyz[1]))
-            click_lbl = f"CLICK [{c_xyz[0]:+5.1f}, {c_xyz[1]:+5.1f}] cm (d={dist_cm:.1f}cm)"
-            (tw, th), _ = cv2.getTextSize(click_lbl, cv2.FONT_HERSHEY_SIMPLEX, 0.40, 1)
-            lx = min(width - tw - 10, max(10, click_px + 14))
-            ly = max(20, click_py - 6)
-            cv2.rectangle(bev, (lx - 2, ly - th - 2), (lx + tw + 2, ly + 2), (0, 0, 0), -1)
-            cv2.putText(bev, click_lbl, (lx, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1, cv2.LINE_AA)
+        # 2. Prominent Click Target Marker (Red & Yellow Target with Pulsing Rings)
+        cv2.circle(bev, (clamped_px, clamped_py), 9, (0, 0, 255), -1, cv2.LINE_AA)
+        cv2.circle(bev, (clamped_px, clamped_py), 14, (0, 255, 255), 2, cv2.LINE_AA)
+        cv2.drawMarker(bev, (clamped_px, clamped_py), (255, 255, 255), cv2.MARKER_CROSS, 20, 2, cv2.LINE_AA)
+
+        # 3. Coordinate and Distance Label
+        dist_cm = clicked_pt_info.get("dist_cm", math.hypot(c_xyz[0], c_xyz[1]))
+        click_lbl = f"CLICK [{c_xyz[0]:+5.1f}, {c_xyz[1]:+5.1f}] cm (d={dist_cm:.1f}cm)"
+        (tw, th), _ = cv2.getTextSize(click_lbl, cv2.FONT_HERSHEY_SIMPLEX, 0.40, 1)
+        lx = min(width - tw - 12, max(12, clamped_px + 16))
+        ly = max(24, min(height - 10, clamped_py - 6))
+        cv2.rectangle(bev, (lx - 3, ly - th - 3), (lx + tw + 3, ly + 3), (10, 10, 10), -1)
+        cv2.rectangle(bev, (lx - 3, ly - th - 3), (lx + tw + 3, ly + 3), (0, 255, 255), 1)
+        cv2.putText(bev, click_lbl, (lx, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1, cv2.LINE_AA)
 
     # Title
     cv2.putText(bev, "TOP-DOWN TABLETOP BEV MAP", (14, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (220, 220, 240), 1)
