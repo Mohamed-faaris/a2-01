@@ -286,6 +286,92 @@ def project_3d_to_pixel(pt_3d: np.ndarray, K: np.ndarray) -> tuple[int, int]:
     return int(round(u)), int(round(v))
 
 
+def get_corner_offset_in_tag(corner_idx: int, tag_size: float) -> tuple[np.ndarray, str]:
+    """
+    Get 3D offset (dx, dy, dz) from AprilTag center to the chosen origin.
+    corner_idx:
+      -1: Center origin (0, 0, 0)
+       0: Top-Left Corner (-s/2, -s/2, 0)
+       1: Top-Right Corner (+s/2, -s/2, 0)
+       2: Bottom-Right Corner (+s/2, +s/2, 0)
+       3: Bottom-Left Corner (-s/2, +s/2, 0)
+    """
+    half = tag_size / 2.0
+    if corner_idx == 0:
+        return np.array([-half, -half, 0.0], dtype=np.float64), "Top-Left Corner"
+    elif corner_idx == 1:
+        return np.array([+half, -half, 0.0], dtype=np.float64), "Top-Right Corner"
+    elif corner_idx == 2:
+        return np.array([+half, +half, 0.0], dtype=np.float64), "Bottom-Right Corner"
+    elif corner_idx == 3:
+        return np.array([-half, +half, 0.0], dtype=np.float64), "Bottom-Left Corner"
+    else:
+        return np.array([0.0, 0.0, 0.0], dtype=np.float64), "Tag Center"
+
+
+def draw_tag_with_corner_origin(
+    img: np.ndarray,
+    tag: dict,
+    K: np.ndarray,
+    active_corner_idx: int = 0
+):
+    """
+    Draw AprilTag polygon, highlight all 4 corners, and clearly mark the chosen Origin corner
+    with prominent 3D coordinate axes and clear text labels.
+    """
+    corners = tag["corners"].astype(int)
+    R_tag = tag["R"]
+    t_tag = tag["t"]
+    tag_size = tag["size"]
+    tid = tag["id"]
+
+    # 1. Draw outer AprilTag boundary
+    cv2.polylines(img, [corners], True, (0, 255, 0), 2, cv2.LINE_AA)
+
+    # 2. Draw subtle dots on all 4 corners with numbers
+    for i, pt in enumerate(corners):
+        px, py = int(pt[0]), int(pt[1])
+        cv2.circle(img, (px, py), 4, (180, 220, 180), -1, cv2.LINE_AA)
+        cv2.putText(img, f"c{i}", (px - 14, py - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (180, 220, 180), 1)
+
+    # 3. Determine active origin point in 3D camera space
+    corner_offset, corner_name = get_corner_offset_in_tag(active_corner_idx, tag_size)
+    # p_cam_origin = t_tag + R_tag @ corner_offset
+    p_cam_origin = t_tag + R_tag @ corner_offset
+
+    origin_px = project_3d_to_pixel(p_cam_origin, K)
+
+    # 4. Draw prominent Origin Marker: concentric rings + crosshair
+    cv2.circle(img, origin_px, 9, (0, 255, 255), 2, cv2.LINE_AA)       # Yellow outer ring
+    cv2.circle(img, origin_px, 4, (0, 0, 255), -1, cv2.LINE_AA)       # Red inner dot
+    cv2.drawMarker(img, origin_px, (0, 255, 255), cv2.MARKER_CROSS, 22, 2, cv2.LINE_AA)
+
+    # 5. Draw 3D Coordinate Axes anchored at this exact Corner Origin
+    axis_len = 0.08  # 8 cm axes
+    ax_x = project_3d_to_pixel(p_cam_origin + R_tag[:, 0] * axis_len, K)
+    ax_y = project_3d_to_pixel(p_cam_origin + R_tag[:, 1] * axis_len, K)
+    ax_z = project_3d_to_pixel(p_cam_origin + R_tag[:, 2] * axis_len, K)
+
+    # X-axis: Red, Y-axis: Green, Z-axis: Blue
+    cv2.line(img, origin_px, ax_x, (0, 0, 255), 3, cv2.LINE_AA)
+    cv2.putText(img, "+X", (ax_x[0] + 4, ax_x[1] + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+
+    cv2.line(img, origin_px, ax_y, (0, 255, 0), 3, cv2.LINE_AA)
+    cv2.putText(img, "+Y", (ax_y[0] + 4, ax_y[1] + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
+
+    cv2.line(img, origin_px, ax_z, (255, 100, 0), 3, cv2.LINE_AA)
+    cv2.putText(img, "+Z", (ax_z[0] + 4, ax_z[1] + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 100, 0), 2)
+
+    # 6. Clear label with corner origin title
+    lbl_text = f"ORIGIN (0,0,0) [Tag #{tid} {corner_name}]"
+    (tw, th), _ = cv2.getTextSize(lbl_text, cv2.FONT_HERSHEY_SIMPLEX, 0.48, 2)
+    lx = max(10, origin_px[0] - tw // 2)
+    ly = max(24, origin_px[1] - 16)
+    cv2.rectangle(img, (lx - 4, ly - th - 4), (lx + tw + 4, ly + 4), (20, 20, 20), -1)
+    cv2.rectangle(img, (lx - 4, ly - th - 4), (lx + tw + 4, ly + 4), (0, 255, 255), 1)
+    cv2.putText(img, lbl_text, (lx, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 255, 255), 2, cv2.LINE_AA)
+
+
 def generate_object_surface_grid(
     bbox_xyxy: list[int | float],
     depth_map: np.ndarray,
@@ -426,6 +512,7 @@ def render_telemetry_hud(
     height: int,
     objects: list[dict],
     best_tag: dict | None,
+    corner_name: str,
     selected_idx: int | None,
     clicked_pt_info: dict | None,
     fps: float,
@@ -445,8 +532,8 @@ def render_telemetry_hud(
     if best_tag:
         tid = best_tag["id"]
         t_dist = float(np.linalg.norm(best_tag["t"])) * 100.0
-        cv2.putText(hud, f"[REF ORIGIN] AprilTag #{tid} Detected (Dist: {t_dist:.1f} cm | Size: {best_tag['size']*100:.1f} cm)",
-                    (14, y), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 255, 120), 1, cv2.LINE_AA)
+        cv2.putText(hud, f"[ORIGIN (0,0,0)] Tag #{tid} [{corner_name.upper()}] | Dist: {t_dist:.1f} cm",
+                    (14, y), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 255, 255), 1, cv2.LINE_AA)
     else:
         cv2.putText(hud, "[REF ORIGIN] No AprilTag detected - displaying camera optical coordinates",
                     (14, y), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (120, 150, 255), 1, cv2.LINE_AA)
@@ -498,7 +585,7 @@ def render_telemetry_hud(
         if pt.get("table_xyz_cm"):
             tx, ty, tz = pt["table_xyz_cm"]
             dist = pt["dist_cm"]
-            cv2.putText(hud, f"Table Position: X={tx:+6.1f} cm, Y={ty:+6.1f} cm, Z={tz:+6.1f} cm (Dist={dist:.1f}cm)",
+            cv2.putText(hud, f"Origin Relative: X={tx:+6.1f} cm, Y={ty:+6.1f} cm, Z={tz:+6.1f} cm (Dist={dist:.1f}cm)",
                         (18, y), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 0), 1, cv2.LINE_AA)
             y += 20
     else:
@@ -510,8 +597,8 @@ def render_telemetry_hud(
     y = height - 40
     cv2.line(hud, (14, y), (width - 14, y), (50, 50, 60), 1)
     y += 18
-    controls = f"[G]: Grid {grid_size}x{grid_size} | [M]: Toggle Mesh | [C]: Clear Click | [S]: Save Snapshot | [Q]: Quit"
-    cv2.putText(hud, controls, (14, y), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (160, 200, 160), 1, cv2.LINE_AA)
+    controls = f"[O]: Cycle Origin Corner | [G]: Grid {grid_size}x{grid_size} | [M]: Mesh | [C]: Clear | [Q]: Quit"
+    cv2.putText(hud, controls, (14, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (160, 200, 160), 1, cv2.LINE_AA)
 
     return hud
 
@@ -520,7 +607,8 @@ def render_bev_tabletop_map(
     width: int,
     height: int,
     objects: list[dict],
-    best_tag: dict | None
+    best_tag: dict | None,
+    corner_name: str = "Top-Left Corner"
 ) -> np.ndarray:
     """Render 2D top-down Bird's-Eye View (BEV) radar map of tabletop objects."""
     bev = np.zeros((height, width, 3), dtype=np.uint8)
@@ -543,9 +631,11 @@ def render_bev_tabletop_map(
             cv2.line(bev, (px, 20), (px, height - 20), (35, 35, 45), 1)
             cv2.putText(bev, f"{offset_m:+.1f}m", (px - 15, height - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (70, 70, 80), 1)
 
-    # Origin (AprilTag)
-    cv2.drawMarker(bev, (cx, cy), (0, 255, 0), cv2.MARKER_CROSS, 16, 2)
-    cv2.putText(bev, "TAG ORIGIN (0,0)", (cx + 8, cy - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1)
+    # Origin (AprilTag Corner)
+    cv2.circle(bev, (cx, cy), 7, (0, 255, 255), 2, cv2.LINE_AA)
+    cv2.circle(bev, (cx, cy), 3, (0, 0, 255), -1, cv2.LINE_AA)
+    cv2.drawMarker(bev, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 16, 2)
+    cv2.putText(bev, f"ORIGIN (0,0) [{corner_name}]", (cx + 10, cy - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1)
 
     # Draw objects
     for idx, obj in enumerate(objects):
@@ -637,6 +727,7 @@ def run_demo(args: argparse.Namespace) -> int:
     draw_mesh = True
     frame_idx = 0
     fps_smooth = 15.0
+    active_corner_idx = getattr(args, "corner_id", 0)  # 0: Top-Left, 1: Top-Right, 2: Bottom-Right, 3: Bottom-Left, -1: Center
 
     # Color palette for detected object types
     class_palette = {
@@ -676,6 +767,9 @@ def run_demo(args: argparse.Namespace) -> int:
             )
 
             best_tag = None
+            corner_name = "Top-Left Corner"
+            corner_offset = np.zeros(3)
+
             if dets:
                 d0 = dets[0]
                 t_size = marker_sizes.get(d0.tag_id, args.tag_size)
@@ -689,22 +783,14 @@ def run_demo(args: argparse.Namespace) -> int:
                     "corners": np.asarray(d0.corners, dtype=np.float64),
                 }
 
-                # Draw AprilTag boundary & coordinate axes
-                corners = best_tag["corners"].astype(int)
-                cv2.polylines(annotated_color, [corners], True, (0, 255, 0), 2)
-                origin_px = project_3d_to_pixel(t_tag, K)
-                ax_x = project_3d_to_pixel(t_tag + R_tag[:, 0] * 0.06, K)
-                ax_y = project_3d_to_pixel(t_tag + R_tag[:, 1] * 0.06, K)
-                ax_z = project_3d_to_pixel(t_tag + R_tag[:, 2] * 0.06, K)
-                cv2.line(annotated_color, origin_px, ax_x, (0, 0, 255), 2)
-                cv2.line(annotated_color, origin_px, ax_y, (0, 255, 0), 2)
-                cv2.line(annotated_color, origin_px, ax_z, (255, 0, 0), 2)
-                cv2.putText(annotated_color, f"Tag #{d0.tag_id} (Ref)", (origin_px[0] + 8, origin_px[1]),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1)
+                # Calculate selected corner origin offset and name
+                corner_offset, corner_name = get_corner_offset_in_tag(active_corner_idx, t_size)
+
+                # Draw clearly marked Corner Origin with coordinate axes
+                draw_tag_with_corner_origin(annotated_color, best_tag, K, active_corner_idx=active_corner_idx)
 
             R_tag_ref = best_tag["R"] if best_tag else None
             t_tag_ref = best_tag["t"] if best_tag else None
-            corner_offset = np.array([-best_tag["size"]/2.0, -best_tag["size"]/2.0, 0.0]) if (best_tag and args.corner_origin) else np.zeros(3)
 
             # 2. YOLO Object Detection
             yolo_res = yolo.predict(source=color_img, conf=args.conf, verbose=False)[0]
@@ -789,7 +875,7 @@ def run_demo(args: argparse.Namespace) -> int:
 
             # Q2: Telemetry HUD
             q2 = render_telemetry_hud(
-                panel_w, panel_h, detected_objects, best_tag,
+                panel_w, panel_h, detected_objects, best_tag, corner_name,
                 tracker.selected_object_idx, click_info, fps_smooth,
                 grid_sizes[grid_size_idx]
             )
@@ -805,7 +891,7 @@ def run_demo(args: argparse.Namespace) -> int:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1, cv2.LINE_AA)
 
             # Q4: Tabletop BEV Radar Map
-            q4 = render_bev_tabletop_map(panel_w, panel_h, detected_objects, best_tag)
+            q4 = render_bev_tabletop_map(panel_w, panel_h, detected_objects, best_tag, corner_name=corner_name)
 
             top_row = np.hstack([q1, q2])
             bot_row = np.hstack([q3, q4])
@@ -824,6 +910,13 @@ def run_demo(args: argparse.Namespace) -> int:
 
             if key == ord('q') or key == 27:
                 break
+            elif key == ord('o'):
+                # Cycle between corners: 0 (TL) -> 1 (TR) -> 2 (BR) -> 3 (BL) -> -1 (Center)
+                corner_cycle = [0, 1, 2, 3, -1]
+                curr_pos = corner_cycle.index(active_corner_idx) if active_corner_idx in corner_cycle else 0
+                active_corner_idx = corner_cycle[(curr_pos + 1) % len(corner_cycle)]
+                _, next_c_name = get_corner_offset_in_tag(active_corner_idx, 0.1)
+                log.info(f"Origin switched to: {next_c_name}")
             elif key == ord('g'):
                 grid_size_idx = (grid_size_idx + 1) % len(grid_sizes)
                 log.info(f"Switched grid resolution to {grid_sizes[grid_size_idx]}x{grid_sizes[grid_size_idx]}")
@@ -863,6 +956,8 @@ def main():
                         help=f"Default AprilTag size in meters (default: {DEFAULT_TAG_SIZE_M})")
     parser.add_argument("--marker-size", action="append",
                         help="Override marker size for specific ID, format: ID=METRES")
+    parser.add_argument("--corner-id", type=int, default=0, choices=[-1, 0, 1, 2, 3],
+                        help="Chosen origin corner ID: 0=Top-Left, 1=Top-Right, 2=Bottom-Right, 3=Bottom-Left, -1=Center (default: 0)")
     parser.add_argument("--corner-origin", action="store_true", default=True,
                         help="Report measurements relative to physical marker corner")
     parser.add_argument("--mock", action="store_true",
