@@ -665,9 +665,10 @@ def render_bev_tabletop_map(
     height: int,
     objects: list[dict],
     best_tag: dict | None,
-    corner_name: str = "Top-Left Corner"
+    corner_name: str = "Top-Left Corner",
+    clicked_pt_info: dict | None = None
 ) -> np.ndarray:
-    """Render 2D top-down Bird's-Eye View (BEV) radar map of tabletop objects."""
+    """Render 2D top-down Bird's-Eye View (BEV) radar map of tabletop objects and clicked point."""
     bev = np.zeros((height, width, 3), dtype=np.uint8)
     bev[:] = (18, 18, 22)
 
@@ -712,6 +713,32 @@ def render_bev_tabletop_map(
             cv2.circle(bev, (px, py), 10, (255, 255, 255), 1, cv2.LINE_AA)
             lbl = f"#{idx+1} {obj['class']}"
             cv2.putText(bev, lbl, (px + 12, py + 4), cv2.FONT_HERSHEY_SIMPLEX, 0.40, col, 1, cv2.LINE_AA)
+
+    # Draw Clicked Point on Coordinate Map
+    if clicked_pt_info and clicked_pt_info.get("clicked") and clicked_pt_info.get("table_xyz_cm"):
+        c_xyz = clicked_pt_info["table_xyz_cm"]
+        click_x_m = c_xyz[0] / 100.0
+        click_y_m = c_xyz[1] / 100.0
+        click_px = int(cx + click_x_m * scale)
+        click_py = int(cy - click_y_m * scale)
+
+        if 0 <= click_px < width and 0 <= click_py < height:
+            # 1. Line connecting Origin (cx, cy) to Clicked Position (click_px, click_py)
+            cv2.line(bev, (cx, cy), (click_px, click_py), (0, 255, 255), 2, cv2.LINE_AA)
+
+            # 2. Prominent Click Marker (Red & Yellow Target)
+            cv2.circle(bev, (click_px, click_py), 8, (0, 0, 255), -1, cv2.LINE_AA)
+            cv2.circle(bev, (click_px, click_py), 12, (0, 255, 255), 2, cv2.LINE_AA)
+            cv2.drawMarker(bev, (click_px, click_py), (255, 255, 255), cv2.MARKER_CROSS, 18, 2, cv2.LINE_AA)
+
+            # 3. Coordinate and Distance Label
+            dist_cm = clicked_pt_info.get("dist_cm", math.hypot(c_xyz[0], c_xyz[1]))
+            click_lbl = f"CLICK [{c_xyz[0]:+5.1f}, {c_xyz[1]:+5.1f}] cm (d={dist_cm:.1f}cm)"
+            (tw, th), _ = cv2.getTextSize(click_lbl, cv2.FONT_HERSHEY_SIMPLEX, 0.40, 1)
+            lx = min(width - tw - 10, max(10, click_px + 14))
+            ly = max(20, click_py - 6)
+            cv2.rectangle(bev, (lx - 2, ly - th - 2), (lx + tw + 2, ly + 2), (0, 0, 0), -1)
+            cv2.putText(bev, click_lbl, (lx, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 255), 1, cv2.LINE_AA)
 
     # Title
     cv2.putText(bev, "TOP-DOWN TABLETOP BEV MAP", (14, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (220, 220, 240), 1)
@@ -958,7 +985,7 @@ def run_demo(args: argparse.Namespace) -> int:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1, cv2.LINE_AA)
 
             # Q4: Tabletop BEV Radar Map
-            q4 = render_bev_tabletop_map(panel_w, panel_h, detected_objects, best_tag, corner_name=corner_name)
+            q4 = render_bev_tabletop_map(panel_w, panel_h, detected_objects, best_tag, corner_name=corner_name, clicked_pt_info=click_info)
 
             top_row = np.hstack([q1, q2])
             bot_row = np.hstack([q3, q4])
