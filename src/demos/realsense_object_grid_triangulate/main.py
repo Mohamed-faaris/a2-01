@@ -372,6 +372,63 @@ def draw_tag_with_corner_origin(
     cv2.putText(img, lbl_text, (lx, ly), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 255, 255), 2, cv2.LINE_AA)
 
 
+def draw_axis_measurement_from_corner(
+    img: np.ndarray,
+    p_cam_origin: np.ndarray,
+    p_cam_click: np.ndarray,
+    pt_table_rel_m: np.ndarray,
+    R_tag: np.ndarray,
+    K: np.ndarray
+):
+    """
+    Draw direct 3D Euclidean distance line and orthogonal 3D X, Y, Z lines connecting
+    the exact physical corner origin to the clicked surface point.
+    """
+    # 3D points in Camera Frame
+    # Origin: p_cam_origin
+    # X step: p_cam_origin + R_tag @ [dx, 0, 0]
+    # XY step: p_cam_origin + R_tag @ [dx, dy, 0]
+    # XYZ (clicked target): p_cam_click
+    p_X = p_cam_origin + R_tag @ np.array([pt_table_rel_m[0], 0.0, 0.0])
+    p_XY = p_cam_origin + R_tag @ np.array([pt_table_rel_m[0], pt_table_rel_m[1], 0.0])
+    p_XYZ = p_cam_click
+
+    px_O = project_3d_to_pixel(p_cam_origin, K)
+    px_X = project_3d_to_pixel(p_X, K)
+    px_XY = project_3d_to_pixel(p_XY, K)
+    px_XYZ = project_3d_to_pixel(p_XYZ, K)
+
+    dist_cm = float(np.linalg.norm(pt_table_rel_m)) * 100.0
+
+    # 1. Direct Euclidean Line (Yellow): Corner Origin -> Clicked Point
+    cv2.line(img, px_O, px_XYZ, (0, 255, 255), 2, cv2.LINE_AA)
+    mid_x = (px_O[0] + px_XYZ[0]) // 2
+    mid_y = (px_O[1] + px_XYZ[1]) // 2
+    cv2.putText(img, f"d={dist_cm:.1f}cm", (mid_x + 8, mid_y - 8),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.50, (0, 255, 255), 2, cv2.LINE_AA)
+
+    # 2. X-axis projection line (Red): Origin -> (X, 0, 0)
+    cv2.line(img, px_O, px_X, (0, 0, 255), 2, cv2.LINE_AA)
+    cv2.circle(img, px_X, 4, (0, 0, 255), -1, cv2.LINE_AA)
+    mx_x, my_x = (px_O[0] + px_X[0]) // 2, (px_O[1] + px_X[1]) // 2
+    cv2.putText(img, f"X:{pt_table_rel_m[0]*100:+.1f}cm", (mx_x + 6, my_x - 6),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 0, 255), 1, cv2.LINE_AA)
+
+    # 3. Y-axis projection line (Green): (X, 0, 0) -> (X, Y, 0)
+    cv2.line(img, px_X, px_XY, (0, 255, 0), 2, cv2.LINE_AA)
+    cv2.circle(img, px_XY, 4, (0, 255, 0), -1, cv2.LINE_AA)
+    mx_y, my_y = (px_X[0] + px_XY[0]) // 2, (px_X[1] + px_XY[1]) // 2
+    cv2.putText(img, f"Y:{pt_table_rel_m[1]*100:+.1f}cm", (mx_y + 6, my_y - 6),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1, cv2.LINE_AA)
+
+    # 4. Z-axis elevation line (Blue / Cyan): (X, Y, 0) -> (X, Y, Z)
+    cv2.line(img, px_XY, px_XYZ, (255, 200, 0), 2, cv2.LINE_AA)
+    cv2.circle(img, px_XYZ, 4, (255, 200, 0), -1, cv2.LINE_AA)
+    mx_z, my_z = (px_XY[0] + px_XYZ[0]) // 2, (px_XY[1] + px_XYZ[1]) // 2
+    cv2.putText(img, f"Z:{pt_table_rel_m[2]*100:+.1f}cm", (mx_z + 6, my_z - 6),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 200, 0), 1, cv2.LINE_AA)
+
+
 def generate_object_surface_grid(
     bbox_xyxy: list[int | float],
     depth_map: np.ndarray,
@@ -848,7 +905,17 @@ def run_demo(args: argparse.Namespace) -> int:
                     p_cam = backproject_pixel(cx_px, cy_px, d_click, K)
                     p_table = None
                     if R_tag_ref is not None and t_tag_ref is not None:
-                        p_table = (R_tag_ref.T @ (p_cam - t_tag_ref) - corner_offset) * 100.0
+                        # Vector in tag frame relative to the chosen corner origin (in meters)
+                        pt_table_rel_m = R_tag_ref.T @ (p_cam - t_tag_ref) - corner_offset
+                        p_table = pt_table_rel_m * 100.0  # in cm
+
+                        # Active origin in 3D camera space
+                        p_cam_origin = t_tag_ref + R_tag_ref @ corner_offset
+
+                        # Draw direct distance line and orthogonal 3D X, Y, Z lines from Corner Origin!
+                        draw_axis_measurement_from_corner(
+                            annotated_color, p_cam_origin, p_cam, pt_table_rel_m, R_tag_ref, K
+                        )
 
                     click_info = {
                         "clicked": True,
