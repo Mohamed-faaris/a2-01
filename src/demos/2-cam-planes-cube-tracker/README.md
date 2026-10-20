@@ -10,12 +10,50 @@ Real-time 2-camera tracker for AprilTags:
 
 ## Architecture & Layout
 
-The UI displays a side-by-side $1280 \times 720$ unified interface:
+The UI displays a unified interface (up to $1920 \times 720$ when the 3D scene panel is enabled):
 - **Left Column ($640 \times 720$)**:
   - Top: Camera 0 annotated feed with polygon bounding boxes, tag IDs, and classification badges.
   - Bottom: Camera 1 annotated feed.
+- **Middle Column ($640 \times 720$, toggle with `V`)**:
+  - Software-rendered 3D perspective view of the Base frame: ground grid, Base axes, Plane A segment, Plane B quad + normal, Cube face quads, the custom `H` frame, and both camera frustums.
 - **Right Column ($640 \times 720$)**:
   - Telemetry HUD dashboard with live 3D metric coordinates (mm) for the Base reference, Cube centroid, Plane A baseline and midpoint, and Plane B normal and coplanarity RMSE.
+
+### 3D Overlay (array verification)
+
+Each camera view re-projects the *fused metric results* (the exact `[X, Y, Z]` arrays shown in the HUD and exported JSON) back into the image: Base axes at Tag 0, the Plane A segment with per-tag coordinate readouts, the Plane B convex hull + normal arrow, Cube face quads + centroid crosshair, and the custom `H` frame. Any misalignment against the raw 2D tag detections exposes a bad coordinate array.
+
+---
+
+## Code Layout
+
+| File | Contents |
+|:---|:---|
+| `main.py` | CLI entrypoint: argument parsing, `--list-cams` / `--list-calibs` inspection, session setup. |
+| `tracker.py` | `CameraCalibration` (NPZ/JSON/YAML/profile loading + live V4L2 node matching), `VideoFeedSource`, tag detection & PnP geometry, and `TwoCameraPlanesCubePipeline` (`process_frames` + `run`). |
+| `viz.py` | 3D overlays (`annotate_camera_view`, `draw_base_frame_overlay`), the `render_scene3d_panel` software renderer, `render_hud_dashboard`, and `SessionLogger` (time-series CSV + frame photo collection). |
+| `checks/check_overlays.py` | Offline verification: base→camera projection round-trip (< 1e-6 px), overlay pixels at projected positions, scene panel contents, composite UI size, and session logging. |
+
+```bash
+PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/checks/check_overlays.py
+```
+
+### Files handled in the restructure
+
+- [`main.py`](./main.py) — CLI entrypoint (was a 1,743-line monolith, now 168 lines)
+- [`tracker.py`](./tracker.py) — calibration loading, video feeds, tag geometry, tracking pipeline
+- [`viz.py`](./viz.py) — 3D overlays, 3D scene panel, HUD dashboard, session logger
+- [`checks/check_overlays.py`](./checks/check_overlays.py) — offline verification of projection math + overlays
+- [`README.md`](./README.md) — this document
+- Generated at runtime: `outputs/session_<timestamp>/history.csv` + `outputs/session_<timestamp>/frames/*.png` (time series + photo collection) and `outputs/live_tracking_results.json` (default snapshot path)
+
+### Session logs (time series + photo collection)
+
+Every run writes `outputs/session_<timestamp>/` (root configurable with `--session-dir`):
+- `history.csv` — one timestamped row per frame (`--history-interval`, default `0.1 s`) with Cube centroid, Plane A/B centers, RMSE/spread and custom-frame coordinates for offline plotting.
+- `frames/*.png` — the annotated UI composite saved every `--photo-interval` seconds (default `10`, `0` disables) plus a `frame_final.png` on exit.
+
+Disable both with `--no-session`. The UI shape and overlay projection are covered by the offline check in `tmp/check_overlays.py` (round-trip projection error < 1e-6 px).
 
 ---
 
@@ -71,5 +109,6 @@ PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
 | Key | Action |
 |:---|:---|
 | **`H`** | **Toggle Custom Baseline Reference Frame**: <br>• Baseline Top $\rightarrow$ $+X$ axis (from Tag 40 to 41)<br>• Baseline Right $\rightarrow$ $+Y$ axis<br>• Camera view ray $\rightarrow$ $+Z$ axis<br>• Rotates $90^\circ$ around $Y$-axis so $+Z$ faces **UP**<br>• Offsets origin by **$+2\text{ cm}$ along $X$** and **$+5\text{ cm}$ along $Z$**<br>• Live computes the 6-faced Cube Centroid expressed in this custom frame |
+| **`V`** | Toggle the 3D scene panel (middle column) |
 | **`S`** | Export current telemetry snapshot to JSON file |
 | **`Q`** / **`ESC`** | Quit application |
