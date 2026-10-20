@@ -46,13 +46,57 @@ from common.calibrator import (
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 log = logging.getLogger("2cam-planes-cube-tracker")
 
-# Canonical default calibration search paths
+# Standard calibration search directories
 DEFAULT_CALIB_SEARCH_DIRS = [
     REPO_ROOT / "calibrations",
     Path("/home/mfk01/Projects/econ-systems/tools/calibrator/output"),
     Path.home() / ".local/share/econ-systems/calibrations",
     REPO_ROOT / "calibrations" / "calibarotor0" / "outputs",
 ]
+
+
+def clean_card_name(card: str | None) -> str:
+    """Removes USB bus/port suffixes for robust camera card matching."""
+    if not card:
+        return ""
+    # Strip (usb-0000:00:14.0-5) or similar hardware location suffixes
+    cleaned = re.sub(r"\s*\(usb-[0-9a-fA-F:.-]+\)", "", str(card))
+    return cleaned.strip().lower()
+
+
+def enumerate_v4l2_streams() -> list[dict]:
+    """Enumerates all connected V4L2 device nodes, card names, and video capture capabilities."""
+    streams = []
+    v4l_dir = Path("/sys/class/video4linux")
+    if not v4l_dir.is_dir():
+        return streams
+
+    for p in sorted(v4l_dir.iterdir(), key=lambda x: int(re.search(r"\d+", x.name).group()) if re.search(r"\d+", x.name) else 999):
+        name_file = p / "name"
+        if name_file.exists():
+            card_name = name_file.read_text().strip()
+            node = f"/dev/{p.name}"
+            has_capture = False
+            formats = []
+            try:
+                res = subprocess.run(["v4l2-ctl", "--device", node, "--list-formats"], capture_output=True, text=True, timeout=0.6)
+                for line in res.stdout.splitlines():
+                    if "Capture" in line or "[" in line:
+                        formats.append(line.strip())
+                if "Type: Video Capture" in res.stdout and any(fmt in res.stdout for fmt in ["YUYV", "MJPG", "UYVY", "RGB", "GREY", "Z16", "BA81"]):
+                    has_capture = True
+            except FileNotFoundError:
+                has_capture = True
+            except Exception:
+                has_capture = False
+
+            streams.append({
+                "node": node,
+                "card_name": card_name,
+                "has_capture": has_capture,
+                "formats": formats
+            })
+    return streams
 
 
 @dataclass
@@ -65,60 +109,218 @@ class CameraCalibration:
     device_node: str | None = None
     card_name: str | None = None
     stream_type: str | None = None
+    distortion_model: str = "standard"
+    source_path: Path | None = None
+    is_remapped: bool = False
+    original_node: str | None = None
 
     @classmethod
-    def load(cls, path_or_query: str | Path | None, default_name: str = "cam") -> CameraCalibration:
-        """Load calibration from NPZ/JSON/YAML or profile name."""
+    def load(cls, path_or_query: str | Path | None, default_name: str = "cam",
+             expected_stream_type: str = "RGB / Color",
+             search_dirs: Sequence[Path] | None = None) -> CameraCalibration:
+        """Loads calibration from NPZ, JSON, YAML, directory, or named profile.
+        Follows rules defined in custom-calibrator-npz.md."""
         if not path_or_query:
             return cls.fallback_fov(default_name)
 
-        p = Path(path_or_query)
-        candidates = [p, Path.cwd() / p]
-        for sdir in DEFAULT_CALIB_SEARCH_DIRS:
-            candidates.append(sdir / p)
-            candidates.append(sdir / p.name)
-            if sdir.is_dir():
-                for sub in sdir.iterdir():
-                    if sub.name.lower() == str(path_or_query).lower() and (sub / "camera_calibration.npz").exists():
-                        candidates.append(sub / "camera_calibration.npz")
+        target_path = Path(path_or_query)
+        effective_search_dirs = list(search_dirs or DEFAULT_CALIB_SEARCH_DIRS)
 
-        target = None
-        for cand in candidates:
-            if cand.is_file():
-                target = cand
-                break
-            elif cand.is_dir() and (cand / "camera_calibration.npz").is_file():
-                target = cand / "camera_calibration.npz"
+        # 1. Search candidate locations
+        candidate_paths = [target_path, Path.cwd() / target_path]
+        for sdir in effective_search_dirs:
+            candidate_paths.append(sdir / target_path)
+            candidate_paths.append(sdir / target_path.name)
+
+        found_path: Path | None = None
+        for cp in candidate_paths:
+            if cp.exists():
+                found_path = cp.resolve()
                 break
 
-        if not target or not target.exists():
-            log.warning(f"Calibration not found for '{path_or_query}', using 60 deg fallback FOV.")
+        # If not found directly, search within subdirectories of search_dirs by name
+        if not found_path:
+            q_lower = str(path_or_query).lower()
+            for sdir in effective_search_dirs:
+                if sdir.is_dir():
+                    for item in sdir.iterdir():
+                        if item.name.lower() == q_lower or (item.is_dir() and item.name.lower() == q_lower):
+                            found_path = item.resolve()
+                            break
+                if found_path:
+                    break
+
+        if not found_path:
+            log.warning(f"Could not locate calibration profile for '{path_or_query}'. Falling back to default FOV.")
             return cls.fallback_fov(default_name)
 
-        if target.suffix.lower() == ".npz":
-            data = np.load(target, allow_pickle=True)
-            K = np.asarray(data["camera_matrix"], dtype=np.float64).reshape(3, 3)
-            D = np.asarray(data["dist_coeffs"], dtype=np.float64).reshape(-1, 1)
-            size = tuple(int(v) for v in np.asarray(data["image_size"]).ravel()[:2])
-            card = str(data.get("card_name", ""))
-            stype = str(data.get("stream_type", ""))
-            node = str(data.get("device_node", ""))
-            rms = float(data["rms_error"]) if "rms_error" in data else None
-            return cls(name=default_name, camera_matrix=K, dist_coeffs=D, image_size=size,
-                       rms_error=rms, device_node=node, card_name=card, stream_type=stype)
+        # 2. If path is directory, look for standard calibration outputs
+        if found_path.is_dir():
+            for fname in ["camera_calibration.npz", "camera_calibration.json", "camera_info.yaml"]:
+                cand = found_path / fname
+                if cand.is_file():
+                    found_path = cand
+                    break
 
-        return cls.fallback_fov(default_name)
+        log.info(f"Loading custom calibration from: {found_path}")
+
+        # 3. Parse by file extension
+        suffix = found_path.suffix.lower()
+        if suffix == ".npz":
+            return cls._load_npz(found_path, default_name, expected_stream_type)
+        elif suffix == ".json":
+            return cls._load_json(found_path, default_name, expected_stream_type)
+        elif suffix in (".yaml", ".yml"):
+            return cls._load_yaml(found_path, default_name, expected_stream_type)
+        else:
+            raise ValueError(f"Unsupported calibration format: {found_path}")
+
+    @classmethod
+    def _load_npz(cls, path: Path, default_name: str, expected_stream_type: str) -> CameraCalibration:
+        data = np.load(path, allow_pickle=True)
+        K = np.asarray(data["camera_matrix"], dtype=np.float64)
+        D = np.asarray(data["dist_coeffs"], dtype=np.float64)
+        size = tuple(int(v) for v in data["image_size"])
+        name = str(data.get("camera_name", path.parent.name if path.parent.name != "output" else default_name))
+        node = str(data.get("device_node")) if "device_node" in data and str(data["device_node"]).strip() else None
+        card = str(data.get("card_name")) if "card_name" in data and str(data["card_name"]).strip() else None
+        stype = str(data.get("stream_type")) if "stream_type" in data and str(data["stream_type"]).strip() else None
+        rms = float(data["rms_error"]) if "rms_error" in data else None
+        model = str(data.get("distortion_model", "standard"))
+
+        calib = cls(name=name, camera_matrix=K, dist_coeffs=D, image_size=size,
+                    rms_error=rms, device_node=node, card_name=card, stream_type=stype,
+                    distortion_model=model, source_path=path)
+        cls._check_stream_type(calib, expected_stream_type)
+        return calib
+
+    @classmethod
+    def _load_json(cls, path: Path, default_name: str, expected_stream_type: str) -> CameraCalibration:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        name = data.get("camera_name") or path.parent.name or default_name
+        c_info = data.get("calibration_info", {})
+        w = int(c_info.get("image_width", 1280))
+        h = int(c_info.get("image_height", 720))
+        rms = float(c_info["rms_reprojection_error_px"]) if "rms_reprojection_error_px" in c_info else None
+        model = c_info.get("model", "standard")
+
+        dev = data.get("device_info", {})
+        cfg = data.get("config", {})
+        card = dev.get("card_name") or cfg.get("camera_card")
+        node = dev.get("device_node") or cfg.get("device_node")
+        stype = dev.get("stream_type") or cfg.get("stream_type")
+
+        mat = data.get("camera_matrix", {})
+        if "matrix_3x3" in mat:
+            K = np.array(mat["matrix_3x3"], dtype=np.float64)
+        else:
+            fx = float(mat.get("fx", 900.0))
+            fy = float(mat.get("fy", 900.0))
+            cx = float(mat.get("cx", w / 2.0))
+            cy = float(mat.get("cy", h / 2.0))
+            K = np.array([[fx, 0.0, cx], [0.0, fy, cy], [0.0, 0.0, 1.0]], dtype=np.float64)
+
+        D = np.array(data.get("distortion_coefficients", []), dtype=np.float64)
+
+        calib = cls(name=name, camera_matrix=K, dist_coeffs=D, image_size=(w, h),
+                    rms_error=rms, device_node=node, card_name=card, stream_type=stype,
+                    distortion_model=model, source_path=path)
+        cls._check_stream_type(calib, expected_stream_type)
+        return calib
+
+    @classmethod
+    def _load_yaml(cls, path: Path, default_name: str, expected_stream_type: str) -> CameraCalibration:
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        name = data.get("camera_name") or path.parent.name or default_name
+        w = int(data.get("image_width", 1280))
+        h = int(data.get("image_height", 720))
+        k_data = data.get("camera_matrix", {}).get("data", [])
+        K = np.array(k_data, dtype=np.float64).reshape((3, 3)) if len(k_data) == 9 else np.eye(3)
+        d_data = data.get("distortion_coefficients", {}).get("data", [])
+        D = np.array(d_data, dtype=np.float64)
+        model = data.get("distortion_model", "plumb_bob")
+        card = data.get("camera_card")
+        node = data.get("device_node")
+        stype = data.get("stream_type")
+
+        calib = cls(name=name, camera_matrix=K, dist_coeffs=D, image_size=(w, h),
+                    rms_error=None, device_node=node, card_name=card, stream_type=stype,
+                    distortion_model=model, source_path=path)
+        cls._check_stream_type(calib, expected_stream_type)
+        return calib
 
     @classmethod
     def fallback_fov(cls, name: str, width: int = 1280, height: int = 720, hfov_deg: float = 60.0) -> CameraCalibration:
         fx = (width / 2.0) / np.tan(np.radians(hfov_deg / 2.0))
         K = np.array([[fx, 0.0, width / 2.0], [0.0, fx, height / 2.0], [0.0, 0.0, 1.0]], dtype=np.float64)
         D = np.zeros(5, dtype=np.float64)
-        return cls(name=name, camera_matrix=K, dist_coeffs=D, image_size=(width, height), stream_type="Synthetic / Fallback FOV")
+        return cls(name=name, camera_matrix=K, dist_coeffs=D, image_size=(width, height),
+                   stream_type="RGB / Color (Fallback FOV)")
+
+    def resolve_live_device_node(self, user_override: str | int | None = None) -> str:
+        """Resolves active V4L2 device node matching card name & stream type.
+        Implements camera node resolution logic from custom-calibrator-npz.md."""
+        # 1. User Override Precedence
+        if user_override is not None:
+            log.info(f"Camera '{self.name}': Using explicit user override node -> '{user_override}'")
+            return str(user_override)
+
+        connected = enumerate_v4l2_streams()
+        c_target_card = clean_card_name(self.card_name)
+
+        # 2. Check exact recorded node match
+        if self.device_node:
+            for s in connected:
+                if s["node"] == self.device_node and s["has_capture"]:
+                    s_card_clean = clean_card_name(s["card_name"])
+                    if not c_target_card or c_target_card in s_card_clean or s_card_clean in c_target_card:
+                        log.info(f"Camera '{self.name}': Verified exact node match '{self.device_node}' ({s['card_name']})")
+                        return self.device_node
+
+        # 3. Fallback: Search connected streams for matching card_name + stream_type
+        if c_target_card:
+            for s in connected:
+                if s["has_capture"]:
+                    s_card_clean = clean_card_name(s["card_name"])
+                    if c_target_card in s_card_clean or s_card_clean in c_target_card:
+                        old_node = self.device_node or "None"
+                        self.is_remapped = (old_node != s["node"])
+                        self.original_node = old_node
+                        self.device_node = s["node"]
+                        if self.is_remapped:
+                            log.warning(f"[CAMERA MOVED / RE-MAPPED] Camera '{self.name}' (Card: '{self.card_name}') "
+                                        f"node changed from '{old_node}' -> '{s['node']}' ({s['card_name']})")
+                        else:
+                            log.info(f"Camera '{self.name}': Matched live device node '{s['node']}' ({s['card_name']})")
+                        return s["node"]
+
+        # 4. Fallback if not detected
+        fallback = self.device_node or "/dev/video0"
+        log.warning(f"Camera '{self.name}' (Card: '{self.card_name or 'Unknown'}') was not found in connected V4L2 devices. "
+                    f"Falling back to '{fallback}'.")
+        return fallback
+
+    @staticmethod
+    def _check_stream_type(calib: CameraCalibration, expected_stream_type: str | None = None) -> None:
+        res_str = f" @ {calib.image_size[0]}x{calib.image_size[1]}" if calib.image_size else ""
+        rms_str = f" (RMS: {calib.rms_error:.3f}px)" if calib.rms_error is not None else ""
+        if calib.stream_type:
+            log.info(f"Loaded calibration '{calib.name}' stream: '{calib.stream_type}'{res_str}{rms_str} (Card: {calib.card_name or 'Unknown'})")
+            is_color_calib = any(c in calib.stream_type.lower() for c in ("color", "rgb", "bgr", "mjpeg", "yuyv"))
+            is_expected_color = any(c in (expected_stream_type or "").lower() for c in ("color", "rgb", "bgr"))
+            if is_expected_color and not is_color_calib:
+                log.warning(f"Stream type mismatch for {calib.name}! Expected color stream, but got '{calib.stream_type}'.")
+        else:
+            log.info(f"Calibration '{calib.name}' does not specify 'stream_type'{res_str}{rms_str}.")
 
 
 class NonQueuingCameraReader:
-    """Zero-latency background thread reader for live V4L2 devices."""
+    """Spawns background grab thread that constantly drains V4L2 buffers,
+    ensuring .get_latest_frame() always retrieves the zero-latency real-time frame."""
 
     def __init__(self, cap: cv2.VideoCapture):
         self.cap = cap
@@ -149,7 +351,7 @@ class NonQueuingCameraReader:
 
 
 class VideoFeedSource:
-    """Handles live webcam, video file, or static image feed."""
+    """Handles live webcam, video file, or static image feed with automatic node resolution."""
 
     def __init__(self, source_path_or_idx: str | int | None, calib: CameraCalibration):
         self.calib = calib
@@ -158,14 +360,7 @@ class VideoFeedSource:
         self.cap: cv2.VideoCapture | None = None
         self.grabber: NonQueuingCameraReader | None = None
 
-        if source_path_or_idx is None:
-            # Check if calibration specifies a node
-            if calib.device_node and Path(calib.device_node).exists():
-                source_path_or_idx = calib.device_node
-            else:
-                source_path_or_idx = 0
-
-        # Check if static image
+        # Check if static image first
         if isinstance(source_path_or_idx, str) and Path(source_path_or_idx).is_file():
             s = str(source_path_or_idx).lower()
             if s.endswith((".png", ".jpg", ".jpeg", ".bmp", ".webp")):
@@ -174,8 +369,10 @@ class VideoFeedSource:
                 log.info(f"Loaded static image: {source_path_or_idx}")
                 return
 
-        # V4L2 or video file
-        target = int(source_path_or_idx) if str(source_path_or_idx).isdigit() else source_path_or_idx
+        # Resolve live device node per custom-calibrator-npz.md
+        live_node = calib.resolve_live_device_node(source_path_or_idx)
+        target = int(live_node) if str(live_node).isdigit() else live_node
+
         self.cap = cv2.VideoCapture(target)
         if not self.cap.isOpened():
             log.warning(f"Could not open video capture for: {target}")
@@ -405,6 +602,13 @@ class TwoCameraPlanesCubePipeline:
         self.last_results: dict = {}
         self.lock = threading.Lock()
 
+        # Custom Baseline Coordinate Frame Feature (Key 'H')
+        # Baseline top -> X axis, Right -> Y axis, Z -> towards camera
+        # Followed by rotation 90 deg via Y axis (Z facing up)
+        # Shift Z +5 cm (+0.05m), X +2 cm (+0.02m)
+        self.custom_h_frame_active: bool = False
+        self.custom_h_frame_info: dict | None = None
+
     def process_frames(self, frame0: np.ndarray, frame1: np.ndarray) -> dict:
         """Process a pair of frames and compute all geometric features."""
         gray0 = cv2.cvtColor(frame0, cv2.COLOR_BGR2GRAY) if frame0.ndim == 3 else frame0
@@ -496,20 +700,117 @@ class TwoCameraPlanesCubePipeline:
                 "z_height_mm": float(mid_pt[2] * 1000.0),
             }
 
+            # -------------------------------------------------------------
+            # Custom Baseline Reference Frame (Key 'H' Feature):
+            # 1. Baseline top is X-axis: x_init = (p41 - p40) / ||p41 - p40|| (pointing along baseline)
+            # 2. Z is facing camera: z_init = camera view vector towards baseline
+            # 3. Right is Y-axis: y_init = cross(z_init, x_init)
+            # 4. Rotate 90 degrees via Y-axis so Z faces UP:
+            #      R_rot_y = [[cos(90), 0, sin(90)], [0, 1, 0], [-sin(90), 0, cos(90)]]
+            #    which sends initial Z towards UP.
+            # 5. Move Z +5 cm (+0.05m) and X +2 cm (+0.02m)
+            # -------------------------------------------------------------
+            v_baseline = p41 - p40
+            norm_b = np.linalg.norm(v_baseline)
+            if norm_b > 1e-6:
+                x_init = v_baseline / norm_b
+
+                # Estimate average camera optical center in Base Frame
+                cam_centers = []
+                for c_id in cam_extrinsics:
+                    R_c_base, t_c_base = cam_extrinsics[c_id]
+                    # Camera optical center in base frame: -R_c_base.T @ t_c_base
+                    c_center = -R_c_base.T @ t_c_base
+                    cam_centers.append(c_center)
+
+                avg_cam_center = np.mean(cam_centers, axis=0) if cam_centers else np.array([0.0, -0.5, 0.5])
+                # Vector from baseline midpoint towards camera (Z facing camera)
+                cam_ray = avg_cam_center - mid_pt
+                cam_ray_norm = np.linalg.norm(cam_ray)
+                z_init = cam_ray / max(1e-6, cam_ray_norm)
+
+                # Gram-Schmidt: Orthogonalize z_init against x_init
+                z_init = z_init - np.dot(z_init, x_init) * x_init
+                z_init = z_init / max(1e-6, np.linalg.norm(z_init))
+
+                # Right is Y-axis: y_init = z_init x x_init
+                y_init = np.cross(z_init, x_init)
+                y_init = y_init / max(1e-6, np.linalg.norm(y_init))
+
+                # Initial rotation matrix R_init = [x_init, y_init, z_init]
+                R_init = np.column_stack([x_init, y_init, z_init])
+
+                # Rotate +90 degrees (or -90 deg depending on direction) via Y axis so Z is facing UP (+Z in base frame)
+                # Test both +90 and -90 deg rotation around Y to ensure Z points up (dot(z_new, [0,0,1]) > 0)
+                R_rot_y_pos = np.array([
+                    [ 0.0, 0.0, 1.0],
+                    [ 0.0, 1.0, 0.0],
+                    [-1.0, 0.0, 0.0]
+                ], dtype=np.float64)
+
+                R_rot_y_neg = np.array([
+                    [0.0, 0.0, -1.0],
+                    [0.0, 1.0,  0.0],
+                    [1.0, 0.0,  0.0]
+                ], dtype=np.float64)
+
+                R_cand_pos = R_init @ R_rot_y_pos
+                R_cand_neg = R_init @ R_rot_y_neg
+
+                # Pick candidate where Z faces UP (+Z in base frame)
+                if R_cand_pos[2, 2] >= R_cand_neg[2, 2]:
+                    R_custom = R_cand_pos
+                else:
+                    R_custom = R_cand_neg
+
+                # Translation: Move Z axis 5 cm (0.05m) and X axis 2 cm (0.02m)
+                # in the newly rotated custom frame coordinates
+                origin_custom = mid_pt + R_custom[:, 0] * 0.02 + R_custom[:, 2] * 0.05
+
+                h_frame_info = {
+                    "origin_base_m": origin_custom.tolist(),
+                    "origin_base_mm": (origin_custom * 1000.0).tolist(),
+                    "R_custom_base": R_custom.tolist(),
+                    "x_axis": R_custom[:, 0].tolist(),
+                    "y_axis": R_custom[:, 1].tolist(),
+                    "z_axis": R_custom[:, 2].tolist(),
+                }
+
+                # If Cube is tracked, express cube centroid in this custom H frame!
+                if results["cube_centroid"]:
+                    cube_pt = np.array(results["cube_centroid"]["xyz_mm"]) / 1000.0
+                    cube_in_h = R_custom.T @ (cube_pt - origin_custom)
+                    h_frame_info["cube_centroid_in_h_mm"] = (cube_in_h * 1000.0).tolist()
+
+                results["custom_h_frame"] = h_frame_info
+                self.custom_h_frame_info = h_frame_info
+
         # 5. Track Plane B: Tags 42, 43, 44, 45 (Platform Quad Plane)
         plane_b_pts = []
         plane_b_centers = {}
+        plane_b_normals = []
         for tid in (42, 43, 44, 45):
             candidates = []
+            cand_normals = []
             for c_id, dets in [(0, dets0), (1, dets1)]:
                 if c_id in cam_extrinsics and tid in dets:
                     R_c_base, t_c_base = cam_extrinsics[c_id]
-                    c_base, _ = project_tag_to_base(dets[tid], R_c_base, t_c_base)
+                    c_base, R_t_base = project_tag_to_base(dets[tid], R_c_base, t_c_base)
                     candidates.append(c_base)
+                    # Tag local Z axis is normal to the tag plane
+                    n_tag = R_t_base[:, 2].copy()
+                    if n_tag[2] < 0:
+                        n_tag = -n_tag
+                    cand_normals.append(n_tag)
             if candidates:
                 avg_pt = np.mean(candidates, axis=0)
                 plane_b_pts.append(avg_pt)
                 plane_b_centers[tid] = avg_pt
+                if cand_normals:
+                    avg_n = np.mean(cand_normals, axis=0)
+                    norm_len = np.linalg.norm(avg_n)
+                    if norm_len > 1e-6:
+                        plane_b_normals.append(avg_n / norm_len)
 
         if len(plane_b_pts) >= 3:
             pts_arr = np.array(plane_b_pts, dtype=np.float64)
@@ -521,18 +822,25 @@ class TwoCameraPlanesCubePipeline:
                 "center_mm": (center * 1000.0).tolist(),
                 "z_height_mm": float(center[2] * 1000.0),
                 "coplanarity_rmse_mm": rmse_mm,
-                "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()}
+                "centers_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()},
+                "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()},
             }
         elif len(plane_b_pts) > 0:
             pts_arr = np.array(plane_b_pts, dtype=np.float64)
             center = np.mean(pts_arr, axis=0)
+            if plane_b_normals:
+                normal = np.mean(plane_b_normals, axis=0)
+                normal = normal / max(1e-6, np.linalg.norm(normal))
+            else:
+                normal = np.array([0.0, 0.0, 1.0])
             results["plane_b"] = {
                 "detected_tags": list(plane_b_centers.keys()),
-                "normal": [0.0, 0.0, 1.0],
+                "normal": normal.tolist(),
                 "center_mm": (center * 1000.0).tolist(),
                 "z_height_mm": float(center[2] * 1000.0),
                 "coplanarity_rmse_mm": 0.0,
-                "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()}
+                "centers_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()},
+                "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()},
             }
 
         return results
@@ -655,16 +963,44 @@ class TwoCameraPlanesCubePipeline:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (120, 120, 150), 1, cv2.LINE_AA)
         y += 85
 
+        # Section 5: Custom Baseline Reference Frame (Key 'H')
+        h_info = results.get("custom_h_frame")
+        status_h = "ACTIVE" if self.custom_h_frame_active else "READY (Press 'H' to Activate)"
+        status_col = (0, 255, 120) if self.custom_h_frame_active else (140, 180, 220)
+        cv2.rectangle(panel, (14, y - 18), (width - 14, y + 90), (25, 30, 38), -1)
+        cv2.putText(panel, f"CUSTOM BASELINE FRAME [KEY 'H']: {status_h}", (20, y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, status_col, 1, cv2.LINE_AA)
+        y += 20
+        if h_info:
+            ox, oy, oz = h_info["origin_base_mm"]
+            cv2.putText(panel, f"Origin (+2cm X, +5cm Z): [{ox:+6.1f}, {oy:+6.1f}, {oz:+6.1f}] mm",
+                        (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
+            y += 18
+            if "cube_centroid_in_h_mm" in h_info:
+                cx, cy, cz = h_info["cube_centroid_in_h_mm"]
+                cv2.putText(panel, f"Cube in Custom Frame: [{cx:+6.1f}, {cy:+6.1f}, {cz:+6.1f}] mm",
+                            (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 100, 255), 1, cv2.LINE_AA)
+            else:
+                cv2.putText(panel, "Cube in Custom Frame: Waiting for cube detection...",
+                            (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (150, 150, 160), 1, cv2.LINE_AA)
+            y += 18
+            cv2.putText(panel, "Spec: X=Top(40->41), Y=Right, Z=Cam -> RotY(90) -> Z=UP",
+                        (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (120, 200, 160), 1, cv2.LINE_AA)
+        else:
+            cv2.putText(panel, "Status: Requires Tags 40 & 41 baseline to be visible",
+                        (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (120, 120, 150), 1, cv2.LINE_AA)
+        y += 75
+
         # Key controls footer
         cv2.line(panel, (14, height - 36), (width - 14, height - 36), (60, 65, 75), 1)
-        cv2.putText(panel, "Press 'S': Export JSON Telemetry Snapshot | Press 'Q' or ESC: Quit",
+        cv2.putText(panel, "Keys: 'H'=Custom Frame | 'S'=Export JSON Snapshot | 'Q'=Quit",
                     (18, height - 14), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (140, 150, 170), 1, cv2.LINE_AA)
 
         return panel
 
     def run(self, output_json: Path | None = None, display: bool = True):
         """Main real-time tracking loop."""
-        log.info("Starting Two-Camera Planes & Cube Tracker Demo. Press 'q' to quit.")
+        log.info("Starting Two-Camera Planes & Cube Tracker Demo. Press 'q' to quit, 'h' for custom baseline frame.")
         out_path = output_json or (REPO_ROOT / "outputs" / "live_tracking_results.json")
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -716,12 +1052,24 @@ class TwoCameraPlanesCubePipeline:
                     if key in (27, ord('q'), ord('Q')):
                         log.info("Quit command received.")
                         break
+                    elif key in (ord('h'), ord('H')):
+                        self.custom_h_frame_active = not self.custom_h_frame_active
+                        mode_str = "ENABLED" if self.custom_h_frame_active else "DISABLED"
+                        log.info(f"Custom Baseline H Frame: {mode_str}")
+                        if self.custom_h_frame_info:
+                            log.info(f"Custom Frame Origin: {self.custom_h_frame_info['origin_base_mm']} mm")
+                            if "cube_centroid_in_h_mm" in self.custom_h_frame_info:
+                                log.info(f"Cube in Custom Frame: {self.custom_h_frame_info['cube_centroid_in_h_mm']} mm")
                     elif key in (ord('s'), ord('S')):
                         with open(out_path, "w", encoding="utf-8") as f:
                             json.dump(results, f, indent=2)
                         log.info(f"Saved snapshot to: {out_path}")
                 else:
-                    # Non-GUI step
+                    # Non-GUI step: save output snapshot if requested
+                    if output_json:
+                        with open(out_path, "w", encoding="utf-8") as f:
+                            json.dump(results, f, indent=2)
+                        log.info(f"Saved headless snapshot to: {out_path}")
                     time.sleep(0.05)
                     break
 
@@ -730,6 +1078,73 @@ class TwoCameraPlanesCubePipeline:
             self.feed1.release()
             if display:
                 cv2.destroyAllWindows()
+
+
+def list_available_calibrations(search_dirs: Sequence[Path]) -> list[dict]:
+    profiles = []
+    seen_names = set()
+    for sdir in search_dirs:
+        root = Path(sdir).expanduser().resolve()
+        if not root.is_dir():
+            continue
+        for item in sorted(root.iterdir()):
+            if not item.is_dir():
+                continue
+            npz = item / "camera_calibration.npz"
+            if npz.is_file() and item.name not in seen_names:
+                try:
+                    data = np.load(npz, allow_pickle=True)
+                    size = tuple(int(v) for v in data["image_size"])
+                    rms = float(data["rms_error"]) if "rms_error" in data else None
+                    card = str(data.get("card_name", ""))
+                    stype = str(data.get("stream_type", ""))
+                    node = str(data.get("device_node", ""))
+                    profiles.append({
+                        "name": item.name,
+                        "path": str(npz),
+                        "size": size,
+                        "rms": rms,
+                        "card": card,
+                        "stype": stype,
+                        "node": node
+                    })
+                    seen_names.add(item.name)
+                except Exception:
+                    pass
+    return profiles
+
+
+def print_camera_inspection():
+    cams = enumerate_v4l2_streams()
+    print("=" * 80)
+    print("🎥 CONNECTED V4L2 VIDEO CAMERAS & STREAMS")
+    print("=" * 80)
+    if not cams:
+        print("  No V4L2 camera devices detected on this system.")
+    else:
+        for c in cams:
+            cap_badge = "[CAPTURE CAPABLE]" if c["has_capture"] else "[METADATA/OTHER]"
+            print(f"  Node: {c['node']:<14} | Card: {c['card_name']} {cap_badge}")
+            if c["formats"]:
+                fmt_preview = ", ".join(c["formats"][:4])
+                print(f"        Formats: {fmt_preview}")
+    print("=" * 80)
+
+
+def print_calib_inspection(search_dirs: Sequence[Path]):
+    profs = list_available_calibrations(search_dirs)
+    print("=" * 80)
+    print("📐 DISCOVERED CUSTOM CAMERA CALIBRATION PROFILES")
+    print("=" * 80)
+    if not profs:
+        print("  No custom calibration archives found in search directories.")
+    else:
+        for p in profs:
+            rms_str = f"RMS: {p['rms']:.3f}px" if p["rms"] is not None else "RMS: N/A"
+            res_str = f"{p['size'][0]}x{p['size'][1]}"
+            print(f"  Profile: {p['name']:<18} | {res_str:<10} | {rms_str:<14} | Card: {p['card'] or 'Unknown'}")
+            print(f"           Path: {p['path']}")
+    print("=" * 80)
 
 
 def main():
@@ -742,7 +1157,17 @@ def main():
     parser.add_argument("--active-ratio", type=float, default=1.0, help="Ratio of active tag to border (default 1.0, 0.8 for padded benchmarks)")
     parser.add_argument("--no-display", action="store_true", help="Run headlessly without opening an OpenCV window")
     parser.add_argument("--output-json", type=str, default=None, help="Path to save output JSON telemetry snapshot")
+    parser.add_argument("--list-cams", action="store_true", help="Scan and print connected V4L2 camera cards and stream nodes")
+    parser.add_argument("--list-calibs", action="store_true", help="Scan and print discovered custom calibration profiles")
     args = parser.parse_args()
+
+    if args.list_cams:
+        print_camera_inspection()
+        return
+
+    if args.list_calibs:
+        print_calib_inspection(DEFAULT_CALIB_SEARCH_DIRS)
+        return
 
     calib0 = CameraCalibration.load(args.calib0, "Camera 0")
     calib1 = CameraCalibration.load(args.calib1, "Camera 1")

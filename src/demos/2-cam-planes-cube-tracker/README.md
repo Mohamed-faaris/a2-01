@@ -19,18 +19,35 @@ The UI displays a side-by-side $1280 \times 720$ unified interface:
 
 ---
 
+## Custom Calibrations & Device Node Matching
+
+Adheres strictly to the calibration specifications in [`custom-calibrator-npz.md`](/home/mfk01/Projects/econ-systems/tools/calibrator/docs/custom-calibrator-npz.md):
+- **Universal Loading**: Loads calibrations from `.npz`, `.json`, `.yaml`, or named profile directories (e.g. `--calib0 see3cam --calib1 rl720`).
+- **Dynamic V4L2 Node Matching**: Scans connected video capture cards via V4L2 (`enumerate_v4l2_streams`) and automatically remaps to the active RGB streaming node (e.g. automatically binds RealSense RGB to `/dev/video6` instead of the 16-bit depth stream `/dev/video0`).
+- **Stream-Type Verification**: Verifies `stream_type` (e.g. `RGB / Color`) against camera capabilities to prevent selecting metadata or depth nodes.
+
+---
+
 ## Usage
 
-### 1. Live USB / V4L2 Webcams
+### 1. Live USB / V4L2 Webcams (Auto Device Node Resolution)
 ```bash
+# Automatically finds /dev/video8 for See3CAM and /dev/video6 for RealSense RGB
 PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
-  --cam0 /dev/video8 \
-  --cam1 /dev/video0 \
   --calib0 see3cam \
   --calib1 rl720
 ```
 
-### 2. Static Images / Synthetic Frames
+### 2. Inspect Connected Cameras & Discovered Calibrations
+```bash
+# List all connected V4L2 video devices, cards, and capture capabilities
+PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py --list-cams
+
+# List all discovered calibration profiles across standard output directories
+PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py --list-calibs
+```
+
+### 3. Static Images / Synthetic Frames
 ```bash
 PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
   --cam0 path/to/cam0.png \
@@ -38,7 +55,7 @@ PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
   --active-ratio 0.8
 ```
 
-### 3. Headless Mode (CLI / JSON Export)
+### 4. Headless Mode (CLI / JSON Export)
 ```bash
 PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
   --cam0 path/to/cam0.png \
@@ -53,5 +70,6 @@ PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
 
 | Key | Action |
 |:---|:---|
+| **`H`** | **Toggle Custom Baseline Reference Frame**: <br>• Baseline Top $\rightarrow$ $+X$ axis (from Tag 40 to 41)<br>• Baseline Right $\rightarrow$ $+Y$ axis<br>• Camera view ray $\rightarrow$ $+Z$ axis<br>• Rotates $90^\circ$ around $Y$-axis so $+Z$ faces **UP**<br>• Offsets origin by **$+2\text{ cm}$ along $X$** and **$+5\text{ cm}$ along $Z$**<br>• Live computes the 6-faced Cube Centroid expressed in this custom frame |
 | **`S`** | Export current telemetry snapshot to JSON file |
 | **`Q`** / **`ESC`** | Quit application |
