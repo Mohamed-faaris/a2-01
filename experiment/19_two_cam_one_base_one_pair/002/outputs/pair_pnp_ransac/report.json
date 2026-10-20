@@ -1,0 +1,77 @@
+{
+  "scene_id": "002",
+  "methodology": "pair_pnp_ransac",
+  "use_ransac": true,
+  "cameras": {
+    "cam0": {
+      "translation_error_mm": 6.455,
+      "rotation_error_deg": 0.0394,
+      "estimated_tvec_m": [
+        0.0844,
+        0.1597,
+        0.9915
+      ],
+      "gt_tvec_m": [
+        0.0839,
+        0.1587,
+        0.9852
+      ]
+    },
+    "cam1": {
+      "translation_error_mm": 6.46,
+      "rotation_error_deg": 0.0364,
+      "estimated_tvec_m": [
+        -0.0844,
+        0.1597,
+        0.9915
+      ],
+      "gt_tvec_m": [
+        -0.0839,
+        0.1587,
+        0.9852
+      ]
+    }
+  },
+  "summary_metrics": {
+    "avg_cam_translation_error_mm": 6.457,
+    "avg_cam_rotation_error_deg": 0.0379,
+    "plane_normal_error_deg": 0.1571,
+    "plane_offset_error_mm": 1.847,
+    "coplanarity_residual_rmse_mm": 1.255,
+    "mean_pair_error_mm": 5.909,
+    "plane_inliers": 20,
+    "plane_total_points": 20
+  },
+  "platform_plane": {
+    "estimated_normal": [
+      -0.1065,
+      -0.1708,
+      0.9795
+    ],
+    "gt_normal": [
+      -0.1045,
+      -0.1727,
+      0.9794
+    ],
+    "estimated_d_offset": -0.0898,
+    "gt_d_offset": -0.0916,
+    "estimated_pair_baseline_m": 0.2438,
+    "gt_pair_baseline_m": 0.24,
+    "pair_errors_mm": {
+      "2": 6.433,
+      "3": 5.384
+    },
+    "projected_pair_m": {
+      "2": [
+        -0.1213,
+        0.328,
+        0.1357
+      ],
+      "3": [
+        0.1211,
+        0.3228,
+        0.1611
+      ]
+    }
+  }
+}

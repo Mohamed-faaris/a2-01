@@ -1,0 +1,45 @@
+{
+  "scene_id": "003",
+  "methodology": "cube_ransac",
+  "use_ransac": true,
+  "metrics": {
+    "cube_centroid_error_mm": 386.782,
+    "target_marker_error_mm": 6.699,
+    "relative_distance_error_mm": 82.731,
+    "estimated_relative_distance_mm": 425.66,
+    "gt_relative_distance_mm": 342.93,
+    "centroid_spread_rmse_mm": 0.0
+  },
+  "coordinates_base_m": {
+    "cube_centroid_estimated": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "cube_centroid_gt": [
+      0.14,
+      0.34,
+      0.12
+    ],
+    "target_marker_estimated": [
+      -0.2035,
+      0.3655,
+      0.0785
+    ],
+    "target_marker_gt": [
+      -0.2,
+      0.36,
+      0.08
+    ],
+    "relative_vector_estimated": [
+      -0.2035,
+      0.3655,
+      0.0785
+    ],
+    "relative_vector_gt": [
+      -0.34,
+      0.02,
+      -0.04
+    ]
+  }
+}

@@ -442,3 +442,117 @@ class RealtimeToolCalibrator:
             inlier_count=int(np.sum(inliers)),
             total_points=len(points_array),
         )
+
+
+@dataclass
+class CubeConfig:
+    """Rigid 6-faced AprilTag cube configuration."""
+    side_length_m: float = 0.0575  # 57.5 mm per face
+    # Face mapping: tag_id -> normal direction in cube local frame
+    # Standard: Top(+Z), Bottom(-Z), Front(+Y), Back(-Y), Right(+X), Left(-X)
+    face_normals: dict[int, np.ndarray] = field(default_factory=lambda: {
+        6: np.array([ 0.0,  0.0,  1.0]),  # Top
+        7: np.array([ 0.0,  0.0, -1.0]),  # Bottom
+        8: np.array([ 0.0,  1.0,  0.0]),  # Front
+        9: np.array([ 0.0, -1.0,  0.0]),  # Back
+        10: np.array([ 1.0,  0.0,  0.0]),  # Right
+        11: np.array([-1.0,  0.0,  0.0]),  # Left
+    })
+
+
+@dataclass
+class CubeCentroidResult:
+    """Robust 3D Cube Centroid and visible face tracking results."""
+    centroid_base_m: np.ndarray          # (3,) Cube center in Base Frame
+    visible_faces: list[int]             # List of visible face tag IDs
+    num_observations: int                # Number of camera-face observations
+    face_estimates_base: dict[int, np.ndarray] # tag_id -> centroid candidate
+    residual_spread_mm: float            # Inlier spread RMSE around centroid
+    inlier_count: int
+
+
+def estimate_cube_centroid_ransac(
+    cube_config: CubeConfig,
+    cameras_face_poses: list[tuple[int, np.ndarray, np.ndarray, np.ndarray, np.ndarray]],
+    distance_threshold_m: float = 0.005,
+) -> CubeCentroidResult | None:
+    """Estimate 3D Cube Centroid in Base Frame using RANSAC across multi-view visible faces.
+
+    cameras_face_poses: list of (tag_id, R_c_t, t_c_t, R_c_base, t_c_base)
+      where:
+        R_c_t, t_c_t: tag pose in camera coordinates
+        R_c_base, t_c_base: camera extrinsics in base frame
+    """
+    half_L = cube_config.side_length_m / 2.0
+    candidates = []
+    face_candidates_by_id: dict[int, list[np.ndarray]] = {}
+
+    for tid, R_c_t, t_c_t, R_c_base, t_c_base in cameras_face_poses:
+        if tid not in cube_config.face_normals:
+            continue
+
+        # Invert camera extrinsics: X_base = R_c_base.T @ (X_cam - t_c_base)
+        R_b_c = R_c_base.T
+        t_b_c = -R_b_c @ t_c_base
+
+        # Tag center in Base Frame
+        tag_center_base = R_b_c @ t_c_t.ravel() + t_b_c
+
+        # Tag orientation in Base Frame: R_b_t = R_b_c @ R_c_t
+        R_b_t = R_b_c @ R_c_t
+
+        # Normal vector in Base Frame: tag's local normal is +Z pointing outward
+        # Tag surface normal in base frame: R_b_t @ [0, 0, 1]
+        normal_base = R_b_t @ np.array([0.0, 0.0, 1.0])
+        normal_base = normal_base / np.linalg.norm(normal_base)
+
+        # Centroid is offset inward by -half_L * normal_base
+        centroid_candidate = tag_center_base - half_L * normal_base
+        candidates.append(centroid_candidate)
+
+        if tid not in face_candidates_by_id:
+            face_candidates_by_id[tid] = []
+        face_candidates_by_id[tid].append(centroid_candidate)
+
+    if not candidates:
+        return None
+
+    pts = np.array(candidates, dtype=np.float64)
+    if len(pts) == 1:
+        return CubeCentroidResult(
+            centroid_base_m=pts[0],
+            visible_faces=list(face_candidates_by_id.keys()),
+            num_observations=1,
+            face_estimates_base={tid: pts[0] for tid in face_candidates_by_id},
+            residual_spread_mm=0.0,
+            inlier_count=1,
+        )
+
+    # RANSAC medoid selection to reject out-of-plane or flipped faces
+    best_inliers = np.ones(len(pts), dtype=bool)
+    best_count = 0
+    best_medoid = pts[0]
+
+    for i in range(len(pts)):
+        dists = np.linalg.norm(pts - pts[i], axis=1)
+        inliers = dists < distance_threshold_m
+        cnt = int(np.sum(inliers))
+        if cnt > best_count:
+            best_count = cnt
+            best_inliers = inliers
+            best_medoid = pts[i]
+
+    inlier_pts = pts[best_inliers]
+    refined_centroid = np.mean(inlier_pts, axis=0)
+    spread_rmse = float(np.sqrt(np.mean(np.linalg.norm(inlier_pts - refined_centroid, axis=1) ** 2)))
+
+    avg_face_estimates = {tid: np.mean(c_list, axis=0) for tid, c_list in face_candidates_by_id.items()}
+
+    return CubeCentroidResult(
+        centroid_base_m=refined_centroid,
+        visible_faces=sorted(face_candidates_by_id.keys()),
+        num_observations=len(pts),
+        face_estimates_base=avg_face_estimates,
+        residual_spread_mm=spread_rmse * 1000.0,
+        inlier_count=int(best_count),
+    )

@@ -1,0 +1,65 @@
+{
+  "name": "Flat Platform Plane with Tag Pair (12 cm elevation)",
+  "base_tag_size_m": 0.134,
+  "base_tag_location": [
+    0.0,
+    -0.22,
+    0.0
+  ],
+  "platform_normal": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "platform_d_offset": -0.12,
+  "pair_baseline_m": 0.24,
+  "target_look_at": [
+    0.0,
+    -0.05,
+    0.06
+  ],
+  "platform_pair": {
+    "2": {
+      "size_m": 0.0885,
+      "location": [
+        -0.12,
+        0.1,
+        0.12
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "3": {
+      "size_m": 0.0885,
+      "location": [
+        0.12,
+        0.1,
+        0.12
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "cameras": {
+    "cam0": {
+      "location": [
+        -0.35,
+        -0.7,
+        0.75
+      ]
+    },
+    "cam1": {
+      "location": [
+        0.35,
+        -0.7,
+        0.75
+      ]
+    }
+  }
+}

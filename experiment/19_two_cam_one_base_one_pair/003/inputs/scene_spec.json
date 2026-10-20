@@ -1,0 +1,65 @@
+{
+  "name": "Oblique 2-Camera Setup with Tag Pair and Perturbation",
+  "base_tag_size_m": 0.134,
+  "base_tag_location": [
+    0.0,
+    -0.22,
+    0.0
+  ],
+  "platform_normal": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "platform_d_offset": -0.1,
+  "pair_baseline_m": 0.24,
+  "target_look_at": [
+    0.0,
+    -0.05,
+    0.05
+  ],
+  "platform_pair": {
+    "2": {
+      "size_m": 0.0885,
+      "location": [
+        -0.12,
+        0.1,
+        0.1
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "3": {
+      "size_m": 0.0885,
+      "location": [
+        0.12,
+        0.1,
+        0.1
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "cameras": {
+    "cam0": {
+      "location": [
+        -0.48,
+        -0.62,
+        0.62
+      ]
+    },
+    "cam1": {
+      "location": [
+        0.48,
+        -0.62,
+        0.62
+      ]
+    }
+  }
+}

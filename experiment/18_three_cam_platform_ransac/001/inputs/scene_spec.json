@@ -1,0 +1,99 @@
+{
+  "name": "Flat Elevated Platform (12 cm)",
+  "base_tag_size_m": 0.134,
+  "base_tag_location": [
+    0.0,
+    -0.22,
+    0.0
+  ],
+  "platform_normal": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "platform_d_offset": -0.12,
+  "platform_width_m": 0.28,
+  "platform_height_m": 0.2,
+  "target_look_at": [
+    0.0,
+    -0.05,
+    0.06
+  ],
+  "platform_corners": {
+    "2": {
+      "size_m": 0.0885,
+      "location": [
+        -0.14,
+        0.2,
+        0.12
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "3": {
+      "size_m": 0.0885,
+      "location": [
+        0.14,
+        0.2,
+        0.12
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "4": {
+      "size_m": 0.0885,
+      "location": [
+        0.14,
+        0.0,
+        0.12
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "5": {
+      "size_m": 0.0885,
+      "location": [
+        -0.14,
+        0.0,
+        0.12
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "cameras": {
+    "cam0": {
+      "location": [
+        -0.42,
+        -0.72,
+        0.75
+      ]
+    },
+    "cam1": {
+      "location": [
+        0.0,
+        -0.7,
+        0.88
+      ]
+    },
+    "cam2": {
+      "location": [
+        0.42,
+        -0.72,
+        0.75
+      ]
+    }
+  }
+}

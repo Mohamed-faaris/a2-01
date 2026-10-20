@@ -1,0 +1,7 @@
+scene_id,methodology,avg_cam_trans_err_mm,avg_cam_rot_err_deg,plane_normal_err_deg,plane_offset_err_mm,coplanarity_rmse_mm,mean_corner_err_mm,inliers,total_points,est_width_m,est_height_m
+001,multitag_pnp_ransac,5.906,0.0829,0.14,1.895,0.826,6.5,12,12,0.2836,0.2025
+001,baseline_single_pnp,5.906,0.0829,0.14,1.895,0.826,6.5,12,12,0.2836,0.2025
+002,multitag_pnp_ransac,6.73,0.0657,0.2033,2.2,1.219,6.604,12,12,0.2841,0.2027
+002,baseline_single_pnp,6.73,0.0657,0.2033,2.2,1.219,6.604,12,12,0.2841,0.2027
+003,multitag_pnp_ransac,5.84,0.1028,0.3516,0.888,0.909,7.305,12,12,0.2845,0.2038
+003,baseline_single_pnp,5.84,0.1028,0.3382,0.961,0.923,9.319,12,12,0.2907,0.204
