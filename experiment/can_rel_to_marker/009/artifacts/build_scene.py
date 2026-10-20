@@ -6,7 +6,7 @@ import mathutils
 
 art_dir = r'/home/mfk01/Projects/econ-systems/demos/a2-01/experiment/can_rel_to_marker/009/artifacts'
 inp_dir = r'/home/mfk01/Projects/econ-systems/demos/a2-01/experiment/can_rel_to_marker/009/inputs'
-marker_img = r'/home/mfk01/Projects/econ-systems/demos/a2-01/experiment/can_rel_to_marker/shared/marker_2.png'
+marker_img = r'/home/mfk01/Projects/econ-systems/demos/a2-01/experiment/can_rel_to_marker/shared/marker_1.png'
 os.makedirs(art_dir, exist_ok=True)
 os.makedirs(inp_dir, exist_ok=True)
 
@@ -53,7 +53,7 @@ mat_m.node_tree.links.new(tex.outputs["Color"], emission.inputs["Color"])
 mat_m.node_tree.links.new(emission.outputs["Emission"], out_node.inputs["Surface"])
 
 # Marker Mesh (plane on floor, z=0.001 to prevent z-fighting)
-hm = 0.092 / 2.0
+hm = 0.085 / 2.0
 m_mesh = bpy.data.meshes.new("MarkerMesh")
 m_mesh.from_pydata([(-hm, -hm, 0), (hm, -hm, 0), (hm, hm, 0), (-hm, hm, 0)], [], [(0, 1, 2, 3)])
 m_mesh.update()
@@ -63,11 +63,11 @@ for loop_idx, uv_c in zip(m_mesh.polygons[0].loop_indices, [(0, 0), (1, 0), (1, 
 
 marker_obj = bpy.data.objects.new("AprilTag_Marker", m_mesh)
 scene.collection.objects.link(marker_obj)
-marker_obj.location = (-0.019, -0.022, 0.001)
+marker_obj.location = (0.045, -0.079, 0.001)
 marker_obj.data.materials.append(mat_m)
 
 # Cans
-cans = [{'name': 'can_red', 'color': [0.85, 0.08, 0.08], 'position': [-0.149, 0.092, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_dist_to_marker_corner_m': 0.19088805620048627}, {'name': 'can_green', 'color': [0.08, 0.85, 0.08], 'position': [-0.006, 0.107, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_dist_to_marker_corner_m': 0.19464904315202786}, {'name': 'can_blue', 'color': [0.08, 0.2, 0.88], 'position': [0.133, 0.11, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_dist_to_marker_corner_m': 0.27325857717553903}]
+cans = [{'name': 'can_red', 'color': [0.85, 0.08, 0.08], 'position': [-0.204, 0.048, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_rel_to_marker_center_m': [-0.249, 0.127, 0.0615], 'gt_rel_to_marker_corner_m': [-0.2065, 0.16949999999999998, 0.0615], 'gt_dist_to_marker_corner_m': 0.2741436667151003}, {'name': 'can_green', 'color': [0.08, 0.85, 0.08], 'position': [0.021, 0.129, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_rel_to_marker_center_m': [-0.023999999999999997, 0.20800000000000002, 0.0615], 'gt_rel_to_marker_corner_m': [0.018500000000000006, 0.2505, 0.0615], 'gt_dist_to_marker_corner_m': 0.2586015274510187}, {'name': 'can_blue', 'color': [0.08, 0.2, 0.88], 'position': [0.131, 0.021, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_rel_to_marker_center_m': [0.08600000000000001, 0.1, 0.0615], 'gt_rel_to_marker_corner_m': [0.1285, 0.1425, 0.0615], 'gt_dist_to_marker_corner_m': 0.20149627788125515}]
 for c in cans:
     pos = c["position"]
     radius = c["radius"]
@@ -95,7 +95,7 @@ light_obj.location = (2.0, -2.0, 4.0)
 light_obj.rotation_euler = (math.radians(35), math.radians(20), math.radians(45))
 
 # Target point: center of all cans + marker
-all_pts = [c["position"] for c in cans] + [(-0.019, -0.022, 0.001)]
+all_pts = [c["position"] for c in cans] + [(0.045, -0.079, 0.001)]
 avg_x = sum(p[0] for p in all_pts) / len(all_pts)
 avg_y = sum(p[1] for p in all_pts) / len(all_pts)
 avg_z = sum(p[2] for p in all_pts) / len(all_pts)
@@ -115,8 +115,8 @@ def create_cam(name, loc):
     c_obj.rotation_euler = dir_vec.to_track_quat('-Z', 'Y').to_euler()
     return c_obj
 
-cam0 = create_cam("Camera_0", (-0.2622599701274753, -0.9867328869500833, 0.31059566241506525))
-cam1 = create_cam("Camera_1", (0.2622599701274753, -0.9867328869500833, 0.31059566241506525))
+cam0 = create_cam("Camera_0", (-0.29406316655750186, -1.0010789366934094, 0.3401382121340401))
+cam1 = create_cam("Camera_1", (0.29406316655750186, -1.0010789366934094, 0.3401382121340401))
 
 bpy.context.view_layer.update()
 

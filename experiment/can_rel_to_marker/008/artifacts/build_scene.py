@@ -53,7 +53,7 @@ mat_m.node_tree.links.new(tex.outputs["Color"], emission.inputs["Color"])
 mat_m.node_tree.links.new(emission.outputs["Emission"], out_node.inputs["Surface"])
 
 # Marker Mesh (plane on floor, z=0.001 to prevent z-fighting)
-hm = 0.07 / 2.0
+hm = 0.064 / 2.0
 m_mesh = bpy.data.meshes.new("MarkerMesh")
 m_mesh.from_pydata([(-hm, -hm, 0), (hm, -hm, 0), (hm, hm, 0), (-hm, hm, 0)], [], [(0, 1, 2, 3)])
 m_mesh.update()
@@ -63,11 +63,11 @@ for loop_idx, uv_c in zip(m_mesh.polygons[0].loop_indices, [(0, 0), (1, 0), (1, 
 
 marker_obj = bpy.data.objects.new("AprilTag_Marker", m_mesh)
 scene.collection.objects.link(marker_obj)
-marker_obj.location = (0.0, -0.071, 0.001)
+marker_obj.location = (0.04, -0.021, 0.001)
 marker_obj.data.materials.append(mat_m)
 
 # Cans
-cans = [{'name': 'can_red', 'color': [0.85, 0.08, 0.08], 'position': [-0.159, 0.065, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_dist_to_marker_corner_m': 0.21999829544794205}, {'name': 'can_green', 'color': [0.08, 0.85, 0.08], 'position': [-0.014, 0.11, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_dist_to_marker_corner_m': 0.22556429238689352}, {'name': 'can_blue', 'color': [0.08, 0.2, 0.88], 'position': [0.202, 0.056, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_dist_to_marker_corner_m': 0.29359027572452057}]
+cans = [{'name': 'can_red', 'color': [0.85, 0.08, 0.08], 'position': [-0.233, 0.056, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_rel_to_marker_center_m': [-0.273, 0.077, 0.0615], 'gt_rel_to_marker_corner_m': [-0.24100000000000002, 0.10900000000000001, 0.0615], 'gt_dist_to_marker_corner_m': 0.2715589254655424}, {'name': 'can_green', 'color': [0.08, 0.85, 0.08], 'position': [0.028, 0.111, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_rel_to_marker_center_m': [-0.012, 0.132, 0.0615], 'gt_rel_to_marker_corner_m': [0.02, 0.164, 0.0615], 'gt_dist_to_marker_corner_m': 0.1762902436324824}, {'name': 'can_blue', 'color': [0.08, 0.2, 0.88], 'position': [0.188, 0.062, 0.0625], 'radius': 0.035, 'height': 0.125, 'gt_rel_to_marker_center_m': [0.148, 0.083, 0.0615], 'gt_rel_to_marker_corner_m': [0.18, 0.115, 0.0615], 'gt_dist_to_marker_corner_m': 0.2222774167566287}]
 for c in cans:
     pos = c["position"]
     radius = c["radius"]
@@ -95,7 +95,7 @@ light_obj.location = (2.0, -2.0, 4.0)
 light_obj.rotation_euler = (math.radians(35), math.radians(20), math.radians(45))
 
 # Target point: center of all cans + marker
-all_pts = [c["position"] for c in cans] + [(0.0, -0.071, 0.001)]
+all_pts = [c["position"] for c in cans] + [(0.04, -0.021, 0.001)]
 avg_x = sum(p[0] for p in all_pts) / len(all_pts)
 avg_y = sum(p[1] for p in all_pts) / len(all_pts)
 avg_z = sum(p[2] for p in all_pts) / len(all_pts)
@@ -115,8 +115,8 @@ def create_cam(name, loc):
     c_obj.rotation_euler = dir_vec.to_track_quat('-Z', 'Y').to_euler()
     return c_obj
 
-cam0 = create_cam("Camera_0", (-0.2529806492332567, -0.8762949757948303, 0.37618976645495145))
-cam1 = create_cam("Camera_1", (0.2529806492332567, -0.8762949757948303, 0.37618976645495145))
+cam0 = create_cam("Camera_0", (-0.34543108410604373, -1.0435530394077188, 0.3688395426316677))
+cam1 = create_cam("Camera_1", (0.34543108410604373, -1.0435530394077188, 0.3688395426316677))
 
 bpy.context.view_layer.update()
 
