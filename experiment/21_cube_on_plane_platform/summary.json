@@ -1,0 +1,8 @@
+{
+  "experiment": "21_cube_on_plane_platform",
+  "scenes": 3,
+  "all_passed": false,
+  "mean_cube_err_mm": 375.77900123524086,
+  "mean_on_plane_gap_mm": 119.21079100551788,
+  "mean_plane_z_err_mm": 70.3765189578844
+}

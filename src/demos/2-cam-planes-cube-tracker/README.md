@@ -102,6 +102,38 @@ PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
   --output-json outputs/tracking_snapshot.json
 ```
 
+### 5. Save Outputs Under Experiment Subfolder
+```bash
+# Saves into outputs/<experiment-name>/session_<timestamp>/ (history.csv, frames/)
+# and updates outputs/<experiment-name>/live_tracking_results.json + .png on 'S' keypress
+PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
+  --calib0 see3cam \
+  --calib1 oak \
+  --exp 21_cube_on_plane_platform
+
+# Save directly into outputs/<experiment-name>/ without timestamp subfolders:
+PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
+  --calib0 see3cam \
+  --calib1 oak \
+  --exp 21_cube_on_plane_platform \
+  --no-timestamp
+```
+
+### 6. Interactive 3D WebGL Viewer & Snapshot Tool
+Launch the interactive 3D WebGL viewer powered by `viser` (Three.js WebGL with orbit, pan, zoom):
+```bash
+# Automatically finds latest live_tracking_results.json and serves on http://localhost:8080
+uv run src/demos/2-cam-planes-cube-tracker/viewer3d.py
+
+# Or inspect a specific session or snapshot:
+uv run src/demos/2-cam-planes-cube-tracker/viewer3d.py \
+  --input outputs/session_20261021_104048/live_tracking_results.json \
+  --port 8080
+```
+- **Live Auto-Reload**: Automatically updates in real time as the tracker writes new telemetry.
+- **Session Dropdown**: Seamlessly switch between different session JSON files.
+- **`📸 Save Snapshot (JSON + PNG)`**: Saves both the active JSON state and a high-resolution 3D client render image into the session folder with a single click.
+
 ---
 
 ## Interactive Keyboard Shortcuts
@@ -110,5 +142,5 @@ PYTHONPATH=src uv run python src/demos/2-cam-planes-cube-tracker/main.py \
 |:---|:---|
 | **`H`** | **Toggle Custom Baseline Reference Frame**: <br>• Baseline Top $\rightarrow$ $+X$ axis (from Tag 40 to 41)<br>• Baseline Right $\rightarrow$ $+Y$ axis<br>• Camera view ray $\rightarrow$ $+Z$ axis<br>• Rotates $90^\circ$ around $Y$-axis so $+Z$ faces **UP**<br>• Offsets origin by **$+2\text{ cm}$ along $X$** and **$+5\text{ cm}$ along $Z$**<br>• Live computes the 6-faced Cube Centroid expressed in this custom frame |
 | **`V`** | Toggle the 3D scene panel (middle column) |
-| **`S`** | Export current telemetry snapshot to JSON file |
+| **`S`** | Export current telemetry snapshot to JSON file and save annotated frame photo |
 | **`Q`** / **`ESC`** | Quit application |

@@ -428,7 +428,15 @@ def detect_and_estimate_poses(
     registry: MarkerRegistry,
     active_ratio: float = 1.0,
 ) -> dict[int, DetectedTagPose]:
-    """Detect tags and estimate 6D camera-relative poses."""
+    """Detect tags and estimate 6D camera-relative poses.
+
+    Pupil-apriltags corner order:
+      Corner 0: bottom-left  [-h,  h, 0]
+      Corner 1: bottom-right [ h,  h, 0]
+      Corner 2: top-right    [ h, -h, 0]
+      Corner 3: top-left     [-h, -h, 0]
+    Coordinate axes: +X Right, +Y Down (into image), +Z Out of tag.
+    """
     raw_dets = detector.detect(gray)
     results = {}
 
@@ -438,25 +446,37 @@ def detect_and_estimate_poses(
         eff_size = nominal_size * active_ratio
         h = eff_size / 2.0
 
-        # Object points centered on tag surface
+        # Standard pupil-apriltags local 3D corners matching OpenCV image coordinates
         obj_pts = np.array([
-            [-h, -h, 0.0],
-            [ h, -h, 0.0],
+            [-h,  h, 0.0],
             [ h,  h, 0.0],
-            [-h,  h, 0.0]
+            [ h, -h, 0.0],
+            [-h, -h, 0.0]
         ], dtype=np.float64)
 
         img_pts = np.array(d.corners, dtype=np.float64)
-        success, rvec, tvec = cv2.solvePnP(
+        success, rvecs, tvecs, repr_errs = cv2.solvePnPGeneric(
             obj_pts,
             img_pts,
             K,
             dist_coeffs,
             flags=cv2.SOLVEPNP_IPPE_SQUARE
         )
-        if not success:
+        if not success or len(rvecs) == 0:
             continue
 
+        # Choose the solution that is in front of camera (t_z > 0.01) with lowest reprojection error
+        best_idx = 0
+        best_err = 1e9
+        for i, (r, t) in enumerate(zip(rvecs, tvecs)):
+            if t[2, 0] > 0.01:
+                err = float(repr_errs[i, 0]) if repr_errs is not None and len(repr_errs) > i else 0.0
+                if err < best_err:
+                    best_err = err
+                    best_idx = i
+
+        rvec = rvecs[best_idx]
+        tvec = tvecs[best_idx]
         R, _ = cv2.Rodrigues(rvec)
         t = tvec.ravel()
 
@@ -667,7 +687,107 @@ class TwoCameraPlanesCubePipeline:
             for c_id, (R, t) in cam_extrinsics.items()
         }
 
-        # 3. Track Cube Centroid (Tags 20..25)
+        # 3. Track Plane B: Tags 42, 43, 44, 45 (Platform Quad Plane)
+        # All tags 42..45 are mounted on the same rigid flat board:
+        # -> All surface normals MUST align with the consensus normal
+        # -> All corner points (16 total) lie on the same 3D plane
+        # -> Filtering tags with flipped normals rejects PnP ambiguities
+        plane_b_raw_pts = []
+        plane_b_centers = {}
+        plane_b_normals = {}
+        plane_b_tag_corners = {}
+
+        for tid in (42, 43, 44, 45):
+            cand_centers = []
+            cand_normals = []
+            cand_corners = []
+            half = self.registry.get_size(tid) / 2.0
+            local_corners = np.array([
+                [-half,  half, 0.0],
+                [ half,  half, 0.0],
+                [ half, -half, 0.0],
+                [-half, -half, 0.0],
+            ], dtype=np.float64)
+
+            for c_id, dets in [(0, dets0), (1, dets1)]:
+                if c_id in cam_extrinsics and tid in dets:
+                    R_c_base, t_c_base = cam_extrinsics[c_id]
+                    c_base, R_t_base = project_tag_to_base(dets[tid], R_c_base, t_c_base)
+                    cand_centers.append(c_base)
+                    # Tag surface normal in Base frame (ensure pointing upwards nz > 0)
+                    n_tag = R_t_base[:, 2].copy()
+                    if n_tag[2] < 0:
+                        n_tag = -n_tag
+                    cand_normals.append(n_tag)
+                    # Tag corners in Base frame
+                    corners_base = c_base + (R_t_base @ local_corners.T).T
+                    cand_corners.append(corners_base)
+
+            if cand_centers:
+                avg_c = np.mean(cand_centers, axis=0)
+                plane_b_centers[tid] = avg_c
+                avg_n = np.mean(cand_normals, axis=0)
+                plane_b_normals[tid] = avg_n / max(1e-6, np.linalg.norm(avg_n))
+                avg_corners = np.mean(cand_corners, axis=0)
+                plane_b_tag_corners[tid] = avg_corners
+                plane_b_raw_pts.append(avg_c)
+                for pt in avg_corners:
+                    plane_b_raw_pts.append(pt)
+
+        # Robust consensus normal across all coplanar tags on Plane B
+        plane_b_normal = np.array([0.0, 0.0, 1.0])
+        plane_b_d = 0.0
+        rmse_mm = 0.0
+        if plane_b_normals:
+            normals_list = list(plane_b_normals.values())
+            med_n = np.median(normals_list, axis=0)
+            med_n = med_n / max(1e-6, np.linalg.norm(med_n))
+            # Keep tags whose surface normal aligns within 25 degrees of median
+            inlier_normals = [
+                n for n in normals_list
+                if float(np.dot(n, med_n)) >= np.cos(np.radians(25.0))
+            ]
+            if inlier_normals:
+                plane_b_normal = np.mean(inlier_normals, axis=0)
+                plane_b_normal = plane_b_normal / max(1e-6, np.linalg.norm(plane_b_normal))
+            else:
+                plane_b_normal = med_n
+            if plane_b_normal[2] < 0:
+                plane_b_normal = -plane_b_normal
+
+            # Plane offset d via robust median of all corner and center points
+            plane_b_d = -float(np.median([np.dot(plane_b_normal, p) for p in plane_b_raw_pts]))
+            residuals = np.abs(np.array([np.dot(plane_b_normal, p) + plane_b_d for p in plane_b_raw_pts]))
+            rmse_mm = float(np.sqrt(np.mean(residuals ** 2))) * 1000.0
+
+            # Orthogonally project all tag centers onto the fitted consensus plane
+            proj_centers = {}
+            for tid, pt in plane_b_centers.items():
+                pt_proj = pt - (np.dot(plane_b_normal, pt) + plane_b_d) * plane_b_normal
+                proj_centers[tid] = pt_proj
+
+            proj_corners = {}
+            for tid, crn_arr in plane_b_tag_corners.items():
+                proj_crn = [pt - (np.dot(plane_b_normal, pt) + plane_b_d) * plane_b_normal for pt in crn_arr]
+                proj_corners[tid] = np.mean(proj_crn, axis=0)
+
+            center_plane = np.mean(list(proj_centers.values()), axis=0)
+            results["plane_b"] = {
+                "detected_tags": list(proj_centers.keys()),
+                "normal": plane_b_normal.tolist(),
+                "d_offset_m": plane_b_d,
+                "center_mm": (center_plane * 1000.0).tolist(),
+                "z_height_mm": float(center_plane[2] * 1000.0),
+                "coplanarity_rmse_mm": rmse_mm,
+                "centers_mm": {tid: (pt * 1000.0).tolist() for tid, pt in proj_centers.items()},
+                "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in proj_centers.items()},
+            }
+
+        # 4. Track Cube Centroid (Tags 20..25)
+        # Geometric constraint:
+        # If cube is placed on the platform plane (or tabletop),
+        # face normals must be parallel or perpendicular to the plane normal,
+        # and centroid height is constrained to plane_height + L/2.
         cube_observations = []
         for c_id, dets in [(0, dets0), (1, dets1)]:
             if c_id not in cam_extrinsics:
@@ -683,9 +803,7 @@ class TwoCameraPlanesCubePipeline:
                         t_c_base
                     ))
 
-        # Reprojectable cube face quads (Base Frame, mm): the fused pose of each
-        # cube face, drawn back into BOTH camera views so it can be compared
-        # against the raw 2D detections.
+        # Reprojectable cube face quads in Base Frame
         cube_face_corners: dict[int, list[np.ndarray]] = {}
         for tid, R_c_t, t_c_t, R_c_base, t_c_base in cube_observations:
             R_b_c = R_c_base.T
@@ -694,10 +812,10 @@ class TwoCameraPlanesCubePipeline:
             R_b_t = R_b_c @ R_c_t
             half = self.registry.get_size(tid) / 2.0
             local_corners = np.array([
-                [-half, -half, 0.0],
-                [ half, -half, 0.0],
-                [ half,  half, 0.0],
                 [-half,  half, 0.0],
+                [ half,  half, 0.0],
+                [ half, -half, 0.0],
+                [-half, -half, 0.0],
             ], dtype=np.float64)
             cube_face_corners.setdefault(tid, []).append(center_b + (R_b_t @ local_corners.T).T)
 
@@ -708,16 +826,71 @@ class TwoCameraPlanesCubePipeline:
             }
 
         if cube_observations:
-            cube_res = estimate_cube_centroid_ransac(self.cube_config, cube_observations)
-            if cube_res:
+            # Active supporting plane for cube:
+            # If Plane B detected, support is Plane B; otherwise tabletop (nz=1, d=0)
+            if results["plane_b"]:
+                supp_n = np.array(results["plane_b"]["normal"], dtype=np.float64)
+                supp_d = float(results["plane_b"]["d_offset_m"])
+            else:
+                supp_n = np.array([0.0, 0.0, 1.0], dtype=np.float64)
+                supp_d = 0.0
+
+            cube_size = self.cube_config.side_length_m
+            half_L = cube_size / 2.0
+            centroid_cands = []
+            face_cands: dict[int, list[np.ndarray]] = {}
+
+            for tid, R_c_t, t_c_t, R_c_base, t_c_base in cube_observations:
+                R_b_c = R_c_base.T
+                t_b_c = -R_b_c @ t_c_base
+                center_b = R_b_c @ t_c_t.ravel() + t_b_c
+                R_b_t = R_b_c @ R_c_t
+                n_face = R_b_t[:, 2].copy()
+                if np.linalg.norm(n_face) > 1e-6:
+                    n_face = n_face / np.linalg.norm(n_face)
+
+                # Dot product with support plane normal
+                dot_val = float(np.dot(n_face, supp_n))
+
+                # Check if face is top/bottom vs lateral face:
+                # Top face normal aligns with +supp_n (dot_val > cos(35 deg))
+                if dot_val > np.cos(np.radians(35.0)):
+                    # Top face: normal parallel to plane, height = plane + L/2
+                    cand_c = center_b - (np.dot(supp_n, center_b) + supp_d - half_L) * supp_n
+                elif dot_val < -np.cos(np.radians(35.0)):
+                    # Bottom face: normal opposite plane, height = plane + L/2
+                    cand_c = center_b - (np.dot(supp_n, center_b) + supp_d - half_L) * supp_n
+                else:
+                    # Lateral face: normal perpendicular to plane normal
+                    n_lat = n_face - np.dot(n_face, supp_n) * supp_n
+                    n_lat_len = np.linalg.norm(n_lat)
+                    if n_lat_len > 1e-6:
+                        n_lat = n_lat / n_lat_len
+                    else:
+                        n_lat = n_face
+                    # Lateral face center projected to height plane + L/2
+                    pt_h = center_b - (np.dot(supp_n, center_b) + supp_d - half_L) * supp_n
+                    # Centroid is offset inward by half_L along opposite of lateral normal
+                    cand_c = pt_h - half_L * n_lat
+
+                centroid_cands.append(cand_c)
+                face_cands.setdefault(tid, []).append(cand_c)
+
+            if centroid_cands:
+                pts_cands = np.array(centroid_cands, dtype=np.float64)
+                refined_centroid = np.median(pts_cands, axis=0)
+                # Ensure height strictly equals plane + L/2
+                refined_centroid = refined_centroid - (np.dot(supp_n, refined_centroid) + supp_d - half_L) * supp_n
+                spread_rmse = float(np.sqrt(np.mean(np.linalg.norm(pts_cands - refined_centroid, axis=1) ** 2))) * 1000.0
+
                 results["cube_centroid"] = {
-                    "xyz_mm": (cube_res.centroid_base_m * 1000.0).tolist(),
-                    "visible_faces": cube_res.visible_faces,
-                    "num_obs": cube_res.num_observations,
-                    "residual_spread_mm": float(cube_res.residual_spread_mm),
+                    "xyz_mm": (refined_centroid * 1000.0).tolist(),
+                    "visible_faces": sorted(face_cands.keys()),
+                    "num_obs": len(centroid_cands),
+                    "residual_spread_mm": spread_rmse,
                 }
 
-        # 4. Track Plane A: Tags 40, 41 (Line / Pair Plane)
+        # 5. Track Plane A: Tags 40, 41 (Line / Pair Plane)
         plane_a_pts = []
         plane_a_centers = {}
         for tid in (40, 41):
@@ -827,64 +1000,6 @@ class TwoCameraPlanesCubePipeline:
                 results["custom_h_frame"] = h_frame_info
                 self.custom_h_frame_info = h_frame_info
 
-        # 5. Track Plane B: Tags 42, 43, 44, 45 (Platform Quad Plane)
-        plane_b_pts = []
-        plane_b_centers = {}
-        plane_b_normals = []
-        for tid in (42, 43, 44, 45):
-            candidates = []
-            cand_normals = []
-            for c_id, dets in [(0, dets0), (1, dets1)]:
-                if c_id in cam_extrinsics and tid in dets:
-                    R_c_base, t_c_base = cam_extrinsics[c_id]
-                    c_base, R_t_base = project_tag_to_base(dets[tid], R_c_base, t_c_base)
-                    candidates.append(c_base)
-                    # Tag local Z axis is normal to the tag plane
-                    n_tag = R_t_base[:, 2].copy()
-                    if n_tag[2] < 0:
-                        n_tag = -n_tag
-                    cand_normals.append(n_tag)
-            if candidates:
-                avg_pt = np.mean(candidates, axis=0)
-                plane_b_pts.append(avg_pt)
-                plane_b_centers[tid] = avg_pt
-                if cand_normals:
-                    avg_n = np.mean(cand_normals, axis=0)
-                    norm_len = np.linalg.norm(avg_n)
-                    if norm_len > 1e-6:
-                        plane_b_normals.append(avg_n / norm_len)
-
-        if len(plane_b_pts) >= 3:
-            pts_arr = np.array(plane_b_pts, dtype=np.float64)
-            normal, d, rmse_mm = fit_plane_ransac_points(pts_arr)
-            center = np.mean(pts_arr, axis=0)
-            results["plane_b"] = {
-                "detected_tags": list(plane_b_centers.keys()),
-                "normal": normal.tolist(),
-                "center_mm": (center * 1000.0).tolist(),
-                "z_height_mm": float(center[2] * 1000.0),
-                "coplanarity_rmse_mm": rmse_mm,
-                "centers_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()},
-                "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()},
-            }
-        elif len(plane_b_pts) > 0:
-            pts_arr = np.array(plane_b_pts, dtype=np.float64)
-            center = np.mean(pts_arr, axis=0)
-            if plane_b_normals:
-                normal = np.mean(plane_b_normals, axis=0)
-                normal = normal / max(1e-6, np.linalg.norm(normal))
-            else:
-                normal = np.array([0.0, 0.0, 1.0])
-            results["plane_b"] = {
-                "detected_tags": list(plane_b_centers.keys()),
-                "normal": normal.tolist(),
-                "center_mm": (center * 1000.0).tolist(),
-                "z_height_mm": float(center[2] * 1000.0),
-                "coplanarity_rmse_mm": 0.0,
-                "centers_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()},
-                "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in plane_b_centers.items()},
-            }
-
         return results
 
     # ------------------------------------------------------------------
@@ -914,12 +1029,86 @@ class TwoCameraPlanesCubePipeline:
         """Render the telemetry dashboard (H-frame status from this pipeline)."""
         return render_hud_dashboard(results, self.custom_h_frame_active, width, height)
 
+    def save_snapshot_bundle(
+        self,
+        f0: np.ndarray | None,
+        f1: np.ndarray | None,
+        v0: np.ndarray | None,
+        v1: np.ndarray | None,
+        combined_ui: np.ndarray | None,
+        results: dict,
+        experiment_name: str = "default",
+        session_root: Path | str = "outputs",
+    ) -> Path:
+        """Save raw camera frames, annotated views, combined UI, and tracking results.
+
+        Directory structure:
+          outputs/<name>/<time>/
+            ├── cam0.png                (raw Camera 0 frame)
+            ├── cam1.png                (raw Camera 1 frame)
+            ├── cam0_annotated.png      (annotated Camera 0 view)
+            ├── cam1_annotated.png      (annotated Camera 1 view)
+            ├── combined_ui.png         (dashboard view)
+            └── live_tracking_results.json (telemetry JSON)
+        Also updates outputs/<name>/ and root outputs/ live_tracking_results.json.
+        """
+        stamp = time.strftime("%Y%m%d_%H%M%S")
+        root = Path(session_root)
+        exp_dir = root / (experiment_name or "default")
+        time_dir = exp_dir / stamp
+        time_dir.mkdir(parents=True, exist_ok=True)
+
+        if f0 is not None:
+            cv2.imwrite(str(time_dir / "cam0.png"), f0)
+            cv2.imwrite(str(exp_dir / "cam0.png"), f0)
+        if f1 is not None:
+            cv2.imwrite(str(time_dir / "cam1.png"), f1)
+            cv2.imwrite(str(exp_dir / "cam1.png"), f1)
+
+        if v0 is not None:
+            cv2.imwrite(str(time_dir / "cam0_annotated.png"), v0)
+            cv2.imwrite(str(exp_dir / "cam0_annotated.png"), v0)
+        if v1 is not None:
+            cv2.imwrite(str(time_dir / "cam1_annotated.png"), v1)
+            cv2.imwrite(str(exp_dir / "cam1_annotated.png"), v1)
+
+        if combined_ui is not None:
+            cv2.imwrite(str(time_dir / "combined_ui.png"), combined_ui)
+            cv2.imwrite(str(exp_dir / "combined_ui.png"), combined_ui)
+
+        with open(time_dir / "live_tracking_results.json", "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2)
+        with open(exp_dir / "live_tracking_results.json", "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=2)
+
+        try:
+            root_json = root / "live_tracking_results.json"
+            with open(root_json, "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=2)
+        except Exception:
+            pass
+
+        log.info(f"[SNAPSHOT SAVED] {time_dir}/")
+        print(f"\n[SNAPSHOT SAVED] {time_dir}/")
+        print(f"  ├── cam0.png (raw Camera 0 frame)")
+        print(f"  ├── cam1.png (raw Camera 1 frame)")
+        print(f"  ├── cam0_annotated.png")
+        print(f"  ├── cam1_annotated.png")
+        print(f"  ├── combined_ui.png")
+        print(f"  └── live_tracking_results.json")
+        return time_dir
+
     def run(self, output_json: Path | None = None, display: bool = True,
-            session: SessionLogger | None = None):
+            session: SessionLogger | None = None,
+            experiment_name: str = "default",
+            session_dir: str | Path = "outputs"):
         """Main real-time tracking loop."""
-        log.info("Starting Two-Camera Planes & Cube Tracker Demo. "
-                 "Keys: 'q' quit, 'h' custom baseline frame, 'v' 3D scene view, 's' export JSON.")
-        out_path = output_json or (REPO_ROOT / "outputs" / "live_tracking_results.json")
+        if output_json:
+            out_path = Path(output_json)
+        elif session is not None:
+            out_path = session.session_dir / "live_tracking_results.json"
+        else:
+            out_path = Path(session_dir) / (experiment_name or "default") / "live_tracking_results.json"
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
         last_ui: np.ndarray | None = None
@@ -992,15 +1181,25 @@ class TwoCameraPlanesCubePipeline:
                         self.show_scene3d = not self.show_scene3d
                         log.info(f"3D Scene Panel: {'ENABLED' if self.show_scene3d else 'DISABLED'}")
                     elif key in (ord('s'), ord('S')):
-                        with open(out_path, "w", encoding="utf-8") as f:
-                            json.dump(results, f, indent=2)
-                        log.info(f"Saved snapshot to: {out_path}")
+                        self.save_snapshot_bundle(
+                            f0, f1, v0, v1, combined_ui, results,
+                            experiment_name=experiment_name,
+                            session_root=session_dir,
+                        )
+                        if output_json:
+                            with open(out_path, "w", encoding="utf-8") as f:
+                                json.dump(results, f, indent=2)
                 else:
                     # Non-GUI step: save output snapshot if requested
                     if output_json:
                         with open(out_path, "w", encoding="utf-8") as f:
                             json.dump(results, f, indent=2)
                         log.info(f"Saved headless snapshot to: {out_path}")
+                    self.save_snapshot_bundle(
+                        f0, f1, v0, v1, combined_ui, results,
+                        experiment_name=experiment_name,
+                        session_root=session_dir,
+                    )
                     time.sleep(0.05)
                     break
 

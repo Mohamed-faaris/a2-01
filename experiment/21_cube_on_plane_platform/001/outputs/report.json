@@ -1,0 +1,94 @@
+{
+  "scene": "001",
+  "name": "Cube-On-Plane Nominal (yaw 0)",
+  "detected_tags": {
+    "cam0": [
+      0,
+      20,
+      42,
+      43,
+      44,
+      45
+    ],
+    "cam1": [
+      0,
+      20,
+      42,
+      43,
+      44,
+      45
+    ]
+  },
+  "cube_resting_gt": {
+    "cube_bottom_z_equals_plane_top": true,
+    "plane_top_z": 0.05,
+    "expected_centroid_z": 0.07050000000000001
+  },
+  "gt_base_frame": {
+    "cube_centroid_mm": [
+      0.0,
+      -280.0,
+      -70.0
+    ],
+    "plane_center_mm": [
+      0.0,
+      -280.0,
+      -49.5
+    ]
+  },
+  "estimates": {
+    "plane": {
+      "detected_tags": [
+        42,
+        43,
+        44,
+        45
+      ],
+      "center_mm": [
+        0.162,
+        79.699,
+        -114.366
+      ],
+      "normal": [
+        -0.0015,
+        0.6676,
+        0.7445
+      ],
+      "center_err_mm": 365.50069775846526,
+      "z_err_mm": -64.86636081964048,
+      "normal_angle_err_deg": 41.88283279369291,
+      "coplanarity_rmse_mm": 0.03687017138620132
+    },
+    "cube": {
+      "centroid_mm": [
+        52.519,
+        100.667,
+        -117.793
+      ],
+      "visible_faces": [
+        20
+      ],
+      "num_obs": 2,
+      "residual_spread_mm": 0.0,
+      "err_mm": 387.2335901729255,
+      "err_xyz_mm": [
+        52.519,
+        380.667,
+        -47.793
+      ],
+      "on_plane_gap_mm": -23.926669495862683,
+      "gt_on_plane_gap_mm": -41.00000000000001,
+      "xy_inside_platform_quad": false
+    }
+  },
+  "plane_a": null,
+  "checks": {
+    "plane_z_within_5mm": false,
+    "plane_normal_within_5deg": false,
+    "plane_all_4_tags": true,
+    "cube_centroid_within_15mm": false,
+    "cube_on_plane_gap_within_5mm": false,
+    "cube_inside_platform": false
+  },
+  "all_passed": false
+}

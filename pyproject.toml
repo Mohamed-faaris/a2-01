@@ -19,6 +19,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     "scipy>=1.15.3",
     "ultralytics>=8.4.123",
+    "viser>=1.1.1",
 ]
 
 [project.scripts]

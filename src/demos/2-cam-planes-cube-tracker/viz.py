@@ -39,6 +39,26 @@ COL_CAM = (80, 200, 255)     # Camera frustums
 COL_GRID = (58, 62, 72)      # Ground grid
 
 
+def safe_pt(uv: np.ndarray | Sequence[float] | None, max_coord: float = 30000.0) -> tuple[int, int] | None:
+    """Safely converts (u, v) array or sequence to integer pixel tuple.
+
+    Returns (int, int) or None if point contains NaN/Inf, is out of bounds, or invalid.
+    Guarantees OpenCV drawing functions will never fail with type/overflow errors.
+    """
+    if uv is None:
+        return None
+    try:
+        arr = np.asarray(uv, dtype=np.float64).ravel()
+        if arr.size < 2 or not np.isfinite(arr[:2]).all():
+            return None
+        x, y = float(arr[0]), float(arr[1])
+        if abs(x) > max_coord or abs(y) > max_coord:
+            return None
+        return (int(round(x)), int(round(y)))
+    except Exception:
+        return None
+
+
 def project_base_point(
     p_base_m: np.ndarray,
     R_c_base: np.ndarray,
@@ -48,15 +68,24 @@ def project_base_point(
 ) -> np.ndarray | None:
     """Project a Base-Frame metric point (metres) into camera pixels.
 
-    Returns (u, v) in pixels, or None when the point is behind the camera.
+    Returns (u, v) in pixels, or None when behind camera or projection is invalid.
     """
-    p_cam = R_c_base @ np.asarray(p_base_m, dtype=np.float64) + t_c_base
-    if p_cam[2] <= 1e-6:
+    try:
+        p_base = np.asarray(p_base_m, dtype=np.float64).ravel()
+        if p_base.size != 3 or not np.isfinite(p_base).all():
+            return None
+        p_cam = R_c_base @ p_base + t_c_base
+        if not np.isfinite(p_cam).all() or p_cam[2] <= 0.01:
+            return None
+        px, _ = cv2.projectPoints(
+            p_cam.reshape(1, 3), np.zeros(3), np.zeros(3), K, dist_coeffs
+        )
+        uv = px.reshape(2)
+        if not np.isfinite(uv).all() or abs(uv[0]) > 25000 or abs(uv[1]) > 25000:
+            return None
+        return uv
+    except Exception:
         return None
-    px, _ = cv2.projectPoints(
-        p_cam.reshape(1, 3), np.zeros(3), np.zeros(3), K, dist_coeffs
-    )
-    return px.reshape(2)
 
 
 def fmt_xyz_mm(p_mm: Sequence[float]) -> str:
@@ -100,9 +129,13 @@ class SessionLogger:
     ]
 
     def __init__(self, session_root: Path, history_interval_s: float = 0.1,
-                 photo_interval_s: float = 10.0):
+                 photo_interval_s: float = 0.0, use_timestamp_subfolder: bool = True):
         stamp = time.strftime("%Y%m%d_%H%M%S")
-        self.session_dir = Path(session_root) / f"session_{stamp}"
+        root = Path(session_root)
+        if use_timestamp_subfolder:
+            self.session_dir = root / f"session_{stamp}"
+        else:
+            self.session_dir = root
         self.frames_dir = self.session_dir / "frames"
         self.frames_dir.mkdir(parents=True, exist_ok=True)
         self.history_path = self.session_dir / "history.csv"
@@ -262,9 +295,10 @@ def draw_base_frame_overlay(vis: np.ndarray, results: dict, cam_id: int,
         return np.asarray(v, dtype=np.float64) * 0.001
 
     def label_px(uv, text, color, dx=10, dy=-8, scale=0.36):
-        if uv is None:
+        pt = safe_pt(uv)
+        if pt is None:
             return
-        x, y = int(round(uv[0])), int(round(uv[1]))
+        x, y = pt
         if not (-240 <= x <= img_w + 240 and -240 <= y <= img_h + 240):
             return
         draw_shadow_text(vis, (x + dx, max(16, y + dy)), text, color, scale=scale)
@@ -274,30 +308,29 @@ def draw_base_frame_overlay(vis: np.ndarray, results: dict, cam_id: int,
 
     # 1. Base-frame axes at the Tag 0 origin (X red, Y green, Z blue)
     origin_m = np.zeros(3)
-    o_uv = proj(origin_m)
-    for d_m, col, name in [((0.10, 0.0, 0.0), COL_X, "X"),
-                           ((0.0, 0.10, 0.0), COL_Y, "Y"),
-                           ((0.0, 0.0, 0.10), COL_Z, "Z")]:
-        e_uv = proj(np.array(d_m, dtype=np.float64))
-        if o_uv is None or e_uv is None:
-            continue
-        cv2.arrowedLine(vis, tuple(o_uv.astype(int)), tuple(e_uv.astype(int)),
-                        col, 2, cv2.LINE_AA, tipLength=0.2)
-        label_px(e_uv, name, col, dx=4, dy=-4, scale=0.55)
+    o_pt = safe_pt(proj(origin_m))
+    if o_pt is not None:
+        for d_m, col, name in [((0.10, 0.0, 0.0), COL_X, "X"),
+                               ((0.0, 0.10, 0.0), COL_Y, "Y"),
+                               ((0.0, 0.0, 0.10), COL_Z, "Z")]:
+            e_pt = safe_pt(proj(np.array(d_m, dtype=np.float64)))
+            if e_pt is None:
+                continue
+            cv2.arrowedLine(vis, o_pt, e_pt, col, 2, cv2.LINE_AA, tipLength=0.2)
+            label_px(e_pt, name, col, dx=4, dy=-4, scale=0.55)
 
     # 2. Plane A (Tags 40, 41): segment + endpoints with coordinate readout
     pa = results.get("plane_a")
     if pa:
         p40, p41 = mm(pa["tag_40_mm"]), mm(pa["tag_41_mm"])
-        u40, u41 = proj(p40), proj(p41)
-        if u40 is not None and u41 is not None:
-            cv2.line(vis, tuple(u40.astype(int)), tuple(u41.astype(int)),
-                     COL_PLANE_A, 2, cv2.LINE_AA)
-        label_px(u40, f"A40 {fmt_xyz_mm(pa['tag_40_mm'])}", COL_PLANE_A, dx=12)
-        label_px(u41, f"A41 {fmt_xyz_mm(pa['tag_41_mm'])}", COL_PLANE_A, dx=12)
-        for u in (u40, u41):
-            if u is not None:
-                cv2.circle(vis, tuple(u.astype(int)), 6, COL_PLANE_A, 2)
+        pt40, pt41 = safe_pt(proj(p40)), safe_pt(proj(p41))
+        if pt40 is not None and pt41 is not None:
+            cv2.line(vis, pt40, pt41, COL_PLANE_A, 2, cv2.LINE_AA)
+        label_px(pt40, f"A40 {fmt_xyz_mm(pa['tag_40_mm'])}", COL_PLANE_A, dx=12)
+        label_px(pt41, f"A41 {fmt_xyz_mm(pa['tag_41_mm'])}", COL_PLANE_A, dx=12)
+        for pt in (pt40, pt41):
+            if pt is not None:
+                cv2.circle(vis, pt, 6, COL_PLANE_A, 2)
 
     # 3. Plane B (Tags 42..45): convex hull outline, centers and normal arrow
     pb = results.get("plane_b")
@@ -305,36 +338,36 @@ def draw_base_frame_overlay(vis: np.ndarray, results: dict, cam_id: int,
         proj_pts = []
         for tid, c_mm in (pb.get("centers_mm") or {}).items():
             u = proj(mm(c_mm))
-            if u is None:
+            pt = safe_pt(u)
+            if pt is None:
                 continue
-            proj_pts.append(u)
-            cv2.circle(vis, tuple(u.astype(int)), 5, COL_PLANE_B, -1)
-            label_px(u, f"B{tid} {fmt_xyz_mm(c_mm)}", COL_PLANE_B)
+            proj_pts.append(pt)
+            cv2.circle(vis, pt, 5, COL_PLANE_B, -1)
+            label_px(pt, f"B{tid} {fmt_xyz_mm(c_mm)}", COL_PLANE_B)
         hull = convex_hull_polygon(np.array(proj_pts)) if len(proj_pts) >= 3 else None
         if hull is not None:
             cv2.polylines(vis, [hull.astype(np.int32)], True, COL_PLANE_B, 2, cv2.LINE_AA)
         c_m = mm(pb["center_mm"])
         n_m = np.asarray(pb["normal"], dtype=np.float64)
-        c_uv, n_uv = proj(c_m), proj(c_m + n_m * 0.08)
-        if c_uv is not None and n_uv is not None:
-            cv2.arrowedLine(vis, tuple(c_uv.astype(int)), tuple(n_uv.astype(int)),
-                            (255, 255, 255), 2, cv2.LINE_AA, tipLength=0.2)
+        c_pt, n_pt = safe_pt(proj(c_m)), safe_pt(proj(c_m + n_m * 0.08))
+        if c_pt is not None and n_pt is not None:
+            cv2.arrowedLine(vis, c_pt, n_pt, (255, 255, 255), 2, cv2.LINE_AA, tipLength=0.2)
         label_m(c_m, f"PL-B {fmt_xyz_mm(pb['center_mm'])}", (255, 255, 255), dy=16)
 
     # 4. Cube: fused face quads + centroid crosshair
     for tid, corners_mm in (results.get("cube_faces_mm") or {}).items():
-        cuv = [proj(mm(c)) for c in corners_mm]
-        if any(u is None for u in cuv):
+        cuv = [safe_pt(proj(mm(c))) for c in corners_mm]
+        if any(pt is None for pt in cuv):
             continue
-        poly = np.array([u for u in cuv if u is not None], dtype=np.int32)
+        poly = np.array(cuv, dtype=np.int32)
         cv2.polylines(vis, [poly], True, COL_CUBE, 1, cv2.LINE_AA)
         label_px(poly.mean(axis=0), f"F{tid}", COL_CUBE, dx=2, dy=4, scale=0.32)
     cube = results.get("cube_centroid")
     if cube:
         c_m = mm(cube["xyz_mm"])
-        c_uv = proj(c_m)
-        if c_uv is not None:
-            cv2.drawMarker(vis, tuple(c_uv.astype(int)), COL_CUBE,
+        c_pt = safe_pt(proj(c_m))
+        if c_pt is not None:
+            cv2.drawMarker(vis, c_pt, COL_CUBE,
                            cv2.MARKER_TILTED_CROSS, 16, 2)
         label_m(c_m, f"CUBE {fmt_xyz_mm(cube['xyz_mm'])}", COL_CUBE, dy=22)
 
@@ -343,16 +376,16 @@ def draw_base_frame_overlay(vis: np.ndarray, results: dict, cam_id: int,
     if h_info:
         o_m = np.asarray(h_info["origin_base_m"], dtype=np.float64)
         R_h = np.asarray(h_info["R_custom_base"], dtype=np.float64)
-        o_uv = proj(o_m)
-        for i, (col, nm) in enumerate([((0, 255, 255), "Hx"),
-                                       ((255, 255, 0), "Hy"),
-                                       ((240, 240, 240), "Hz")]):
-            e_uv = proj(o_m + R_h[:, i] * 0.06)
-            if o_uv is None or e_uv is None:
-                continue
-            cv2.arrowedLine(vis, tuple(o_uv.astype(int)), tuple(e_uv.astype(int)),
-                            col, 1, cv2.LINE_AA, tipLength=0.25)
-            label_px(e_uv, nm, col, dx=2, dy=2, scale=0.32)
+        o_pt = safe_pt(proj(o_m))
+        if o_pt is not None:
+            for i, (col, nm) in enumerate([((0, 255, 255), "Hx"),
+                                           ((255, 255, 0), "Hy"),
+                                           ((240, 240, 240), "Hz")]):
+                e_pt = safe_pt(proj(o_m + R_h[:, i] * 0.06))
+                if e_pt is None:
+                    continue
+                cv2.arrowedLine(vis, o_pt, e_pt, col, 1, cv2.LINE_AA, tipLength=0.25)
+                label_px(e_pt, nm, col, dx=2, dy=2, scale=0.32)
         label_m(o_m, f"H {fmt_xyz_mm(h_info['origin_base_mm'])}", COL_HFRAME, dy=28)
 
     # Legend strip
@@ -413,21 +446,21 @@ def render_scene3d_panel(results: dict, calib0, calib1,
                          -f_px * float(upv @ d) / zc + height / 2.0])
 
     def seg(p_a, p_b, color, thickness=1):
-        ua, ub = proj(p_a), proj(p_b)
-        if ua is None or ub is None:
+        pt_a, pt_b = safe_pt(proj(p_a)), safe_pt(proj(p_b))
+        if pt_a is None or pt_b is None:
             return
-        cv2.line(panel, tuple(ua.astype(int)), tuple(ub.astype(int)), color, thickness, cv2.LINE_AA)
+        cv2.line(panel, pt_a, pt_b, color, thickness, cv2.LINE_AA)
 
     def dot(p_m, color, r_px=5):
-        u = proj(p_m)
-        if u is not None:
-            cv2.circle(panel, tuple(u.astype(int)), r_px, color, -1)
+        pt = safe_pt(proj(p_m))
+        if pt is not None:
+            cv2.circle(panel, pt, r_px, color, -1)
 
     def text_at(p_m, text, color, dx=8, dy=-8, scale=0.36):
-        u = proj(p_m)
-        if u is None:
+        pt = safe_pt(proj(p_m))
+        if pt is None:
             return
-        draw_shadow_text(panel, (int(u[0]) + dx, max(16, int(u[1]) + dy)), text, color, scale=scale)
+        draw_shadow_text(panel, (pt[0] + dx, max(16, pt[1] + dy)), text, color, scale=scale)
 
     # ---- Ground grid on z = 0 -------------------------------------------
     span = float(max(hi[0] - lo[0], hi[1] - lo[1], 0.2)) + 0.14

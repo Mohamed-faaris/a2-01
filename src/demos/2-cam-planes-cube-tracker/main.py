@@ -119,10 +119,14 @@ def main():
                         help="Root directory for session logs: outputs/session_<ts>/history.csv + frames/*.png")
     parser.add_argument("--history-interval", type=float, default=0.1,
                         help="Seconds between history.csv time-series rows (default 0.1)")
-    parser.add_argument("--photo-interval", type=float, default=10.0,
-                        help="Seconds between saved annotated UI frames (default 10.0, 0 disables)")
+    parser.add_argument("--photo-interval", type=float, default=0.0,
+                        help="Seconds between automatic saved UI frames (default 0.0, disabled; photos saved on 'S' keypress)")
     parser.add_argument("--no-session", action="store_true",
                         help="Disable the session time-series log and photo snapshots")
+    parser.add_argument("--experiment", "--exp", "--experiment-name", type=str, default=None,
+                        help="Experiment name subfolder under outputs/ (e.g. outputs/<experiment-name>/...)")
+    parser.add_argument("--no-timestamp", action="store_true",
+                        help="Save directly into outputs/<experiment-name>/ without creating a session_<ts> subfolder")
     parser.add_argument("--list-cams", action="store_true", help="Scan and print connected V4L2 camera cards and stream nodes")
     parser.add_argument("--list-calibs", action="store_true", help="Scan and print discovered custom calibration profiles")
     args = parser.parse_args()
@@ -151,10 +155,14 @@ def main():
 
     session = None
     if not args.no_session:
+        exp_root = Path(args.session_dir)
+        if args.experiment:
+            exp_root = exp_root / args.experiment
         session = SessionLogger(
-            Path(args.session_dir),
+            exp_root,
             history_interval_s=args.history_interval,
             photo_interval_s=args.photo_interval,
+            use_timestamp_subfolder=(not args.no_timestamp),
         )
 
     try:
