@@ -306,4 +306,66 @@ if smoke.get("cube_centroid"):
 if smoke.get("plane_b"):
     assert smoke["plane_b"]["shared_normal"] is True, "plane_b missing shared normal"
 
+# ===========================================================================
+# 8. Regression: process_frame assembly with plane+cube detections injected.
+#    The exp20 render has no tags 42..45/20..25, so the plane_b/cube dict
+#    comps only ever ran on a live camera (where the tuple-unpack crash
+#    happened). Pin the whole assembly offline with exact synthetic poses.
+# ===========================================================================
+import tracker as tracker_mod  # noqa: E402
+
+
+def _det(tid, center_base, R_b_t):
+    t_c = R_c_base @ np.asarray(center_base, dtype=float) + t_c_base
+    return DetectedTagPose(tid, np.zeros((4, 2)), np.zeros(2),
+                           R_c_base @ np.asarray(R_b_t, dtype=float), t_c, 50.0)
+
+
+R_flat = rot_from_z(np.array([0.0, 0.0, 1.0]))     # tag facing +Z (up)
+R_side_x = rot_from_z(np.array([1.0, 0.0, 0.0]))   # face normal +X
+R_side_ny = rot_from_z(np.array([0.0, -1.0, 0.0]))  # face normal -Y
+
+side_m = pipe.cube_side_m
+plane_z = 0.06
+centroid_gt = np.array([0.01, 0.03, plane_z + side_m / 2.0])
+
+fake_dets = {0: det0}
+for tid, xy in [(42, (-0.08, -0.06)), (43, (0.08, -0.06)),
+                (44, (0.08, 0.06)), (45, (-0.08, 0.06))]:
+    fake_dets[tid] = _det(tid, np.array([xy[0], xy[1], plane_z]), R_flat)
+fake_dets[40] = _det(40, np.array([-0.05, -0.12, 0.0]), R_flat)
+fake_dets[41] = _det(41, np.array([0.05, -0.12, 0.0]), R_flat)
+fake_dets[20] = _det(20, centroid_gt + np.array([0.0, 0.0, side_m / 2.0]), R_flat)
+fake_dets[24] = _det(24, centroid_gt + np.array([side_m / 2.0, 0.0, 0.0]), R_side_x)
+fake_dets[23] = _det(23, centroid_gt - np.array([0.0, side_m / 2.0, 0.0]), R_side_ny)
+
+orig_detect = tracker_mod.detect_and_estimate_poses
+tracker_mod.detect_and_estimate_poses = lambda gray, K_, D_, det_, reg_, ar=1.0: dict(fake_dets)
+try:
+    asm = pipe.process_frame(BG)
+finally:
+    tracker_mod.detect_and_estimate_poses = orig_detect
+
+pb = asm.get("plane_b")
+assert pb and pb["shared_normal"] is True and pb["detected_tags"] == [42, 43, 44, 45], pb
+assert abs(pb["offset_m"] - plane_z) < 1e-6, pb["offset_m"]
+assert pb["coplanarity_rmse_mm"] < 1e-6, pb["coplanarity_rmse_mm"]
+assert sorted(pb["corners_mm"]) == [42, 43, 44, 45]
+assert pb["corners_mm"][42] == pb["centers_mm"][42], \
+    "corners_mm must carry tag CENTERS (tuple-unpack regression wrote normals instead)"
+
+cb = asm.get("cube_centroid")
+assert cb, "constrained cube missing with injected faces"
+xyz_err = float(np.linalg.norm(np.array(cb["xyz_mm"]) / 1000.0 - centroid_gt)) * 1000.0
+print(f"[8] assembly: plane_b offset {pb['offset_m'] * 1000:.1f} mm flatness "
+      f"{pb['coplanarity_rmse_mm']:.4f} mm | cube xyz err {xyz_err:.3f} mm, "
+      f"gap {cb['on_plane_gap_mm']:+.3f} mm, faces {cb['visible_faces']}, "
+      f"H-frame {'cube_centroid_in_h_mm' in (asm.get('custom_h_frame') or {})}")
+assert xyz_err < 0.5, xyz_err
+assert abs(cb["on_plane_gap_mm"]) < 0.5, cb["on_plane_gap_mm"]
+assert cb["visible_faces"] == [20, 23, 24], cb["visible_faces"]
+hf = asm.get("custom_h_frame") or {}
+assert "cube_centroid_in_h_mm" in hf, "H-frame missing cube coordinates"
+assert asm.get("plane_a"), "plane A missing with injected tags 40/41"
+
 print("ALL CHECKS PASSED")
