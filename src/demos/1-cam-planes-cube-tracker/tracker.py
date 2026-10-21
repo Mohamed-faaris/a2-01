@@ -448,25 +448,36 @@ def detect_and_estimate_poses(
         eff_size = nominal_size * active_ratio
         h = eff_size / 2.0
 
-        # Object points centered on tag surface
+        # Standard pupil-apriltags local 3D corners matching OpenCV image coordinates
         obj_pts = np.array([
-            [-h, -h, 0.0],
-            [ h, -h, 0.0],
+            [-h,  h, 0.0],
             [ h,  h, 0.0],
-            [-h,  h, 0.0]
+            [ h, -h, 0.0],
+            [-h, -h, 0.0]
         ], dtype=np.float64)
 
         img_pts = np.array(d.corners, dtype=np.float64)
-        success, rvec, tvec = cv2.solvePnP(
+        success, rvecs, tvecs, repr_errs = cv2.solvePnPGeneric(
             obj_pts,
             img_pts,
             K,
             dist_coeffs,
             flags=cv2.SOLVEPNP_IPPE_SQUARE
         )
-        if not success:
+        if not success or len(rvecs) == 0:
             continue
 
+        best_idx = 0
+        best_err = 1e9
+        for i, (r, t) in enumerate(zip(rvecs, tvecs)):
+            if t[2, 0] > 0.01:
+                err = float(repr_errs[i, 0]) if repr_errs is not None and len(repr_errs) > i else 0.0
+                if err < best_err:
+                    best_err = err
+                    best_idx = i
+
+        rvec = rvecs[best_idx]
+        tvec = tvecs[best_idx]
         R, _ = cv2.Rodrigues(rvec)
         t = tvec.ravel()
 
@@ -983,8 +994,67 @@ class SingleCameraPlanesCubePipeline:
         return render_detections_panel(results.get("detections") or [], results,
                                        width, height)
 
+    def save_snapshot_bundle(
+        self,
+        f: np.ndarray | None,
+        v: np.ndarray | None,
+        combined_ui: np.ndarray | None,
+        results: dict,
+        experiment_name: str = "default",
+        session_root: Path | str = "outputs",
+    ) -> Path:
+        """Save raw camera frame, annotated view, combined UI, and tracking results.
+
+        Directory structure:
+          outputs/<name>/<time>/
+            ├── cam0.png                (raw Camera 0 frame)
+            ├── cam0_annotated.png      (annotated Camera 0 view)
+            ├── combined_ui.png         (dashboard view)
+            └── live_tracking_results.json (telemetry JSON)
+        Also updates outputs/<name>/ and root outputs/ live_tracking_results.json.
+        """
+        stamp = time.strftime("%Y%m%d_%H%M%S")
+        root = Path(session_root)
+        exp_dir = root / (experiment_name or "default")
+        time_dir = exp_dir / stamp
+        time_dir.mkdir(parents=True, exist_ok=True)
+
+        if f is not None:
+            cv2.imwrite(str(time_dir / "cam0.png"), f)
+            cv2.imwrite(str(exp_dir / "cam0.png"), f)
+
+        if v is not None:
+            cv2.imwrite(str(time_dir / "cam0_annotated.png"), v)
+            cv2.imwrite(str(exp_dir / "cam0_annotated.png"), v)
+
+        if combined_ui is not None:
+            cv2.imwrite(str(time_dir / "combined_ui.png"), combined_ui)
+            cv2.imwrite(str(exp_dir / "combined_ui.png"), combined_ui)
+
+        with open(time_dir / "live_tracking_results.json", "w", encoding="utf-8") as fjs:
+            json.dump(results, fjs, indent=2)
+        with open(exp_dir / "live_tracking_results.json", "w", encoding="utf-8") as fjs:
+            json.dump(results, fjs, indent=2)
+
+        try:
+            root_json = root / "live_tracking_results.json"
+            with open(root_json, "w", encoding="utf-8") as fjs:
+                json.dump(results, fjs, indent=2)
+        except Exception:
+            pass
+
+        log.info(f"[SNAPSHOT SAVED] {time_dir}/")
+        print(f"\n[SNAPSHOT SAVED] {time_dir}/")
+        print(f"  ├── cam0.png (raw Camera 0 frame)")
+        print(f"  ├── cam0_annotated.png")
+        print(f"  ├── combined_ui.png")
+        print(f"  └── live_tracking_results.json")
+        return time_dir
+
     def run(self, output_json: Path | None = None, display: bool = True,
-            session: SessionLogger | None = None):
+            session: SessionLogger | None = None,
+            experiment_name: str = "default",
+            session_dir: str | Path = "outputs"):
         """Main real-time tracking loop.
 
         Saves (per session layout ``outputs/<name>/<time>/``):
@@ -997,7 +1067,7 @@ class SingleCameraPlanesCubePipeline:
         elif session is not None:
             out_path = session.session_dir / "live_tracking_results.json"
         else:
-            out_path = REPO_ROOT / "outputs" / "live_tracking_results.json"
+            out_path = Path(session_dir) / (experiment_name or "default") / "live_tracking_results.json"
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
         last_ui: np.ndarray | None = None
@@ -1063,24 +1133,25 @@ class SingleCameraPlanesCubePipeline:
                         self.show_scene3d = not self.show_scene3d
                         log.info(f"3D Scene Panel: {'ENABLED' if self.show_scene3d else 'DISABLED'}")
                     elif key in (ord('s'), ord('S')):
+                        self.save_snapshot_bundle(
+                            f, v, combined_ui, results,
+                            experiment_name=experiment_name,
+                            session_root=session_dir,
+                        )
+                        if output_json:
+                            with open(out_path, "w", encoding="utf-8") as fjs:
+                                json.dump(results, fjs, indent=2)
+                else:
+                    # Headless: always save the live results JSON and frames
+                    if output_json:
                         with open(out_path, "w", encoding="utf-8") as fjs:
                             json.dump(results, fjs, indent=2)
-                        log.info(f"Saved snapshot to: {out_path}")
-                        # Save photo snapshot on 'S' keypress
-                        photo_path = out_path.with_suffix(".png")
-                        try:
-                            cv2.imwrite(str(photo_path), combined_ui)
-                            log.info(f"Saved snapshot photo to: {photo_path}")
-                        except Exception as exc:
-                            log.warning(f"Could not save snapshot photo {photo_path}: {exc}")
-                        if session is not None:
-                            stamp_str = time.strftime("%Y%m%d_%H%M%S")
-                            session.save_photo(combined_ui, f"snapshot_{session._frame_idx:06d}_{stamp_str}.png")
-                else:
-                    # Headless: always save the live results JSON
-                    with open(out_path, "w", encoding="utf-8") as fjs:
-                        json.dump(results, fjs, indent=2)
-                    log.info(f"Saved headless snapshot to: {out_path}")
+                        log.info(f"Saved headless snapshot to: {out_path}")
+                    self.save_snapshot_bundle(
+                        f, v, combined_ui, results,
+                        experiment_name=experiment_name,
+                        session_root=session_dir,
+                    )
                     time.sleep(0.05)
                     break
 
