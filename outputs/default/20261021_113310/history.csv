@@ -1,0 +1,1 @@
+frame,wall_time_iso,elapsed_s,cam_has_base,cube_x_mm,cube_y_mm,cube_z_mm,cube_spread_mm,cube_faces,plane_a_x_mm,plane_a_y_mm,plane_a_z_mm,plane_a_baseline_mm,plane_b_x_mm,plane_b_y_mm,plane_b_z_mm,plane_b_rmse_mm,plane_b_tags,h_origin_x_mm,h_origin_y_mm,h_origin_z_mm,h_cube_x_mm,h_cube_y_mm,h_cube_z_mm

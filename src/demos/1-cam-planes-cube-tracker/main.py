@@ -27,11 +27,19 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-# Suppress Qt font and Wayland warnings in console
+# Suppress Qt font, Wayland, and OpenCV internal V4L2 debug warnings in console
 os.environ.setdefault("QT_LOGGING_RULES", "*.warning=false;qt.qpa.*=false;qt.text.*=false")
 os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
+os.environ.setdefault("OPENCV_LOG_LEVEL", "ERROR")
+os.environ.setdefault("OPENCV_VIDEOIO_DEBUG", "0")
 
+import cv2
 import numpy as np
+
+try:
+    cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_ERROR)
+except Exception:
+    pass
 
 # Add src (and this demo dir) to python path if needed
 DEMO_DIR = Path(__file__).resolve().parent
@@ -133,8 +141,9 @@ def main():
                         help="Seconds between automatic saved UI frames (default 0.0, disabled; photos saved on 'S' keypress)")
     parser.add_argument("--no-session", action="store_true",
                         help="Disable the session time-series log and photo snapshots")
-    parser.add_argument("--name", "--experiment", "--exp", "--experiment-name", type=str, default="default",
-                        help="Experiment name folder under outputs/: outputs/<name>/<time>/... (e.g. demo_run)")
+    parser.add_argument("--name", "--experiment", "--exp", "--experiment-name", type=str, default=None,
+                        help="Experiment name folder under outputs/: outputs/<name>/<time>/... (e.g. demo_run). "
+                             "Omit to save directly into outputs/<time>/ — no 'default' folder is created")
     parser.add_argument("--no-timestamp", action="store_true",
                         help="Save directly into outputs/<name>/ without creating the <time> subfolder")
     parser.add_argument("--list-cams", action="store_true", help="Scan and print connected V4L2 camera cards and stream nodes")
@@ -159,11 +168,11 @@ def main():
     )
 
     out_p = Path(args.output_json) if args.output_json else None
-    exp_name = args.name or "default"
+    exp_name = args.name
 
     session = None
     if not args.no_session:
-        exp_root = Path(args.session_dir) / exp_name
+        exp_root = Path(args.session_dir) / exp_name if exp_name else Path(args.session_dir)
         session = SessionLogger(
             exp_root,
             history_interval_s=args.history_interval,

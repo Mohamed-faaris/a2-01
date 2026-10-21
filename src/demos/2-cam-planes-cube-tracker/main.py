@@ -15,11 +15,24 @@ Modules:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 from typing import Sequence
 
+# Suppress Qt font, Wayland, and OpenCV internal V4L2 debug warnings in console
+os.environ.setdefault("QT_LOGGING_RULES", "*.warning=false;qt.qpa.*=false;qt.text.*=false")
+os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
+os.environ.setdefault("OPENCV_LOG_LEVEL", "ERROR")
+os.environ.setdefault("OPENCV_VIDEOIO_DEBUG", "0")
+
+import cv2
 import numpy as np
+
+try:
+    cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_ERROR)
+except Exception:
+    pass
 
 # Add src (and this demo dir) to python path if needed
 DEMO_DIR = Path(__file__).resolve().parent
@@ -123,8 +136,8 @@ def main():
                         help="Seconds between automatic saved UI frames (default 0.0, disabled; photos saved on 'S' keypress)")
     parser.add_argument("--no-session", action="store_true",
                         help="Disable the session time-series log and photo snapshots")
-    parser.add_argument("--experiment", "--exp", "--experiment-name", type=str, default=None,
-                        help="Experiment name subfolder under outputs/ (e.g. outputs/<experiment-name>/...)")
+    parser.add_argument("--name", "--experiment", "--exp", "--experiment-name", type=str, default="default",
+                        help="Experiment name subfolder under outputs/ (outputs/<name>/<time>/...)")
     parser.add_argument("--no-timestamp", action="store_true",
                         help="Save directly into outputs/<experiment-name>/ without creating a session_<ts> subfolder")
     parser.add_argument("--list-cams", action="store_true", help="Scan and print connected V4L2 camera cards and stream nodes")
@@ -152,12 +165,11 @@ def main():
     )
 
     out_p = Path(args.output_json) if args.output_json else None
+    exp_name = args.name or "default"
 
     session = None
     if not args.no_session:
-        exp_root = Path(args.session_dir)
-        if args.experiment:
-            exp_root = exp_root / args.experiment
+        exp_root = Path(args.session_dir) / exp_name
         session = SessionLogger(
             exp_root,
             history_interval_s=args.history_interval,
@@ -166,7 +178,13 @@ def main():
         )
 
     try:
-        pipeline.run(output_json=out_p, display=(not args.no_display), session=session)
+        pipeline.run(
+            output_json=out_p,
+            display=(not args.no_display),
+            session=session,
+            experiment_name=exp_name,
+            session_dir=args.session_dir,
+        )
     finally:
         if session is not None:
             session.close()

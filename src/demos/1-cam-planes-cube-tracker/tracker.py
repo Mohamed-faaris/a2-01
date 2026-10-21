@@ -41,6 +41,12 @@ import numpy as np
 import yaml
 from pupil_apriltags import Detector
 
+# Suppress low-level OpenCV console warnings
+try:
+    cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_ERROR)
+except Exception:
+    pass
+
 # Add src (and this demo dir) to python path if needed
 DEMO_DIR = Path(__file__).resolve().parent
 REPO_ROOT = DEMO_DIR.parent.parent.parent
@@ -339,20 +345,33 @@ class NonQueuingCameraReader:
     """Spawns background grab thread that constantly drains V4L2 buffers,
     ensuring .get_latest_frame() always retrieves the zero-latency real-time frame."""
 
-    def __init__(self, cap: cv2.VideoCapture):
+    def __init__(self, cap: cv2.VideoCapture, camera_name: str = "camera"):
         self.cap = cap
+        self.camera_name = camera_name
         self.lock = threading.Lock()
         self.latest_frame: np.ndarray | None = None
         self.running = True
+        self.consecutive_fails = 0
+        self.error_msg: str | None = None
         self.thread = threading.Thread(target=self._worker, daemon=True)
         self.thread.start()
 
     def _worker(self):
         while self.running:
-            ret, frame = self.cap.read()
-            if not ret:
+            try:
+                ret, frame = self.cap.read()
+            except Exception as exc:
+                self.error_msg = f"Camera '{self.camera_name}' read exception: {exc}"
+                break
+
+            if not ret or frame is None:
+                self.consecutive_fails += 1
+                if self.consecutive_fails > 90:  # ~1.5 seconds of consecutive failure
+                    self.error_msg = f"Camera '{self.camera_name}' stopped producing frames ({self.consecutive_fails} consecutive drops)."
                 time.sleep(0.01)
                 continue
+
+            self.consecutive_fails = 0
             with self.lock:
                 self.latest_frame = frame
 
@@ -363,8 +382,12 @@ class NonQueuingCameraReader:
     def stop(self):
         self.running = False
         if self.thread.is_alive():
-            self.thread.join(timeout=0.5)
-        self.cap.release()
+            self.thread.join(timeout=1.0)
+        try:
+            if self.cap and self.cap.isOpened():
+                self.cap.release()
+        except Exception:
+            pass
 
 
 class VideoFeedSource:
@@ -376,6 +399,7 @@ class VideoFeedSource:
         self.static_frame: np.ndarray | None = None
         self.cap: cv2.VideoCapture | None = None
         self.grabber: NonQueuingCameraReader | None = None
+        self.source_desc = ""
 
         # Check if static image first
         if isinstance(source_path_or_idx, str) and Path(source_path_or_idx).is_file():
@@ -383,25 +407,116 @@ class VideoFeedSource:
             if s.endswith((".png", ".jpg", ".jpeg", ".bmp", ".webp")):
                 self.is_static_image = True
                 self.static_frame = cv2.imread(str(source_path_or_idx))
-                log.info(f"Loaded static image: {source_path_or_idx}")
+                self.source_desc = f"Static Image ({source_path_or_idx})"
+                if self.static_frame is None:
+                    log.error(f"[CAMERA ERROR] Could not read static image file: {source_path_or_idx}. Closing application.")
+                    sys.exit(1)
+                log.info(f"Loaded static image for {calib.name}: {source_path_or_idx} ({self.static_frame.shape[1]}x{self.static_frame.shape[0]})")
                 return
 
         # Resolve live device node per custom-calibrator-npz.md
         live_node = calib.resolve_live_device_node(source_path_or_idx)
-        target = int(live_node) if str(live_node).isdigit() else live_node
 
-        self.cap = cv2.VideoCapture(target)
-        if not self.cap.isOpened():
-            log.warning(f"Could not open video capture for: {target}")
-            return
+        # Determine backend: use CAP_V4L2 for device nodes or integer camera indexes on Linux
+        backend = cv2.CAP_ANY
+        if isinstance(live_node, int) or (isinstance(live_node, str) and live_node.isdigit()):
+            target = int(live_node)
+            backend = cv2.CAP_V4L2
+        elif isinstance(live_node, str) and live_node.startswith("/dev/video"):
+            target = live_node
+            backend = cv2.CAP_V4L2
+        else:
+            target = live_node
 
-        w, h = calib.image_size
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
+        self.source_desc = f"{target} (backend: {'V4L2' if backend == cv2.CAP_V4L2 else 'ANY'})"
 
-        if isinstance(target, int) or (isinstance(target, str) and target.startswith("/dev/video")):
-            self.grabber = NonQueuingCameraReader(self.cap)
+        try:
+            self.cap = cv2.VideoCapture(target, backend) if backend != cv2.CAP_ANY else cv2.VideoCapture(target)
+        except Exception as exc:
+            log.error(f"[CAMERA OPEN ERROR] Exception opening device '{target}' for '{calib.name}': {exc}. Closing application.")
+            sys.exit(1)
+
+        if not self.cap or not self.cap.isOpened():
+            log.error(f"[CAMERA OPEN ERROR] Failed to open video capture device '{target}' for '{calib.name}'!")
+            log.error("  Please verify camera connection, permissions on /dev/video*, or if device is in use. Closing application.")
+            sys.exit(1)
+
+        # Enforce 1080p (1920x1080) stream resolution
+        req_w = 1920
+        req_h = 1080
+        if calib.image_size and calib.image_size[0] > 0 and calib.image_size[1] > 0:
+            req_w, req_h = calib.image_size
+
+        # For V4L2 cameras, set MJPG first to allow 1080p @ 60/30 FPS
+        if backend == cv2.CAP_V4L2:
+            try:
+                self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+            except Exception:
+                pass
+
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, req_w)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, req_h)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+        act_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        act_h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        # Fallback to YUYV if MJPG didn't achieve 1080p
+        if (act_w != req_w or act_h != req_h) and backend == cv2.CAP_V4L2:
+            try:
+                self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'YUYV'))
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, req_w)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, req_h)
+                act_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                act_h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            except Exception:
+                pass
+
+        fps = float(self.cap.get(cv2.CAP_PROP_FPS))
+        fourcc_int = int(self.cap.get(cv2.CAP_PROP_FOURCC))
+        fourcc_str = "".join([chr((fourcc_int >> 8 * i) & 0xFF) for i in range(4)]).strip()
+
+        # Warmup / retrieve initial frame with short retry to allow sensor mode negotiation
+        test_frame = None
+        for _ in range(10):
+            ret, cand_frame = self.cap.read()
+            if ret and cand_frame is not None:
+                test_frame = cand_frame
+                break
+            time.sleep(0.05)
+
+        if test_frame is None:
+            log.error(f"[CAMERA STREAM ERROR] Camera '{calib.name}' on device '{target}' opened, but failed to retrieve frame after mode initialization!")
+            log.error("  Stream is unresponsive or blocked by another process. Closing application.")
+            self.release()
+            sys.exit(1)
+
+        # Log camera stream details clearly
+        log.info(f"🎥 [CAMERA STREAM] '{calib.name}' on {target}: Streaming {act_w}x{act_h} @ {fps:.1f} FPS [FOURCC: {fourcc_str or 'RAW'}] -> ACTIVE OK")
+
+        # Dynamic intrinsics scaling if stream dimensions differ from loaded calibration
+        if calib.image_size and (act_w != calib.image_size[0] or act_h != calib.image_size[1]):
+            sx = act_w / float(calib.image_size[0])
+            sy = act_h / float(calib.image_size[1])
+            calib.camera_matrix[0, 0] *= sx
+            calib.camera_matrix[0, 2] *= sx
+            calib.camera_matrix[1, 1] *= sy
+            calib.camera_matrix[1, 2] *= sy
+            old_w, old_h = calib.image_size
+            calib.image_size = (act_w, act_h)
+            log.info(f"📐 [CALIB RESCALE] '{calib.name}' intrinsics scaled from {old_w}x{old_h} to {act_w}x{act_h} (scale: sx={sx:.3f}, sy={sy:.3f})")
+
+        # Start non-queuing reader
+        if backend == cv2.CAP_V4L2 or isinstance(target, int) or (isinstance(target, str) and target.startswith("/dev/video")):
+            self.grabber = NonQueuingCameraReader(self.cap, camera_name=calib.name)
+            self.grabber.latest_frame = test_frame
             log.info(f"Started real-time non-queuing grabber for {target}")
+
+    def has_error(self) -> bool:
+        return bool(self.grabber and self.grabber.error_msg is not None)
+
+    def get_error(self) -> str | None:
+        return self.grabber.error_msg if self.grabber else None
 
     def get_frame(self) -> np.ndarray | None:
         if self.is_static_image:
@@ -417,7 +532,10 @@ class VideoFeedSource:
         if self.grabber:
             self.grabber.stop()
         elif self.cap:
-            self.cap.release()
+            try:
+                self.cap.release()
+            except Exception:
+                pass
 
 
 @dataclass
@@ -935,7 +1053,7 @@ class SingleCameraPlanesCubePipeline:
                 "centers_projected_mm": {tid: (c * 1000.0).tolist()
                                          for tid, c in plane_fit["centers_proj"].items()},
                 "corners_mm": {tid: (c * 1000.0).tolist()
-                               for tid, c in plane_b_data},
+                               for tid, c, _ in plane_b_data},
             }
 
         # 6. Constrained cube estimate (needs the plane's shared normal)
@@ -1000,7 +1118,7 @@ class SingleCameraPlanesCubePipeline:
         v: np.ndarray | None,
         combined_ui: np.ndarray | None,
         results: dict,
-        experiment_name: str = "default",
+        experiment_name: str | None = None,
         session_root: Path | str = "outputs",
     ) -> Path:
         """Save raw camera frame, annotated view, combined UI, and tracking results.
@@ -1015,7 +1133,9 @@ class SingleCameraPlanesCubePipeline:
         """
         stamp = time.strftime("%Y%m%d_%H%M%S")
         root = Path(session_root)
-        exp_dir = root / (experiment_name or "default")
+        # No hardcoded "default": without an experiment name the session
+        # root itself is the experiment dir (outputs/<time>/...).
+        exp_dir = root / experiment_name if experiment_name else root
         time_dir = exp_dir / stamp
         time_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1053,7 +1173,7 @@ class SingleCameraPlanesCubePipeline:
 
     def run(self, output_json: Path | None = None, display: bool = True,
             session: SessionLogger | None = None,
-            experiment_name: str = "default",
+            experiment_name: str | None = None,
             session_dir: str | Path = "outputs"):
         """Main real-time tracking loop.
 
@@ -1066,22 +1186,28 @@ class SingleCameraPlanesCubePipeline:
             out_path = Path(output_json)
         elif session is not None:
             out_path = session.session_dir / "live_tracking_results.json"
+        elif experiment_name:
+            out_path = Path(session_dir) / experiment_name / "live_tracking_results.json"
         else:
-            out_path = Path(session_dir) / (experiment_name or "default") / "live_tracking_results.json"
+            out_path = Path(session_dir) / "live_tracking_results.json"
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
         last_ui: np.ndarray | None = None
         try:
             while True:
+                if self.feed.has_error():
+                    log.error(f"[CAMERA STREAM ERROR] {self.feed.get_error()}. Closing application.")
+                    break
+
                 # Grab with a short deadline (first live frame may lag)
                 f = self.feed.get_frame()
                 waited = 0.0
-                while f is None and waited < 5.0:
+                while f is None and waited < 2.0:
                     time.sleep(0.02)
                     waited += 0.02
                     f = self.feed.get_frame()
                 if f is None:
-                    log.warning("No frame received from source; stopping tracking loop.")
+                    log.error("[CAMERA STREAM ERROR] No frame received from source; stopping tracking loop and closing.")
                     break
 
                 # Process geometric features

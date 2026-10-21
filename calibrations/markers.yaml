@@ -7,7 +7,7 @@ default_size_m: 0.0885
 markers:
   # Tag 0: 134 mm (Tabletop Origin / Benchmark Ground Plane)
   0:
-    size_m: 0.1340
+    size_m: 0.1240
     family: "tag36h11"
     description: "Tabletop Reference Origin (134 mm)"
 

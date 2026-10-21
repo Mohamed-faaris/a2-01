@@ -1,0 +1,2 @@
+frame,wall_time_iso,elapsed_s,cam0_has_base,cam1_has_base,cube_x_mm,cube_y_mm,cube_z_mm,cube_spread_mm,cube_faces,plane_a_x_mm,plane_a_y_mm,plane_a_z_mm,plane_a_baseline_mm,plane_b_x_mm,plane_b_y_mm,plane_b_z_mm,plane_b_rmse_mm,plane_b_tags,h_origin_x_mm,h_origin_y_mm,h_origin_z_mm,h_cube_x_mm,h_cube_y_mm,h_cube_z_mm
+1,2026-10-21T11:39:48.851,0.394,1,1,46.282,575.971,1207.394,35.817,25,559.802,569.411,1174.441,280.530,63.691,603.231,1221.832,6.662,42;43;44;45,596.018,596.202,1203.947,-350.599,329.471,-266.759

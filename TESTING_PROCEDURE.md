@@ -7,7 +7,7 @@ This framework defines a decoupled, reproducible methodology for testing and val
 
 ## 2. Directory Layout Architecture
 
-To allow re-running, iterating on detector parameters, or comparing alternate algorithmic pipelines without re-rendering scenes, directory storage is separated into **inputs**, **outputs**, and **artifacts**:
+To allow re-running, iterating on detector parameters, or comparing alternate algorithmic pipelines without re-rendering scenes, directory storage  is separated into **inputs**, **outputs**, and **artifacts**:
 
 ```text
 experiment/

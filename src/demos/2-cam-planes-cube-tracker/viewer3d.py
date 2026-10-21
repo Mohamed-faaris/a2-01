@@ -200,6 +200,8 @@ class Tracking3DViewer:
 
     def render_scene_3d(self, data: dict[str, Any]):
         """Render all 3D features in the Base Tag 0 reference frame."""
+        self.server.scene.reset()
+
         # 1. Base Tag 0 Ground Grid & Reference Frame
         self.server.scene.add_grid(
             "/base/ground_grid",
@@ -253,8 +255,6 @@ class Tracking3DViewer:
             self.server.scene.add_label("/plane_a/label_40", text=f"Tag 40\n[{p40[0]*1e3:+.0f}, {p40[1]*1e3:+.0f}, {p40[2]*1e3:+.0f}]mm", position=p40 + np.array([0, 0, 0.02]))
             self.server.scene.add_label("/plane_a/label_41", text=f"Tag 41\n[{p41[0]*1e3:+.0f}, {p41[1]*1e3:+.0f}, {p41[2]*1e3:+.0f}]mm", position=p41 + np.array([0, 0, 0.02]))
             self.server.scene.add_label("/plane_a/label_mid", text=f"Baseline: {dist_mm:.1f} mm", position=mid + np.array([0, 0, 0.03]))
-        else:
-            self.server.scene.remove("/plane_a")
 
         # 3. Plane B: Platform Quad (Tags 42..45)
         pb = data.get("plane_b")
@@ -310,8 +310,6 @@ class Tracking3DViewer:
                 text=f"PLANE B Normal: [{normal[0]:+.2f}, {normal[1]:+.2f}, {normal[2]:+.2f}]\nCoplanar RMSE: {rmse_mm:.1f}mm",
                 position=c_b + np.array([0, 0, 0.04]),
             )
-        else:
-            self.server.scene.remove("/plane_b")
 
         # 4. 6-Faced AprilTag Cube (Tags 20..25)
         cube = data.get("cube_centroid")
@@ -341,8 +339,6 @@ class Tracking3DViewer:
                 text=f"CUBE CENTROID (41mm)\n[{c_cube[0]*1e3:+.1f}, {c_cube[1]*1e3:+.1f}, {c_cube[2]*1e3:+.1f}] mm\nFaces: {faces} (±{spread_mm:.1f}mm)",
                 position=c_cube + np.array([0, 0, 0.035]),
             )
-        else:
-            self.server.scene.remove("/cube")
 
         # Cube detected face polygons if recorded
         cube_faces = data.get("cube_faces_mm") or {}
@@ -384,8 +380,6 @@ class Tracking3DViewer:
                 text=h_text,
                 position=o_h + np.array([0, 0, 0.03]),
             )
-        else:
-            self.server.scene.remove("/custom_h_frame")
 
         # 6. Camera Frustums in Base Frame
         cam_ext = data.get("cam_extrinsics") or {}
