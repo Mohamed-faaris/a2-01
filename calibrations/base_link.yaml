@@ -1,0 +1,21 @@
+# Base Link Coordinate Frame Configuration
+# Defines the rigid transformation of base_link relative to Base Tag 0.
+#
+# Frame Convention:
+#   v_tag0 = rotation_matrix @ v_base_link + origin_tag0_m
+#   v_base_link = rotation_matrix.T @ (v_tag0 - origin_tag0_m)
+
+base_link:
+  # Origin [X, Y, Z] of base_link in Tag 0 frame (meters)
+  # Derived from Plane A baseline: midpoint + 2cm X, + 5cm Z
+  origin_tag0_m: [0.629164, 0.581773, 1.003308]
+
+  # 3x3 rotation matrix (columns are base_link X, Y, Z axes in Tag 0 frame)
+  # X: along baseline (40 -> 41), Y: right, Z: pointing UP normal to tabletop
+  rotation_matrix:
+    - [ 0.648822, -0.458219,  0.607507]
+    - [ 0.462455,  0.871456,  0.163400]
+    - [-0.604289,  0.174927,  0.777326]
+
+  # Set true to dynamically update base_link from Plane A tags 40 & 41 when visible
+  auto_calculate_from_plane_a: false

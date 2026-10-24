@@ -40,3 +40,10 @@ markers:
     size_m: 0.0660
     family: "tag36h11"
     description: "Mid-size Marker (66 mm)"
+
+  # Tags 50 to 67: 70 mm
+  50..67:
+    size_m: 0.0700
+    family: "tag36h11"
+    description: "Medium Marker (70 mm)"
+

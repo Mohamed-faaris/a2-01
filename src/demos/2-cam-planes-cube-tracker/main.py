@@ -140,6 +140,8 @@ def main():
                         help="Experiment name subfolder under outputs/ (outputs/<name>/<time>/...)")
     parser.add_argument("--no-timestamp", action="store_true",
                         help="Save directly into outputs/<experiment-name>/ without creating a session_<ts> subfolder")
+    parser.add_argument("--base-link-config", type=str, default="calibrations/base_link.yaml",
+                        help="Path to base_link YAML/JSON config file (default: calibrations/base_link.yaml)")
     parser.add_argument("--list-cams", action="store_true", help="Scan and print connected V4L2 camera cards and stream nodes")
     parser.add_argument("--list-calibs", action="store_true", help="Scan and print discovered custom calibration profiles")
     args = parser.parse_args()
@@ -162,6 +164,7 @@ def main():
         source1=args.cam1,
         markers_yaml=args.markers_yaml,
         active_ratio=args.active_ratio,
+        base_link_config=args.base_link_config,
     )
 
     out_p = Path(args.output_json) if args.output_json else None

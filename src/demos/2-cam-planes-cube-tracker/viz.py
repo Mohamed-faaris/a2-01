@@ -306,7 +306,7 @@ def draw_base_frame_overlay(vis: np.ndarray, results: dict, cam_id: int,
     def label_m(p_m, text, color, **kw):
         label_px(proj(p_m), text, color, **kw)
 
-    # 1. Base-frame axes at the Tag 0 origin (X red, Y green, Z blue)
+    # 1. Base axes at the base_link origin [0, 0, 0] (X red, Y green, Z blue)
     origin_m = np.zeros(3)
     o_pt = safe_pt(proj(origin_m))
     if o_pt is not None:
@@ -318,6 +318,16 @@ def draw_base_frame_overlay(vis: np.ndarray, results: dict, cam_id: int,
                 continue
             cv2.arrowedLine(vis, o_pt, e_pt, col, 2, cv2.LINE_AA, tipLength=0.2)
             label_px(e_pt, name, col, dx=4, dy=-4, scale=0.55)
+        label_px(o_pt, "base_link [0,0,0]", (0, 255, 120), dy=14, scale=0.34)
+
+    # 1b. Tag 0 reference marker in base_link
+    t0_info = results.get("tag0")
+    if t0_info:
+        p0_m = mm(t0_info["xyz_mm"])
+        pt0 = safe_pt(proj(p0_m))
+        if pt0 is not None:
+            cv2.circle(vis, pt0, 5, (0, 255, 100), -1)
+            label_px(pt0, f"Tag 0 {fmt_xyz_mm(t0_info['xyz_mm'])}", (0, 255, 100), dy=-10, scale=0.34)
 
     # 2. Plane A (Tags 40, 41): segment + endpoints with coordinate readout
     pa = results.get("plane_a")
@@ -472,7 +482,7 @@ def render_scene3d_panel(results: dict, calib0, calib1,
         seg(np.array([x0 + i * step, y0, 0.0]), np.array([x0 + i * step, y0 + span, 0.0]), COL_GRID)
         seg(np.array([x0, y0 + i * step, 0.0]), np.array([x0 + span, y0 + i * step, 0.0]), COL_GRID)
 
-    # ---- Base axes at the Tag 0 origin ----------------------------------
+    # ---- Base axes at the base_link origin [0, 0, 0] --------------------
     for d_m, col, name in [((0.10, 0.0, 0.0), COL_X, "X"),
                            ((0.0, 0.10, 0.0), COL_Y, "Y"),
                            ((0.0, 0.0, 0.10), COL_Z, "Z")]:
@@ -481,6 +491,14 @@ def render_scene3d_panel(results: dict, calib0, calib1,
         seg(np.zeros(3), e_m, col, 2)
         if ue is not None:
             draw_shadow_text(panel, (int(ue[0]) + 4, int(ue[1]) - 4), name, col, scale=0.55)
+    text_at(np.zeros(3), "base_link [0,0,0]", (0, 255, 120), dy=14, scale=0.34)
+
+    # ---- Tag 0 reference marker in base_link ----------------------------
+    t0_info = results.get("tag0")
+    if t0_info:
+        p0_m = np.asarray(t0_info["xyz_mm"]) * 0.001
+        dot(p0_m, (0, 255, 100), 5)
+        text_at(p0_m, f"Tag 0 {fmt_xyz_mm(t0_info['xyz_mm'])}", (0, 255, 100), dy=-10, scale=0.34)
 
     # ---- Plane A ---------------------------------------------------------
     if pa:
@@ -585,16 +603,22 @@ def render_hud_dashboard(results: dict, custom_h_frame_active: bool = False,
 
     # Section 1: Base Reference (Tag 0)
     cv2.rectangle(panel, (14, y - 18), (width - 14, y + 40), (25, 30, 38), -1)
-    b0_status = "LOCKED" if results.get("cam0_has_base") else "SEARCHING"
-    b1_status = "LOCKED" if results.get("cam1_has_base") else "SEARCHING"
+    b0_meth = (results.get("cam_extrinsics") or {}).get(0, {}).get("method", "")
+    b1_meth = (results.get("cam_extrinsics") or {}).get(1, {}).get("method", "")
+    b0_status = "LOCKED [Multi-PnP]" if b0_meth == "multi_tag_pnp" else ("LOCKED [Tag0]" if results.get("cam0_has_base") else "SEARCHING")
+    b1_status = "LOCKED [Multi-PnP]" if b1_meth == "multi_tag_pnp" else ("LOCKED [Tag0]" if results.get("cam1_has_base") else "SEARCHING")
     b0_col = (0, 255, 100) if results.get("cam0_has_base") else (80, 80, 220)
     b1_col = (0, 255, 100) if results.get("cam1_has_base") else (80, 80, 220)
 
-    cv2.putText(panel, "BASE REFERENCE FRAME (Tag 0, 134 mm)", (20, y),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 120), 1, cv2.LINE_AA)
+    cv2.putText(panel, "COORDINATE ORIGIN: base_link [0, 0, 0] mm", (20, y),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 255, 120), 1, cv2.LINE_AA)
+    map_sz = results.get("world_map_size", 0)
+    if map_sz > 0:
+        cv2.putText(panel, f"World Map: {map_sz} tags", (width - 180, y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 220, 255), 1, cv2.LINE_AA)
     y += 22
-    cv2.putText(panel, f"Cam 0: {b0_status}", (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, b0_col, 1, cv2.LINE_AA)
-    cv2.putText(panel, f"Cam 1: {b1_status}", (180, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, b1_col, 1, cv2.LINE_AA)
+    cv2.putText(panel, f"Cam 0: {b0_status}", (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, b0_col, 1, cv2.LINE_AA)
+    cv2.putText(panel, f"Cam 1: {b1_status}", (210, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, b1_col, 1, cv2.LINE_AA)
     y += 45
 
     # Section 2: Cube 3D Centroid (Tags 20..25)
@@ -654,28 +678,28 @@ def render_hud_dashboard(results: dict, custom_h_frame_active: bool = False,
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (120, 120, 150), 1, cv2.LINE_AA)
     y += 85
 
-    # Section 5: Custom Baseline Reference Frame (Key 'H')
-    h_info = results.get("custom_h_frame")
-    status_h = "ACTIVE" if custom_h_frame_active else "READY (Press 'H' to Activate)"
-    status_col = (0, 255, 120) if custom_h_frame_active else (140, 180, 220)
+    # Section 5: base_link Reference Frame
+    bl = results.get("base_link") or results.get("custom_h_frame")
+    status_bl = "ACTIVE" if bl and bl.get("active") else "READY (Press 'H' to Activate)"
+    status_col = (0, 255, 120) if bl and bl.get("active") else (140, 180, 220)
     cv2.rectangle(panel, (14, y - 18), (width - 14, y + 90), (25, 30, 38), -1)
-    cv2.putText(panel, f"CUSTOM BASELINE FRAME [KEY 'H']: {status_h}", (20, y),
+    cv2.putText(panel, f"BASE_LINK REFERENCE FRAME: {status_bl}", (20, y),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.42, status_col, 1, cv2.LINE_AA)
     y += 20
-    if h_info:
-        ox, oy, oz = h_info["origin_base_mm"]
-        cv2.putText(panel, f"Origin (+2cm X, +5cm Z): [{ox:+6.1f}, {oy:+6.1f}, {oz:+6.1f}] mm",
+    if bl:
+        ox, oy, oz = bl.get("origin_in_tag0_base_mm") or bl.get("origin_base_mm", [0, 0, 0])
+        cv2.putText(panel, f"Origin in Tag 0 frame: [{ox:+6.1f}, {oy:+6.1f}, {oz:+6.1f}] mm (+2cm X, +5cm Z)",
                     (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
         y += 18
-        if "cube_centroid_in_h_mm" in h_info:
-            cx, cy, cz = h_info["cube_centroid_in_h_mm"]
-            cv2.putText(panel, f"Cube in Custom Frame: [{cx:+6.1f}, {cy:+6.1f}, {cz:+6.1f}] mm",
-                        (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 100, 255), 1, cv2.LINE_AA)
+        if "tag0" in results:
+            t0 = results["tag0"]["xyz_mm"]
+            cv2.putText(panel, f"Tag 0 in base_link: [{t0[0]:+6.1f}, {t0[1]:+6.1f}, {t0[2]:+6.1f}] mm",
+                        (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 200, 100), 1, cv2.LINE_AA)
         else:
-            cv2.putText(panel, "Cube in Custom Frame: Waiting for cube detection...",
-                        (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (150, 150, 160), 1, cv2.LINE_AA)
+            cv2.putText(panel, "Spec: X=Top(40->41), Y=Right, Z=Cam -> RotY(90) -> Z=UP",
+                        (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (120, 200, 160), 1, cv2.LINE_AA)
         y += 18
-        cv2.putText(panel, "Spec: X=Top(40->41), Y=Right, Z=Cam -> RotY(90) -> Z=UP",
+        cv2.putText(panel, "All coordinates in HUD and JSON are relative to base_link [0, 0, 0]",
                     (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (120, 200, 160), 1, cv2.LINE_AA)
     else:
         cv2.putText(panel, "Status: Requires Tags 40 & 41 baseline to be visible",

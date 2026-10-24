@@ -67,6 +67,72 @@ DEFAULT_CALIB_SEARCH_DIRS = [
     REPO_ROOT / "calibrations" / "calibarotor0" / "outputs",
 ]
 
+# Static reference tags for multi-tag bundle / auto-survey
+STATIC_TAG_IDS = frozenset({0, 40, 41, 42, 43, 44, 45})
+CUBE_TAG_IDS = frozenset(range(20, 32))
+
+# Default Base Link transformation relative to Base Reference (Tag 0):
+# Origin [X, Y, Z] in meters (derived from Plane A baseline midpoint + 2cm X, + 5cm Z):
+DEFAULT_BASE_LINK_ORIGIN_M = np.array([0.629164, 0.581773, 1.003308], dtype=np.float64)
+# Rotation matrix (columns are base_link X, Y, Z axes in Tag 0 frame):
+DEFAULT_BASE_LINK_ROTATION = np.array([
+    [ 0.648822, -0.458219,  0.607507],
+    [ 0.462455,  0.871456,  0.163400],
+    [-0.604289,  0.174927,  0.777326],
+], dtype=np.float64)
+
+
+def load_base_link_config(config_path: Path | str | None = None) -> tuple[np.ndarray, np.ndarray, bool]:
+    """Loads base_link origin and rotation matrix relative to Tag 0 base frame.
+
+    Returns:
+        (origin_m, rotation_matrix, auto_calculate_from_plane_a)
+    """
+    origin = DEFAULT_BASE_LINK_ORIGIN_M.copy()
+    R = DEFAULT_BASE_LINK_ROTATION.copy()
+    auto_from_plane_a = False
+
+    candidates = []
+    if config_path:
+        candidates.append(Path(config_path))
+    candidates.extend([
+        REPO_ROOT / "calibrations" / "base_link.yaml",
+        REPO_ROOT / "calibrations" / "base_link.json",
+    ])
+
+    for p in candidates:
+        p = Path(p).expanduser().resolve()
+        if p.is_file():
+            try:
+                import yaml
+                data = yaml.safe_load(p.read_text())
+                bl = data.get("base_link", data)
+                if "origin_tag0_m" in bl:
+                    origin = np.array(bl["origin_tag0_m"], dtype=np.float64)
+                elif "origin_m" in bl:
+                    origin = np.array(bl["origin_m"], dtype=np.float64)
+                elif "origin_base_m" in bl:
+                    origin = np.array(bl["origin_base_m"], dtype=np.float64)
+
+                if "rotation_matrix" in bl:
+                    R = np.array(bl["rotation_matrix"], dtype=np.float64)
+                elif "R_base_link_tag0" in bl:
+                    R = np.array(bl["R_base_link_tag0"], dtype=np.float64)
+                elif "R_custom_base" in bl:
+                    R = np.array(bl["R_custom_base"], dtype=np.float64)
+
+                if "auto_calculate_from_plane_a" in bl:
+                    auto_from_plane_a = bool(bl["auto_calculate_from_plane_a"])
+
+                log.info(f"Loaded base_link config from {p}: origin={origin.round(3).tolist()} auto_plane_a={auto_from_plane_a}")
+                return origin, R, auto_from_plane_a
+            except Exception as exc:
+                log.warning(f"Could not load base_link config from {p}: {exc}. Using default constants.")
+                break
+
+    log.info(f"Using default base_link transformation constants: origin={origin.round(3).tolist()}")
+    return origin, R, auto_from_plane_a
+
 
 def clean_card_name(card: str | None) -> str:
     """Removes USB bus/port suffixes for robust camera card matching."""
@@ -350,9 +416,21 @@ class NonQueuingCameraReader:
         while self.running:
             try:
                 ret, frame = self.cap.read()
+            except cv2.error:
+                # Transient frame decode failure (e.g. dropped/corrupt MJPEG byte)
+                self.consecutive_fails += 1
+                if self.consecutive_fails > 90:
+                    self.error_msg = f"Camera '{self.camera_name}' fatal decode error."
+                    break
+                time.sleep(0.01)
+                continue
             except Exception as exc:
-                self.error_msg = f"Camera '{self.camera_name}' read exception: {exc}"
-                break
+                self.consecutive_fails += 1
+                if self.consecutive_fails > 90:
+                    self.error_msg = f"Camera '{self.camera_name}' read exception: {exc}"
+                    break
+                time.sleep(0.01)
+                continue
 
             if not ret or frame is None:
                 self.consecutive_fails += 1
@@ -713,6 +791,7 @@ class TwoCameraPlanesCubePipeline:
         source1: str | int | None = None,
         markers_yaml: Path | str | None = None,
         active_ratio: float = 1.0,
+        base_link_config: Path | str | None = None,
     ):
         self.calib0 = calib0
         self.calib1 = calib1
@@ -757,6 +836,111 @@ class TwoCameraPlanesCubePipeline:
         # 3D scene panel visibility (key 'V')
         self.show_scene3d: bool = True
 
+        # Multi-Tag PnP Auto-Survey World Map
+        # World map: tag_id -> ndarray(4, 3) 3D corner positions in base frame
+        self.world_map: dict[int, np.ndarray] = {}
+        self.world_map_obs: dict[int, int] = {}
+
+        # Pre-seed Tag 0 analytically (it defines the world origin)
+        _h0 = self.registry.get_size(0) / 2.0
+        _R_basis = np.diag([-1.0, 1.0, -1.0])
+        _lc0 = np.array([
+            [-_h0,  _h0, 0.0],
+            [ _h0,  _h0, 0.0],
+            [ _h0, -_h0, 0.0],
+            [-_h0, -_h0, 0.0],
+        ], dtype=np.float64)
+        self.world_map[0] = (_R_basis @ _lc0.T).T
+        self.world_map_obs[0] = 9999
+
+        # Base Link configuration and transformation constants
+        self.base_link_origin_m, self.base_link_R, self.auto_base_link = load_base_link_config(base_link_config)
+
+    def _survey_tags(
+        self,
+        dets: dict[int, DetectedTagPose],
+        R_c_base: np.ndarray,
+        t_c_base: np.ndarray,
+    ) -> None:
+        """Update world map with static tag positions observed in current frame."""
+        R_b_c = R_c_base.T
+        t_b_c = -R_b_c @ t_c_base
+
+        for tid, pose in dets.items():
+            if tid not in STATIC_TAG_IDS or tid == 0:
+                continue
+
+            h = self.registry.get_size(tid) / 2.0
+            lc = np.array([
+                [-h,  h, 0.0],
+                [ h,  h, 0.0],
+                [ h, -h, 0.0],
+                [-h, -h, 0.0],
+            ], dtype=np.float64)
+
+            # Tag corners in camera frame:
+            c_cam = (pose.R_c_t @ lc.T + pose.t_c_t.reshape(3, 1)).T
+            # Transform to base frame:
+            c_world = (R_b_c @ c_cam.T + t_b_c.reshape(3, 1)).T
+
+            n = self.world_map_obs.get(tid, 0)
+            if n == 0:
+                self.world_map[tid] = c_world
+            else:
+                alpha = 1.0 / min(n + 1, 50)
+                self.world_map[tid] = (1.0 - alpha) * self.world_map[tid] + alpha * c_world
+            self.world_map_obs[tid] = n + 1
+
+    def _multi_tag_pnp(
+        self,
+        dets: dict[int, DetectedTagPose],
+        K: np.ndarray,
+        dist: np.ndarray,
+        init_R: np.ndarray | None = None,
+        init_t: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray] | None:
+        """Solve camera extrinsics (R_c_base, t_c_base) using all surveyed static tags."""
+        obj_pts = []
+        img_pts = []
+        tags_used = []
+
+        for tid, pose in dets.items():
+            if tid in CUBE_TAG_IDS or tid not in self.world_map:
+                continue
+            if self.world_map_obs.get(tid, 0) < 1:
+                continue
+            obj_pts.append(self.world_map[tid])
+            img_pts.append(pose.corners_px)
+            tags_used.append(tid)
+
+        if len(tags_used) < 2:
+            return None
+
+        obj = np.vstack(obj_pts).astype(np.float64)
+        img = np.vstack(img_pts).astype(np.float64)
+
+        try:
+            if init_R is not None and init_t is not None:
+                rvec_guess, _ = cv2.Rodrigues(init_R)
+                tvec_guess = init_t.copy().reshape(3, 1).astype(np.float64)
+                ok, rvec, tvec = cv2.solvePnP(
+                    obj, img, K, dist,
+                    rvec=rvec_guess, tvec=tvec_guess,
+                    useExtrinsicGuess=True,
+                    flags=cv2.SOLVEPNP_ITERATIVE,
+                )
+            else:
+                ok, rvec, tvec = cv2.solvePnP(
+                    obj, img, K, dist,
+                    flags=cv2.SOLVEPNP_ITERATIVE,
+                )
+            if not ok:
+                return None
+            R, _ = cv2.Rodrigues(rvec)
+            return R, tvec.ravel()
+        except cv2.error:
+            return None
+
     def process_frames(self, frame0: np.ndarray, frame1: np.ndarray) -> dict:
         """Process a pair of frames and compute all geometric features."""
         gray0 = cv2.cvtColor(frame0, cv2.COLOR_BGR2GRAY) if frame0.ndim == 3 else frame0
@@ -778,19 +962,49 @@ class TwoCameraPlanesCubePipeline:
             "cam1_has_base": (0 in dets1),
             "cam0_tags": list(dets0.keys()),
             "cam1_tags": list(dets1.keys()),
+            "world_map_size": len(self.world_map),
+            "world_map_tags": sorted(self.world_map.keys()),
             "cube_centroid": None,
             "plane_a": None,
             "plane_b": None,
         }
 
-        # 2. Camera Extrinsics relative to Base Tag 0
-        cam_extrinsics: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+        # 2. Camera Extrinsics: Multi-Tag PnP with Auto-Survey
+        # 2a. Bootstrap from Tag 0 only (if visible)
+        bootstrap_ext: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         if 0 in dets0:
-            cam_extrinsics[0] = solve_camera_extrinsics_from_base(dets0[0])
+            bootstrap_ext[0] = solve_camera_extrinsics_from_base(dets0[0])
         if 0 in dets1:
-            cam_extrinsics[1] = solve_camera_extrinsics_from_base(dets1[0])
+            bootstrap_ext[1] = solve_camera_extrinsics_from_base(dets1[0])
 
-        # If base is only seen in one camera, we can still track everything visible to that camera!
+        # 2b. Survey static tags into world map using bootstrap extrinsics
+        if 0 in bootstrap_ext:
+            self._survey_tags(dets0, *bootstrap_ext[0])
+        if 1 in bootstrap_ext:
+            self._survey_tags(dets1, *bootstrap_ext[1])
+
+        # Update world map count in results after survey
+        results["world_map_size"] = len(self.world_map)
+        results["world_map_tags"] = sorted(self.world_map.keys())
+
+        # 2c. Multi-tag PnP -> final extrinsics (with fallback to bootstrap)
+        cam_extrinsics: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+        cam_pnp_methods: dict[int, str] = {}
+
+        for c_id, dets_c, K_c, D_c in [
+            (0, dets0, self.calib0.camera_matrix, self.calib0.dist_coeffs),
+            (1, dets1, self.calib1.camera_matrix, self.calib1.dist_coeffs),
+        ]:
+            init_R, init_t = bootstrap_ext.get(c_id, (None, None))
+            pnp_res = self._multi_tag_pnp(dets_c, K_c, D_c, init_R=init_R, init_t=init_t)
+            if pnp_res is not None:
+                cam_extrinsics[c_id] = pnp_res
+                cam_pnp_methods[c_id] = "multi_tag_pnp"
+            elif c_id in bootstrap_ext:
+                cam_extrinsics[c_id] = bootstrap_ext[c_id]
+                cam_pnp_methods[c_id] = "bootstrap_tag0"
+
+        # If neither camera has valid extrinsics, cannot track in base frame
         if not cam_extrinsics:
             return results
 
@@ -801,6 +1015,7 @@ class TwoCameraPlanesCubePipeline:
                 "R_c_base": R.tolist(),
                 "t_c_base_m": t.tolist(),
                 "position_base_mm": ((-R.T @ t) * 1000.0).tolist(),
+                "method": cam_pnp_methods.get(c_id, "unknown"),
             }
             for c_id, (R, t) in cam_extrinsics.items()
         }
@@ -1023,7 +1238,13 @@ class TwoCameraPlanesCubePipeline:
                 plane_a_pts.append(avg_pt)
                 plane_a_centers[tid] = avg_pt
 
-        if len(plane_a_pts) >= 2:
+        # Fallback to world map positions if either tag 40 or 41 is occluded in current frame
+        if 40 not in plane_a_centers and 40 in self.world_map:
+            plane_a_centers[40] = np.mean(self.world_map[40], axis=0)
+        if 41 not in plane_a_centers and 41 in self.world_map:
+            plane_a_centers[41] = np.mean(self.world_map[41], axis=0)
+
+        if 40 in plane_a_centers and 41 in plane_a_centers:
             p40 = plane_a_centers[40]
             p41 = plane_a_centers[41]
             dist_mm = float(np.linalg.norm(p41 - p40)) * 1000.0
@@ -1036,87 +1257,166 @@ class TwoCameraPlanesCubePipeline:
                 "z_height_mm": float(mid_pt[2] * 1000.0),
             }
 
-            # -------------------------------------------------------------
-            # Custom Baseline Reference Frame (Key 'H' Feature):
-            # 1. Baseline top is X-axis: x_init = (p41 - p40) / ||p41 - p40|| (pointing along baseline)
-            # 2. Z is facing camera: z_init = camera view vector towards baseline
-            # 3. Right is Y-axis: y_init = cross(z_init, x_init)
-            # 4. Rotate 90 degrees via Y-axis so Z faces UP
-            # 5. Move Z +5 cm (+0.05m) and X +2 cm (+0.02m)
-            # -------------------------------------------------------------
-            v_baseline = p41 - p40
-            norm_b = np.linalg.norm(v_baseline)
-            if norm_b > 1e-6:
-                x_init = v_baseline / norm_b
+            # Optional dynamic recalculation from Plane A baseline when requested:
+            if self.auto_base_link:
+                v_baseline = p41 - p40
+                norm_b = np.linalg.norm(v_baseline)
+                if norm_b > 1e-6:
+                    x_init = v_baseline / norm_b
 
-                # Estimate average camera optical center in Base Frame
-                cam_centers = []
-                for c_id in cam_extrinsics:
-                    R_c_base, t_c_base = cam_extrinsics[c_id]
-                    # Camera optical center in base frame: -R_c_base.T @ t_c_base
-                    c_center = -R_c_base.T @ t_c_base
-                    cam_centers.append(c_center)
+                    # Estimate average camera optical center in Base Frame
+                    cam_centers = []
+                    for c_id in cam_extrinsics:
+                        R_c_base, t_c_base = cam_extrinsics[c_id]
+                        c_center = -R_c_base.T @ t_c_base
+                        cam_centers.append(c_center)
 
-                avg_cam_center = np.mean(cam_centers, axis=0) if cam_centers else np.array([0.0, -0.5, 0.5])
-                # Vector from baseline midpoint towards camera (Z facing camera)
-                cam_ray = avg_cam_center - mid_pt
-                cam_ray_norm = np.linalg.norm(cam_ray)
-                z_init = cam_ray / max(1e-6, cam_ray_norm)
+                    avg_cam_center = np.mean(cam_centers, axis=0) if cam_centers else np.array([0.0, -0.5, 0.5])
+                    cam_ray = avg_cam_center - mid_pt
+                    cam_ray_norm = np.linalg.norm(cam_ray)
+                    z_init = cam_ray / max(1e-6, cam_ray_norm)
 
-                # Gram-Schmidt: Orthogonalize z_init against x_init
-                z_init = z_init - np.dot(z_init, x_init) * x_init
-                z_init = z_init / max(1e-6, np.linalg.norm(z_init))
+                    # Gram-Schmidt: Orthogonalize z_init against x_init
+                    z_init = z_init - np.dot(z_init, x_init) * x_init
+                    z_init = z_init / max(1e-6, np.linalg.norm(z_init))
 
-                # Right is Y-axis: y_init = z_init x x_init
-                y_init = np.cross(z_init, x_init)
-                y_init = y_init / max(1e-6, np.linalg.norm(y_init))
+                    # Right is Y-axis: y_init = z_init x x_init
+                    y_init = np.cross(z_init, x_init)
+                    y_init = y_init / max(1e-6, np.linalg.norm(y_init))
 
-                # Initial rotation matrix R_init = [x_init, y_init, z_init]
-                R_init = np.column_stack([x_init, y_init, z_init])
+                    # Initial rotation matrix R_init = [x_init, y_init, z_init]
+                    R_init = np.column_stack([x_init, y_init, z_init])
 
-                # Rotate +90 / -90 deg around Y so Z faces UP (+Z in base frame)
-                R_rot_y_pos = np.array([
-                    [ 0.0, 0.0, 1.0],
-                    [ 0.0, 1.0, 0.0],
-                    [-1.0, 0.0, 0.0]
-                ], dtype=np.float64)
+                    R_rot_y_pos = np.array([
+                        [ 0.0, 0.0, 1.0],
+                        [ 0.0, 1.0, 0.0],
+                        [-1.0, 0.0, 0.0]
+                    ], dtype=np.float64)
 
-                R_rot_y_neg = np.array([
-                    [0.0, 0.0, -1.0],
-                    [0.0, 1.0,  0.0],
-                    [1.0, 0.0,  0.0]
-                ], dtype=np.float64)
+                    R_rot_y_neg = np.array([
+                        [ 0.0, 0.0, -1.0],
+                        [ 0.0, 1.0,  0.0],
+                        [ 1.0, 0.0,  0.0]
+                    ], dtype=np.float64)
 
-                R_cand_pos = R_init @ R_rot_y_pos
-                R_cand_neg = R_init @ R_rot_y_neg
+                    R_cand_pos = R_init @ R_rot_y_pos
+                    R_cand_neg = R_init @ R_rot_y_neg
 
-                # Pick candidate where Z faces UP (+Z in base frame)
-                if R_cand_pos[2, 2] >= R_cand_neg[2, 2]:
-                    R_custom = R_cand_pos
-                else:
-                    R_custom = R_cand_neg
+                    if R_cand_pos[2, 2] >= R_cand_neg[2, 2]:
+                        R_dyn = R_cand_pos
+                    else:
+                        R_dyn = R_cand_neg
 
-                # Translation: Move Z axis 5 cm (0.05m) and X axis 2 cm (0.02m)
-                # in the newly rotated custom frame coordinates
-                origin_custom = mid_pt + R_custom[:, 0] * 0.02 + R_custom[:, 2] * 0.05
+                    origin_dyn = mid_pt + R_dyn[:, 0] * 0.02 + R_dyn[:, 2] * 0.05
+                    self.base_link_origin_m = origin_dyn
+                    self.base_link_R = R_dyn
 
-                h_frame_info = {
-                    "origin_base_m": origin_custom.tolist(),
-                    "origin_base_mm": (origin_custom * 1000.0).tolist(),
-                    "R_custom_base": R_custom.tolist(),
-                    "x_axis": R_custom[:, 0].tolist(),
-                    "y_axis": R_custom[:, 1].tolist(),
-                    "z_axis": R_custom[:, 2].tolist(),
+        # -------------------------------------------------------------
+        # BASE_LINK Coordinate Frame & Transformation:
+        # Loaded from constants/file (or auto-calculated from Plane A above).
+        # Unconditionally transform ALL tracking outputs (Tag 0, Cube,
+        # Planes, Cameras) so base_link is ALWAYS the (0, 0, 0) origin!
+        # -------------------------------------------------------------
+        origin_custom = self.base_link_origin_m
+        R_custom = self.base_link_R
+
+        # Rigid transformation from Tag 0 frame to base_link frame:
+        # p_base_link = R_L @ p_base + t_L
+        R_L = R_custom.T
+        t_L = -R_L @ origin_custom
+
+        base_link_info = {
+            "active": True,
+            "origin_mm": [0.0, 0.0, 0.0],
+            "origin_base_m": origin_custom.tolist(),
+            "origin_base_mm": (origin_custom * 1000.0).tolist(),
+            "origin_in_tag0_base_mm": (origin_custom * 1000.0).tolist(),
+            "R_base_link_tag0": R_custom.tolist(),
+            "R_custom_base": R_custom.tolist(),
+            "x_axis": R_custom[:, 0].tolist(),
+            "y_axis": R_custom[:, 1].tolist(),
+            "z_axis": R_custom[:, 2].tolist(),
+        }
+
+        # 1. Transform Tag 0 into base_link:
+        tag0_in_link = t_L  # Tag 0 is (0,0,0) in Tag 0 frame -> R_L @ 0 + t_L = t_L
+        results["tag0"] = {
+            "xyz_mm": (tag0_in_link * 1000.0).tolist()
+        }
+
+        # 2. Transform Cube Centroid into base_link:
+        if results["cube_centroid"]:
+            cube_base_m = np.array(results["cube_centroid"]["xyz_mm"]) / 1000.0
+            cube_link_m = R_L @ cube_base_m + t_L
+            results["cube_centroid"]["xyz_mm"] = (cube_link_m * 1000.0).tolist()
+            base_link_info["cube_centroid_in_h_mm"] = (cube_link_m * 1000.0).tolist()
+
+        # 3. Transform Cube Faces into base_link:
+        if results.get("cube_faces_mm"):
+            cube_faces_link = {}
+            for tid, f_corners in results["cube_faces_mm"].items():
+                corners_m = np.array(f_corners) / 1000.0
+                corners_link = (R_L @ corners_m.T + t_L.reshape(3, 1)).T
+                cube_faces_link[tid] = (corners_link * 1000.0).tolist()
+            results["cube_faces_mm"] = cube_faces_link
+
+        # 4. Transform Plane A into base_link:
+        if results["plane_a"]:
+            pa = results["plane_a"]
+            p40_link = R_L @ (np.array(pa["tag_40_mm"]) / 1000.0) + t_L
+            p41_link = R_L @ (np.array(pa["tag_41_mm"]) / 1000.0) + t_L
+            mid_link = (p40_link + p41_link) / 2.0
+            pa["tag_40_mm"] = (p40_link * 1000.0).tolist()
+            pa["tag_41_mm"] = (p41_link * 1000.0).tolist()
+            pa["center_mm"] = (mid_link * 1000.0).tolist()
+            pa["z_height_mm"] = float(mid_link[2] * 1000.0)
+
+        # 5. Transform Plane B into base_link:
+        if results["plane_b"]:
+            pb = results["plane_b"]
+            c_base_m = np.array(pb["center_mm"]) / 1000.0
+            c_link_m = R_L @ c_base_m + t_L
+            n_base = np.array(pb["normal"], dtype=np.float64)
+            n_link = R_L @ n_base
+            pb["normal"] = n_link.tolist()
+            pb["center_mm"] = (c_link_m * 1000.0).tolist()
+            pb["z_height_mm"] = float(c_link_m[2] * 1000.0)
+            pb["d_offset_m"] = -float(np.dot(n_link, c_link_m))
+
+            if "centers_mm" in pb:
+                pb["centers_mm"] = {
+                    tid: ((R_L @ (np.array(pt) / 1000.0) + t_L) * 1000.0).tolist()
+                    for tid, pt in pb["centers_mm"].items()
+                }
+            if "corners_mm" in pb:
+                pb["corners_mm"] = {
+                    tid: ((R_L @ (np.array(pt) / 1000.0) + t_L) * 1000.0).tolist()
+                    for tid, pt in pb["corners_mm"].items()
                 }
 
-                # If Cube is tracked, express cube centroid in this custom H frame!
-                if results["cube_centroid"]:
-                    cube_pt = np.array(results["cube_centroid"]["xyz_mm"]) / 1000.0
-                    cube_in_h = R_custom.T @ (cube_pt - origin_custom)
-                    h_frame_info["cube_centroid_in_h_mm"] = (cube_in_h * 1000.0).tolist()
+        # 6. Transform Camera Extrinsics to base_link:
+        # p_cam = R_c_link @ p_base_link + t_c_link
+        # R_c_link = R_c_base @ R_custom
+        # t_c_link = R_c_base @ origin_custom + t_c_base
+        for c_id in list(cam_extrinsics.keys()):
+            R_c_base, t_c_base = cam_extrinsics[c_id]
+            R_c_link = R_c_base @ R_custom
+            t_c_link = R_c_base @ origin_custom + t_c_base
+            pos_cam_link = -R_c_link.T @ t_c_link
+            cam_extrinsics[c_id] = (R_c_link, t_c_link)
+            results["cam_extrinsics"][c_id] = {
+                "R_c_base": R_c_link.tolist(),
+                "t_c_base_m": t_c_link.tolist(),
+                "position_base_mm": (pos_cam_link * 1000.0).tolist(),
+                "method": results["cam_extrinsics"].get(c_id, {}).get("method", "unknown"),
+                "R_c_tag0": R_c_base.tolist(),
+                "t_c_tag0_m": t_c_base.tolist(),
+            }
 
-                results["custom_h_frame"] = h_frame_info
-                self.custom_h_frame_info = h_frame_info
+        results["base_link"] = base_link_info
+        results["custom_h_frame"] = base_link_info
+        self.custom_h_frame_info = base_link_info
+        results["origin_frame"] = "base_link"
 
         return results
 
