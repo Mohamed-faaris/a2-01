@@ -143,16 +143,20 @@ def load_all_poses(
                 np.radians(joint_angles_deg.get(f"joint{i}", 0.0)) for i in range(1, 7)
             ]
 
-        # D415 Image
+        # D415 Image (accepts d415.png or front.png)
         d415_img_path = pdir / "d415.png"
+        if not d415_img_path.is_file():
+            d415_img_path = pdir / "front.png"
         d415_tags = {}
         if d415_img_path.is_file():
             img_d415 = cv2.imread(str(d415_img_path))
             if img_d415 is not None:
                 d415_tags = detector.detect(img_d415, K_d415, D_d415)
 
-        # USB Image
+        # USB Image (accepts usb.png or down.png)
         usb_img_path = pdir / "usb.png"
+        if not usb_img_path.is_file():
+            usb_img_path = pdir / "down.png"
         usb_tags = {}
         if usb_img_path.is_file():
             img_usb = cv2.imread(str(usb_img_path))

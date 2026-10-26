@@ -1,0 +1,59 @@
+[
+  {
+    "method": "algo_3d_pose_cauchy",
+    "status": "FAIL",
+    "runtime_s": 4.5160835400020005,
+    "reproj_rms_px": 4.816176607126917,
+    "reproj_mean_px": 4.290712823709953,
+    "reproj_max_px": 10.658525052076554,
+    "pos_rms_mm": 14.841856892291347,
+    "pos_mean_mm": 11.982752365676633,
+    "pos_max_mm": 48.65886998726117,
+    "rot_rms_deg": 13.580853933136137,
+    "rot_mean_deg": 5.025513307851139,
+    "box_coplanar_mm": 1.8347850485123116,
+    "d415_xyz_m": [
+      1.9097,
+      -0.3667,
+      0.8255
+    ]
+  },
+  {
+    "method": "algo_2d_corner_ba",
+    "status": "FAIL",
+    "runtime_s": 1.250733114000468,
+    "reproj_rms_px": 1.424043457262872,
+    "reproj_mean_px": 1.2912429414956212,
+    "reproj_max_px": 3.8178810911310865,
+    "pos_rms_mm": 29.232366216624044,
+    "pos_mean_mm": 25.105367272510176,
+    "pos_max_mm": 68.23187411811274,
+    "rot_rms_deg": 13.57509815623815,
+    "rot_mean_deg": 5.080807414730553,
+    "box_coplanar_mm": 1.8347850485123496,
+    "d415_xyz_m": [
+      1.8982,
+      -0.3527,
+      0.8083
+    ]
+  },
+  {
+    "method": "algo_rigid_cube_ba",
+    "status": "FAIL",
+    "runtime_s": 1.1628620799965574,
+    "reproj_rms_px": 1.6604290572455864,
+    "reproj_mean_px": 1.5163149296131322,
+    "reproj_max_px": 4.043038763646313,
+    "pos_rms_mm": 28.653658081178172,
+    "pos_mean_mm": 24.86750479551286,
+    "pos_max_mm": 69.09491512174552,
+    "rot_rms_deg": 13.81440394587975,
+    "rot_mean_deg": 6.199471840882427,
+    "box_coplanar_mm": 1.8347850485123811,
+    "d415_xyz_m": [
+      1.8977,
+      -0.3519,
+      0.808
+    ]
+  }
+]
