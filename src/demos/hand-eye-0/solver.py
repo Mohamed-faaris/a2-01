@@ -91,19 +91,29 @@ def solve_closed_form_rotation(tag_sample_groups: list[list[tuple[np.ndarray, np
 
                 angle_A = np.linalg.norm(Rotation.from_matrix(R_A).as_rotvec())
                 angle_B = np.linalg.norm(Rotation.from_matrix(R_B).as_rotvec())
-                if angle_A < np.radians(3.0) or angle_B < np.radians(3.0):
+                if angle_A < np.radians(4.0) or angle_B < np.radians(4.0):
+                    continue
+                # In eye-to-hand calibration R_A and R_B must have conjugate traces (|angle_A - angle_B| ~ 0).
+                # Filter out planar ambiguity flips (e.g. 180 deg errors from single-tag PnP)
+                if abs(angle_A - angle_B) > np.radians(8.0):
                     continue
 
                 qA = Rotation.from_matrix(R_A).as_quat()  # [x, y, z, w]
                 qB = Rotation.from_matrix(R_B).as_quat()
+                # Ensure same quaternion hemisphere
+                if qA[3] < 0:
+                    qA = -qA
+                if qB[3] < 0:
+                    qB = -qB
 
                 wA, xA, yA, zA = qA[3], qA[0], qA[1], qA[2]
                 wB, xB, yB, zB = qB[3], qB[0], qB[1], qB[2]
 
-                row1 = [ wA - wB, -xA + xB, -yA + yB, -zA + zB ]
-                row2 = [ xA - xB,  wA - wB,  zA + zB, -yA - yB ]
-                row3 = [ yA - yB, -zA - zB,  wA - wB,  xA + xB ]
-                row4 = [ zA - zB,  yA + yB, -xA - xB,  wA - wB ]
+                # qA * qX - qX * qB = 0 for qX = [wX, xX, yX, zX]
+                row1 = [ wA - wB, -(xA - xB), -(yA - yB), -(zA - zB) ]
+                row2 = [ xA - xB,  wA - wB, -(zA + zB),  yA + yB ]
+                row3 = [ yA - yB,  zA + zB,  wA - wB, -(xA + xB) ]
+                row4 = [ zA - zB, -(yA + yB),  xA + xB,  wA - wB ]
                 eqs.extend([row1, row2, row3, row4])
 
     if len(eqs) < 4:

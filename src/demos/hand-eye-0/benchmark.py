@@ -12,6 +12,7 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import math
 import os
 import sys
 import time
@@ -31,10 +32,11 @@ from config import (
     DEFAULT_DATASET_DIR,
     DEFAULT_D415_CALIB,
     DEFAULT_USB_CALIB,
+    TAG_SIZES_M,
     load_camera_intrinsics,
 )
-from detector import load_all_poses
-from solver import solve_handeye_pipeline, HandEyeCalibrationResult
+from detector import load_all_poses, PoseObservation
+from solver import solve_handeye_pipeline, HandEyeCalibrationResult, get_tag_corners_local
 from viz import save_annotated_gallery
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -104,6 +106,132 @@ def serialize_result(res: HandEyeCalibrationResult) -> dict:
             "quaternion_xyzw": Rotation.from_matrix(res.T_base_usb[:3, :3]).as_quat().tolist(),
         }
     return data
+
+
+def build_scene_dict(
+    observations: Sequence[PoseObservation],
+    res: HandEyeCalibrationResult,
+    K_d: np.ndarray,
+    D_d: np.ndarray,
+    K_u: np.ndarray,
+    D_u: np.ndarray,
+) -> dict:
+    """Builds a comprehensive scene representation in base_link coordinates."""
+    cameras = {
+        "d415": {
+            "name": "Intel RealSense D415 (Color)",
+            "frame_id": "camera_d415",
+            "T_base_camera": res.T_base_d415.tolist(),
+            "position_m": res.T_base_d415[:3, 3].tolist(),
+            "quaternion_xyzw": Rotation.from_matrix(res.T_base_d415[:3, :3]).as_quat().tolist(),
+            "intrinsics": {
+                "K": K_d.tolist(),
+                "distortion_coeffs": D_d.tolist(),
+                "fx": float(K_d[0, 0]), "fy": float(K_d[1, 1]),
+                "cx": float(K_d[0, 2]), "cy": float(K_d[1, 2]),
+                "resolution": [1280, 720],
+            },
+            "optical_axis_in_base": (res.T_base_d415[:3, :3] @ np.array([0, 0, 1])).tolist(),
+        }
+    }
+    if res.T_base_usb is not None:
+        cameras["usb"] = {
+            "name": "Global Context USB Camera",
+            "frame_id": "camera_usb",
+            "T_base_camera": res.T_base_usb.tolist(),
+            "position_m": res.T_base_usb[:3, 3].tolist(),
+            "quaternion_xyzw": Rotation.from_matrix(res.T_base_usb[:3, :3]).as_quat().tolist(),
+            "intrinsics": {
+                "K": K_u.tolist(),
+                "distortion_coeffs": D_u.tolist(),
+                "fx": float(K_u[0, 0]), "fy": float(K_u[1, 1]),
+                "cx": float(K_u[0, 2]), "cy": float(K_u[1, 2]),
+                "resolution": [1920, 1080],
+            },
+            "optical_axis_in_base": (res.T_base_usb[:3, :3] @ np.array([0, 0, 1])).tolist(),
+        }
+
+    static_objects = {}
+    for tid, T in res.static_tag_poses.items():
+        corners_local = get_tag_corners_local(tid)
+        corners_base = (T[:3, :3] @ corners_local.T).T + T[:3, 3]
+        static_objects[str(tid)] = {
+            "type": "base_marker" if tid in (4, 5) else "workpiece_platform",
+            "tag_id": tid,
+            "T_base_tag": T.tolist(),
+            "center_base_m": T[:3, 3].tolist(),
+            "normal_base": (T[:3, :3] @ np.array([0, 0, 1])).tolist(),
+            "corners_base_m": corners_base.tolist(),
+            "tag_size_m": TAG_SIZES_M.get(tid, 0.066),
+        }
+
+    workpiece_plane = None
+    if res.box_plane_normal is not None and res.box_plane_center is not None:
+        n = res.box_plane_normal
+        c = res.box_plane_center
+        d = -float(np.dot(n, c))
+        workpiece_plane = {
+            "plane_equation_abcd": [float(n[0]), float(n[1]), float(n[2]), d],
+            "normal": n.tolist(),
+            "center_m": c.tolist(),
+            "coplanarity_rmse_mm": round(res.box_coplanarity_rmse_mm, 3),
+            "member_tags": [42, 43, 44, 45],
+        }
+
+    tool_assembly = {
+        "reference_frame": "tcp",
+        "tags": {
+            str(tid): {
+                "tag_id": tid,
+                "T_tcp_tag": M.tolist(),
+                "position_mm": (M[:3, 3] * 1000.0).tolist(),
+                "quaternion_xyzw": Rotation.from_matrix(M[:3, :3]).as_quat().tolist(),
+                "tag_size_m": TAG_SIZES_M.get(tid, 0.041),
+            }
+            for tid, M in res.tool_mounts.items()
+        }
+    }
+
+    poses_list = []
+    for obs in observations:
+        q_rad = obs.joint_angles_rad
+        q_deg = [math.degrees(a) for a in q_rad]
+        pose_dict = {
+            "pose_name": obs.pose_name,
+            "joint_positions_rad": q_rad,
+            "joint_positions_deg": q_deg,
+            "T_base_tcp": obs.T_base_tcp.tolist(),
+            "tcp_position_m": obs.T_base_tcp[:3, 3].tolist(),
+            "tcp_quaternion_xyzw": Rotation.from_matrix(obs.T_base_tcp[:3, :3]).as_quat().tolist(),
+            "d415_observed_tags": list(obs.d415_tags.keys()),
+            "usb_observed_tags": list(obs.usb_tags.keys()),
+        }
+        poses_list.append(pose_dict)
+
+    return {
+        "scene_format_version": "1.0.0",
+        "origin_frame": "base_link",
+        "calibration_method": res.method,
+        "runtime_seconds": res.runtime_s,
+        "summary_metrics": {
+            "reproj_rms_px": res.reproj_rms_px,
+            "pos_rms_mm": res.pos_rms_mm,
+            "rot_rms_deg": res.rot_rms_deg,
+            "box_coplanarity_rmse_mm": res.box_coplanarity_rmse_mm,
+        },
+        "cameras": cameras,
+        "robot": {
+            "model": "DOBOT CR5A",
+            "base_frame": "base_link",
+            "tcp_frame": "tcp",
+            "num_joints": 6,
+            "urdf": "/home/mfk01/Downloads/Robotics_Resources/cr5/urdf/cr5a.urdf",
+        },
+        "tool_assembly": tool_assembly,
+        "static_landmarks": static_objects,
+        "workpiece_plane": workpiece_plane,
+        "recorded_poses": poses_list,
+    }
 
 
 def create_method_report_md(res: HandEyeCalibrationResult) -> str:
@@ -231,7 +359,12 @@ def run_benchmarks(
         with open(out_dir / "summary_report.md", "w", encoding="utf-8") as f:
             f.write(md_content)
 
-        # 5. Generate annotated verification gallery
+        # 5. Save scene.json
+        scene_dict = build_scene_dict(observations, res, K_d, D_d, K_u, D_u)
+        with open(out_dir / "scene.json", "w", encoding="utf-8") as f:
+            json.dump(scene_dict, f, indent=2)
+
+        # 6. Generate annotated verification gallery
         save_annotated_gallery(observations, res, K_d, D_d, K_u, D_u, out_dir / "annotated")
 
         benchmark_records.append({
@@ -306,4 +439,17 @@ def run_benchmarks(
 
 
 if __name__ == "__main__":
-    run_benchmarks()
+    import argparse
+    parser = argparse.ArgumentParser(description="Run Hand-Eye Calibration Benchmarks")
+    parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_DIR, help="Path to pose dataset directory")
+    parser.add_argument("--output-dir", type=Path, default=None, help="Output directory")
+    args = parser.parse_args()
+
+    out_root = args.output_dir
+    if out_root is None:
+        ds_path = Path(args.dataset)
+        parts = [p for p in ds_path.parts if p and p != "."]
+        slug = f"{parts[-2]}-{parts[-1]}" if len(parts) >= 2 else ds_path.name
+        out_root = REPO_ROOT / "outputs" / slug
+
+    run_benchmarks(dataset_dir=args.dataset, output_root=out_root)
