@@ -6,9 +6,9 @@
 
 | Algorithm / Methodology | Status | Reproj RMS [px] | Reproj Mean [px] | 3D Pos RMS [mm] | 3D Rot RMS [deg] | Runtime [s] |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| `algo_3d_pose_cauchy` | **FAIL** | **`4.816 px`** | `4.291 px` | `14.84 mm` | `13.58°` | `4.516 s` |
-| `algo_2d_corner_ba` | **FAIL** | **`1.424 px`** | `1.291 px` | `29.23 mm` | `13.58°` | `1.251 s` |
-| `algo_rigid_cube_ba` | **FAIL** | **`1.660 px`** | `1.516 px` | `28.65 mm` | `13.81°` | `1.163 s` |
+| `algo_3d_pose_cauchy` | **FAIL** | **`4.816 px`** | `4.291 px` | `14.84 mm` | `13.58°` | `5.726 s` |
+| `algo_2d_corner_ba` | **FAIL** | **`1.424 px`** | `1.291 px` | `29.23 mm` | `13.58°` | `1.121 s` |
+| `algo_rigid_cube_ba` | **FAIL** | **`1.660 px`** | `1.516 px` | `28.65 mm` | `13.81°` | `1.146 s` |
 
 ---
 

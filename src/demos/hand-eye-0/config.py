@@ -29,12 +29,22 @@ TAG_SIZES_M = {
     43: 0.0660,
     44: 0.0660,
     45: 0.0660,
+    50: 0.0700,
+    51: 0.0700,
+    52: 0.0700,
+    53: 0.0700,
+    54: 0.0700,
+    55: 0.0700,
 }
 DEFAULT_TAG_SIZE_M = 0.0885
 
-# Tag Roles
+# Tag Roles & Workpiece Box Groups
 BASE_LINKED_TAGS = frozenset({0, 1, 4, 5, 41})
-OBJECT_LINKED_TAGS = frozenset({42, 43, 44, 45})
+BOX_TAG_GROUPS: dict[str, frozenset[int]] = {
+    "box": frozenset({42, 43, 44, 45}),
+    "box2": frozenset({50, 51, 52, 53}),
+}
+OBJECT_LINKED_TAGS = frozenset().union(*BOX_TAG_GROUPS.values())
 STATIC_TAGS = BASE_LINKED_TAGS | OBJECT_LINKED_TAGS
 TOOL_TCP_TAGS = frozenset({20, 21, 40})
 

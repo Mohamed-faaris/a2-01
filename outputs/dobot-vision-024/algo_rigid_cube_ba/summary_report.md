@@ -2,11 +2,13 @@
 
 ## 1. Executive Summary & Verification Metrics
 - **Methodology**: `rigid_cube_ba`
-- **Runtime**: `1.163 s`
+- **Runtime**: `1.146 s`
 - **2D Reprojection Error**: `1.66 px RMS` (Mean: `1.52 px`, Max: `4.04 px`)
 - **3D Position Residual**: `28.65 mm RMS` (Mean: `24.87 mm`, Max: `69.09 mm`)
 - **3D Rotation Residual**: `13.81° RMS` (Mean: `6.20°`, Max: `84.75°`)
 - **Workpiece Box Coplanarity RMSE**: `1.83 mm`
+- **Workpiece [box] Coplanarity RMSE**: `1.83 mm` (Tags: `42, 43, 44, 45`)
+- **Workpiece [box2] Coplanarity RMSE**: `1.73 mm` (Tags: `50, 51, 52, 53`)
 - **Total Tool Tag Sightings**: `65` across 18 arm poses
 
 ---

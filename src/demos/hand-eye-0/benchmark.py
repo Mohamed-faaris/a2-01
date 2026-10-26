@@ -29,6 +29,8 @@ if str(DEMO_DIR) not in sys.path:
     sys.path.insert(0, str(DEMO_DIR))
 
 from config import (
+    BASE_LINKED_TAGS,
+    BOX_TAG_GROUPS,
     DEFAULT_DATASET_DIR,
     DEFAULT_D415_CALIB,
     DEFAULT_USB_CALIB,
@@ -155,14 +157,35 @@ def build_scene_dict(
     for tid, T in res.static_tag_poses.items():
         corners_local = get_tag_corners_local(tid)
         corners_base = (T[:3, :3] @ corners_local.T).T + T[:3, 3]
+        box_owner = None
+        for b_name, b_tags in BOX_TAG_GROUPS.items():
+            if tid in b_tags:
+                box_owner = b_name
+                break
         static_objects[str(tid)] = {
-            "type": "base_marker" if tid in (4, 5) else "workpiece_platform",
+            "type": "base_marker" if tid in BASE_LINKED_TAGS else "workpiece_platform",
             "tag_id": tid,
+            "box_owner": box_owner,
             "T_base_tag": T.tolist(),
             "center_base_m": T[:3, 3].tolist(),
             "normal_base": (T[:3, :3] @ np.array([0, 0, 1])).tolist(),
             "corners_base_m": corners_base.tolist(),
             "tag_size_m": TAG_SIZES_M.get(tid, 0.066),
+        }
+
+    workpiece_planes = {}
+    for b_name, b_data in getattr(res, "workpiece_planes", {}).items():
+        n = np.array(b_data["normal"])
+        c = np.array(b_data["center"])
+        d = -float(np.dot(n, c))
+        workpiece_planes[b_name] = {
+            "name": b_name,
+            "plane_equation_abcd": [float(n[0]), float(n[1]), float(n[2]), d],
+            "normal": n.tolist(),
+            "center_m": c.tolist(),
+            "coplanarity_rmse_mm": round(b_data["coplanarity_rmse_mm"], 3),
+            "member_tags": b_data["tag_ids"],
+            "present_tags": b_data.get("present_tag_ids", b_data["tag_ids"]),
         }
 
     workpiece_plane = None
@@ -218,6 +241,13 @@ def build_scene_dict(
             "pos_rms_mm": res.pos_rms_mm,
             "rot_rms_deg": res.rot_rms_deg,
             "box_coplanarity_rmse_mm": res.box_coplanarity_rmse_mm,
+            "workpiece_boxes": {
+                b_name: {
+                    "coplanarity_rmse_mm": b_data["coplanarity_rmse_mm"],
+                    "present_tags": b_data.get("present_tag_ids", []),
+                }
+                for b_name, b_data in getattr(res, "workpiece_planes", {}).items()
+            },
         },
         "cameras": cameras,
         "robot": {
@@ -230,6 +260,7 @@ def build_scene_dict(
         "tool_assembly": tool_assembly,
         "static_landmarks": static_objects,
         "workpiece_plane": workpiece_plane,
+        "workpiece_planes": workpiece_planes,
         "recorded_poses": poses_list,
     }
 
@@ -245,6 +276,11 @@ def create_method_report_md(res: HandEyeCalibrationResult) -> str:
         f"- **3D Position Residual**: `{res.pos_rms_mm:.2f} mm RMS` (Mean: `{res.pos_mean_mm:.2f} mm`, Max: `{res.pos_max_mm:.2f} mm`)",
         f"- **3D Rotation Residual**: `{res.rot_rms_deg:.2f}° RMS` (Mean: `{res.rot_mean_deg:.2f}°`, Max: `{res.rot_max_deg:.2f}°`)",
         f"- **Workpiece Box Coplanarity RMSE**: `{res.box_coplanarity_rmse_mm:.2f} mm`",
+    ]
+    for b_name, b_data in getattr(res, "workpiece_planes", {}).items():
+        tids_str = ", ".join(str(i) for i in b_data.get("present_tag_ids", b_data["tag_ids"]))
+        lines.append(f"- **Workpiece [{b_name}] Coplanarity RMSE**: `{b_data['coplanarity_rmse_mm']:.2f} mm` (Tags: `{tids_str}`)")
+    lines += [
         f"- **Total Tool Tag Sightings**: `{res.num_tool_sightings}` across 18 arm poses",
         "",
         "---",

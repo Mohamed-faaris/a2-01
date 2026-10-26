@@ -22,6 +22,7 @@ from scipy.spatial.transform import Rotation
 from detector import PoseObservation
 from config import (
     BASE_LINKED_TAGS,
+    BOX_TAG_GROUPS,
     OBJECT_LINKED_TAGS,
     STATIC_TAGS,
     TOOL_TCP_TAGS,
@@ -57,9 +58,10 @@ class HandEyeCalibrationResult:
     T_base_usb: np.ndarray | None           # 4x4 transform from base_link to usb
     tool_mounts: dict[int, np.ndarray]      # tag_id -> 4x4 transform from tcp to tag
     static_tag_poses: dict[int, np.ndarray] # tag_id -> 4x4 transform from base_link to tag
-    box_plane_normal: np.ndarray | None     # Normal vector of workpiece plane in base_link
-    box_plane_center: np.ndarray | None     # Center point of workpiece plane in base_link
+    box_plane_normal: np.ndarray | None     # Normal vector of primary workpiece plane in base_link
+    box_plane_center: np.ndarray | None     # Center point of primary workpiece plane in base_link
     box_coplanarity_rmse_mm: float = 0.0
+    workpiece_planes: dict[str, dict] = field(default_factory=dict) # multi-box plane fits
     pos_rms_mm: float = 0.0
     pos_mean_mm: float = 0.0
     pos_max_mm: float = 0.0
@@ -423,22 +425,36 @@ def solve_handeye_pipeline(
         T_cons[:3, 3] = t_consensus
         static_tag_poses[tid] = T_cons
 
-    # Workpiece Plane (Tags 42, 43, 44, 45)
-    box_pts = [static_tag_poses[tid][:3, 3] for tid in OBJECT_LINKED_TAGS if tid in static_tag_poses]
-    box_normal = None
-    box_center = None
-    box_rmse = 0.0
+    # Workpiece Plane Fitting (for all configured boxes in BOX_TAG_GROUPS)
+    workpiece_planes = {}
+    for b_name, tag_set in BOX_TAG_GROUPS.items():
+        b_pts_list = [static_tag_poses[tid][:3, 3] for tid in tag_set if tid in static_tag_poses]
+        if len(b_pts_list) >= 3:
+            pts = np.array(b_pts_list)
+            b_center = np.mean(pts, axis=0)
+            uu, dd, vv = np.linalg.svd(pts - b_center)
+            b_norm = vv[-1]
+            if b_norm[2] < 0:
+                b_norm = -b_norm
+            resids = np.abs(np.dot(pts - b_center, b_norm))
+            b_rmse = float(np.sqrt(np.mean(resids ** 2)) * 1000.0)
+            workpiece_planes[b_name] = {
+                "name": b_name,
+                "tag_ids": sorted(list(tag_set)),
+                "present_tag_ids": [tid for tid in sorted(list(tag_set)) if tid in static_tag_poses],
+                "normal": b_norm.tolist(),
+                "center": b_center.tolist(),
+                "coplanarity_rmse_mm": b_rmse,
+                "tag_positions_mm": {
+                    int(tid): (static_tag_poses[tid][:3, 3] * 1000.0).tolist()
+                    for tid in tag_set if tid in static_tag_poses
+                },
+            }
 
-    if len(box_pts) >= 3:
-        pts = np.array(box_pts)
-        box_center = np.mean(pts, axis=0)
-        uu, dd, vv = np.linalg.svd(pts - box_center)
-        normal = vv[-1]
-        if normal[2] < 0:
-            normal = -normal
-        box_normal = normal
-        resids = np.abs(np.dot(pts - box_center, box_normal))
-        box_rmse = float(np.sqrt(np.mean(resids ** 2)) * 1000.0)
+    primary_box = workpiece_planes.get("box") or (next(iter(workpiece_planes.values())) if workpiece_planes else None)
+    box_normal = np.array(primary_box["normal"]) if primary_box else None
+    box_center = np.array(primary_box["center"]) if primary_box else None
+    box_rmse = float(primary_box["coplanarity_rmse_mm"]) if primary_box else 0.0
 
     # 5. Solve USB Camera Extrinsics
     T_base_usb = None
@@ -518,6 +534,7 @@ def solve_handeye_pipeline(
         box_plane_normal=box_normal,
         box_plane_center=box_center,
         box_coplanarity_rmse_mm=box_rmse,
+        workpiece_planes=workpiece_planes,
         pos_rms_mm=float(np.sqrt(np.mean(pos_errs_arr ** 2))),
         pos_mean_mm=float(np.mean(pos_errs_arr)),
         pos_max_mm=float(np.max(pos_errs_arr)),

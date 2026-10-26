@@ -2,7 +2,7 @@
   "method": "algo_rigid_cube_ba",
   "description": "Rigid 6-Faced 41mm Cube Multi-Tag Constraint + 2D Reprojection Bundle Adjustment",
   "status": "fail",
-  "runtime_seconds": 1.1628620799965574,
+  "runtime_seconds": 1.1459828570004902,
   "evaluation_metrics": {
     "reprojection_rms_px": 1.6604290572455864,
     "reprojection_mean_px": 1.5163149296131322,

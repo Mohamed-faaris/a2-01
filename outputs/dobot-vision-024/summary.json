@@ -2,7 +2,7 @@
   {
     "method": "algo_3d_pose_cauchy",
     "status": "FAIL",
-    "runtime_s": 4.5160835400020005,
+    "runtime_s": 5.725946713995654,
     "reproj_rms_px": 4.816176607126917,
     "reproj_mean_px": 4.290712823709953,
     "reproj_max_px": 10.658525052076554,
@@ -21,7 +21,7 @@
   {
     "method": "algo_2d_corner_ba",
     "status": "FAIL",
-    "runtime_s": 1.250733114000468,
+    "runtime_s": 1.121412667002005,
     "reproj_rms_px": 1.424043457262872,
     "reproj_mean_px": 1.2912429414956212,
     "reproj_max_px": 3.8178810911310865,
@@ -40,7 +40,7 @@
   {
     "method": "algo_rigid_cube_ba",
     "status": "FAIL",
-    "runtime_s": 1.1628620799965574,
+    "runtime_s": 1.1459828570004902,
     "reproj_rms_px": 1.6604290572455864,
     "reproj_mean_px": 1.5163149296131322,
     "reproj_max_px": 4.043038763646313,

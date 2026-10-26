@@ -2,11 +2,13 @@
 
 ## 1. Executive Summary & Verification Metrics
 - **Methodology**: `2d_corner_ba`
-- **Runtime**: `1.251 s`
+- **Runtime**: `1.121 s`
 - **2D Reprojection Error**: `1.42 px RMS` (Mean: `1.29 px`, Max: `3.82 px`)
 - **3D Position Residual**: `29.23 mm RMS` (Mean: `25.11 mm`, Max: `68.23 mm`)
 - **3D Rotation Residual**: `13.58° RMS` (Mean: `5.08°`, Max: `84.80°`)
 - **Workpiece Box Coplanarity RMSE**: `1.83 mm`
+- **Workpiece [box] Coplanarity RMSE**: `1.83 mm` (Tags: `42, 43, 44, 45`)
+- **Workpiece [box2] Coplanarity RMSE**: `1.73 mm` (Tags: `50, 51, 52, 53`)
 - **Total Tool Tag Sightings**: `65` across 18 arm poses
 
 ---

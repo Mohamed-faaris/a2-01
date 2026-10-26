@@ -2,11 +2,13 @@
 
 ## 1. Executive Summary & Verification Metrics
 - **Methodology**: `3d_pose_cauchy`
-- **Runtime**: `4.516 s`
+- **Runtime**: `5.726 s`
 - **2D Reprojection Error**: `4.82 px RMS` (Mean: `4.29 px`, Max: `10.66 px`)
 - **3D Position Residual**: `14.84 mm RMS` (Mean: `11.98 mm`, Max: `48.66 mm`)
 - **3D Rotation Residual**: `13.58° RMS` (Mean: `5.03°`, Max: `85.21°`)
 - **Workpiece Box Coplanarity RMSE**: `1.83 mm`
+- **Workpiece [box] Coplanarity RMSE**: `1.83 mm` (Tags: `42, 43, 44, 45`)
+- **Workpiece [box2] Coplanarity RMSE**: `1.73 mm` (Tags: `50, 51, 52, 53`)
 - **Total Tool Tag Sightings**: `65` across 18 arm poses
 
 ---

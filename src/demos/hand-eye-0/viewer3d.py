@@ -51,6 +51,8 @@ if str(DEMO_DIR) not in sys.path:
     sys.path.insert(0, str(DEMO_DIR))
 
 from config import (
+    BASE_LINKED_TAGS,
+    BOX_TAG_GROUPS,
     DEFAULT_DATASET_DIR,
     DEFAULT_D415_CALIB,
     DEFAULT_USB_CALIB,
@@ -537,9 +539,17 @@ class HandEye3DViewer:
                 )
 
     def _render_static_tags(self) -> None:
-        """Renders stationary base tags (4, 5) and workpiece platform box tags (42..45)."""
+        """Renders stationary base tags and multiple workpiece box platform tags."""
         static_dict = self.calib_data.get("static_tags_in_base_link", {})
-        box_pts = []
+        box_points: dict[str, list[tuple[int, np.ndarray]]] = {}
+
+        # Box Color Palettes
+        box_colors = {
+            "box": {"tag": (245, 158, 11), "platform": (55, 65, 80), "arrow": (0, 230, 255), "name": "Workpiece Box 1"},
+            "box2": {"tag": (168, 85, 247), "platform": (75, 50, 95), "arrow": (236, 72, 153), "name": "Workpiece Box 2"},
+            "box3": {"tag": (14, 165, 233), "platform": (45, 75, 85), "arrow": (56, 189, 248), "name": "Workpiece Box 3"},
+        }
+        default_box_palette = {"tag": (234, 88, 12), "platform": (60, 60, 70), "arrow": (251, 146, 60), "name": "Workpiece Box"}
 
         for tid_str, tinfo in static_dict.items():
             tid = int(tid_str)
@@ -547,10 +557,28 @@ class HandEye3DViewer:
             pos = T_b_tag[:3, 3]
             q_wxyz = matrix_to_wxyz(T_b_tag[:3, :3])
             size = TAG_SIZES_M.get(tid, 0.066)
-            is_base = tid in (0, 1, 4, 5, 41)
+            is_base = tid in BASE_LINKED_TAGS
 
-            # Marker Quad / Box
-            col = (40, 200, 100) if is_base else (240, 160, 40)
+            # Determine box ownership
+            box_owner = None
+            if not is_base:
+                for b_name, b_tags in BOX_TAG_GROUPS.items():
+                    if tid in b_tags:
+                        box_owner = b_name
+                        break
+                if box_owner is None:
+                    box_owner = "box" if tid < 50 else "box2"
+
+            # Marker Quad / Box Color
+            if is_base:
+                col = (40, 200, 100)
+                label = f"Tag {tid} (Base)"
+            else:
+                pal = box_colors.get(box_owner, default_box_palette)
+                col = pal["tag"]
+                label = f"Tag {tid} ({pal['name']})"
+                box_points.setdefault(box_owner, []).append((tid, pos))
+
             self.server.scene.add_box(
                 f"/scene/static_tags/tag_{tid}",
                 dimensions=(size, size, 0.003),
@@ -565,43 +593,51 @@ class HandEye3DViewer:
                 position=tuple(pos),
                 wxyz=q_wxyz,
             )
-            label = f"Tag {tid} (Base)" if is_base else f"Tag {tid} (Box)"
             self.server.scene.add_label(
                 f"/scene/static_tags/tag_{tid}_label",
                 text=label,
                 position=tuple(pos + np.array([0, 0, 0.03])),
             )
 
-            if not is_base:
-                box_pts.append(pos)
+        # Render Surface Polygon & Normal for Each Workpiece Box
+        for b_name, tag_pts in box_points.items():
+            pts = np.array([p[1] for p in tag_pts])
+            tids = [p[0] for p in tag_pts]
+            if len(pts) >= 3:
+                c = np.mean(pts, axis=0)
+                uu, dd, vv = np.linalg.svd(pts - c)
+                norm = vv[-1]
+                if norm[2] < 0:
+                    norm = -norm
+                resids = np.abs(np.dot(pts - c, norm))
+                rmse_mm = float(np.sqrt(np.mean(resids ** 2)) * 1000.0)
 
-        # Workpiece Box Surface Polygon & Center
-        if len(box_pts) >= 4:
-            pts = np.array(box_pts)
-            c = np.mean(pts, axis=0)
-            # Platform box
-            self.server.scene.add_box(
-                "/scene/workpiece_box/platform",
-                dimensions=(0.35, 0.35, 0.015),
-                position=(float(c[0]), float(c[1]), float(c[2] - 0.01)),
-                color=(55, 65, 80),
-                opacity=0.6,
-            )
-            # Normal Vector arrow
-            norm = np.array([0.016, 0.059, 0.998])
-            self.server.scene.add_cylinder(
-                "/scene/workpiece_box/normal_arrow",
-                radius=0.004,
-                height=0.15,
-                position=tuple(c + norm * 0.075),
-                wxyz=align_z_to_vector(norm),
-                color=(0, 230, 255),
-            )
-            self.server.scene.add_label(
-                "/scene/workpiece_box/label",
-                text="📦 Workpiece Platform (Tags 42..45)",
-                position=tuple(c + np.array([0, 0, 0.08])),
-            )
+                # Platform dimensions
+                dists = [np.linalg.norm(p - c) for p in pts]
+                span = max(0.20, float(max(dists) * 2.2))
+                pal = box_colors.get(b_name, default_box_palette)
+
+                self.server.scene.add_box(
+                    f"/scene/workpiece_{b_name}/platform",
+                    dimensions=(span, span, 0.015),
+                    position=(float(c[0]), float(c[1]), float(c[2] - 0.01)),
+                    color=pal["platform"],
+                    opacity=0.6,
+                )
+                self.server.scene.add_cylinder(
+                    f"/scene/workpiece_{b_name}/normal_arrow",
+                    radius=0.004,
+                    height=0.15,
+                    position=tuple(c + norm * 0.075),
+                    wxyz=align_z_to_vector(norm),
+                    color=pal["arrow"],
+                )
+                tids_str = ", ".join(str(t) for t in sorted(tids))
+                self.server.scene.add_label(
+                    f"/scene/workpiece_{b_name}/label",
+                    text=f"📦 {pal['name']} (Tags {tids_str}, RMSE: {rmse_mm:.2f} mm)",
+                    position=tuple(c + np.array([0, 0, 0.08])),
+                )
 
     def _render_tool_tags(self, obs) -> None:
         """Renders tool tags dynamically attached to the moving robot TCP."""
