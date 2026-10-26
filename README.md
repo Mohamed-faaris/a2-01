@@ -59,3 +59,22 @@ uv run python scripts/blender_pose_sanity.py --blender blender
 ```
 
 Outputs are saved under `artifacts/blender_pose_sanity/`: the Blender scene script, `.blend` scene, rendered PNG, source marker PNGs, and `pose_report.json`. The current Blender 5.2.2 run passed: maximum per-tag position error was 2.14 cm; relative translation error was 1.34 cm, distance error 1.17 cm, and rotation error 1.96°. The check uses ideal camera intrinsics with no lens distortion, so it is a pipeline sanity check rather than a substitute for real camera calibration.
+
+---
+
+## 🤖 3D Hand-Eye Visualizer (`viewer3d.py`)
+
+Interactive 3D WebGL digital twin for multi-pose hand-eye calibration with the **DOBOT CR5A** robot arm, **Intel RealSense D415**, and context USB camera.
+
+- **Guide**: See [README_3DVIEWER.md](file:///home/mfk01/Projects/econ-systems/demos/a2-01/README_3DVIEWER.md) for full architecture details, CLI arguments, and controls.
+- **Run with defaults** (`http://localhost:8085`):
+  ```sh
+  .venv/bin/python src/demos/hand-eye-0/viewer3d.py
+  ```
+- **Load a specific calibration run or dataset**:
+  ```sh
+  .venv/bin/python src/demos/hand-eye-0/viewer3d.py \
+    --calib outputs/dobot-vision-011/handeye_calibration.json \
+    --dataset inputs/dobot-vision/011
+  ```
+
