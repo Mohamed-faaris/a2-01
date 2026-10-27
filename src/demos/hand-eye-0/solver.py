@@ -73,6 +73,7 @@ class HandEyeCalibrationResult:
     reproj_max_px: float = 0.0
     num_tool_sightings: int = 0
     per_pose_errors: list[dict] = field(default_factory=list)
+    observability_diagnostics: dict[str, Any] = field(default_factory=dict)
     runtime_s: float = 0.0
 
 
@@ -244,6 +245,7 @@ def solve_handeye_pipeline(
     # 3. Method-Specific Optimization
     T_base_d415 = np.eye(4)
     final_mounts = {}
+    observability_diag = {}
 
     if method == "3d_pose_cauchy":
         # Parameter vector: rvec_cam (3), tvec_cam (3), (rvec_mount_i, tvec_mount_i)
@@ -571,7 +573,50 @@ def solve_handeye_pipeline(
 
                 return np.array(residuals)
 
-            opt = least_squares(res_coplanar, x0, loss="cauchy", f_scale=1.5, max_nfev=350)
+            # Multi-Start Optimization: Closed-form baseline + 4 perturbed basins
+            candidate_seeds = [x0]
+            rng = np.random.default_rng(42)
+            for _ in range(4):
+                x_pert = x0.copy()
+                x_pert[0:3] += rng.uniform(-0.02, 0.02, size=3)
+                x_pert[3:6] += rng.uniform(-0.015, 0.015, size=3)
+                if use_dual:
+                    x_pert[6:9] += rng.uniform(-0.02, 0.02, size=3)
+                    x_pert[9:12] += rng.uniform(-0.015, 0.015, size=3)
+                candidate_seeds.append(x_pert)
+
+            best_opt = None
+            best_cost = float("inf")
+            for seed in candidate_seeds:
+                opt_c = least_squares(res_coplanar, seed, loss="cauchy", f_scale=1.5, max_nfev=250)
+                if opt_c.cost < best_cost:
+                    best_cost = opt_c.cost
+                    best_opt = opt_c
+            opt = best_opt
+
+            # Parameter Observability & Covariance Diagnostics
+            try:
+                J = opt.jac.toarray() if hasattr(opt.jac, "toarray") else opt.jac
+                s_vals = np.linalg.svd(J, compute_uv=False)
+                cond_num = float(s_vals[0] / max(s_vals[-1], 1e-12))
+                dof = max(len(opt.fun) - len(opt.x), 1)
+                s_sq = 2.0 * opt.cost / dof
+                cov = np.linalg.pinv(J.T @ J) * s_sq
+                std_errors = np.sqrt(np.maximum(np.diag(cov), 0.0))
+
+                observability_diag = {
+                    "jacobian_condition_number": round(cond_num, 2),
+                    "singular_values": [round(float(s), 3) for s in s_vals[:8]],
+                    "min_singular_value": round(float(s_vals[-1]), 4),
+                    "d415_pos_std_err_mm": (std_errors[3:6] * 1000.0).round(2).tolist(),
+                    "d415_rot_std_err_deg": (std_errors[0:3] * 180.0 / np.pi).round(2).tolist(),
+                }
+                if use_dual:
+                    observability_diag["usb_pos_std_err_mm"] = (std_errors[9:12] * 1000.0).round(2).tolist()
+                    observability_diag["usb_rot_std_err_deg"] = (std_errors[6:9] * 180.0 / np.pi).round(2).tolist()
+            except Exception as e:
+                log.warning(f"Failed to compute observability diagnostics: {e}")
+
             R_cam_opt = Rotation.from_rotvec(opt.x[0:3]).as_matrix()
             T_base_d415[:3, :3] = R_cam_opt
             T_base_d415[:3, 3] = opt.x[3:6]
@@ -832,5 +877,6 @@ def solve_handeye_pipeline(
         reproj_max_px=float(np.max(reproj_errs_arr)),
         num_tool_sightings=len(pos_errs),
         per_pose_errors=per_pose_errors,
+        observability_diagnostics=observability_diag,
         runtime_s=runtime_s,
     )

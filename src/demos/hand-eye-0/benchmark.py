@@ -107,6 +107,8 @@ def serialize_result(res: HandEyeCalibrationResult) -> dict:
             "position_m": res.T_base_usb[:3, 3].tolist(),
             "quaternion_xyzw": Rotation.from_matrix(res.T_base_usb[:3, :3]).as_quat().tolist(),
         }
+    if getattr(res, "observability_diagnostics", None):
+        data["observability_diagnostics"] = res.observability_diagnostics
     return data
 
 
@@ -314,11 +316,30 @@ def create_method_report_md(res: HandEyeCalibrationResult) -> str:
         dist = float(np.linalg.norm(pos_mm))
         lines.append(f"| **Tag {tid}** | `tcp` | `[{pos_mm[0]:+6.1f}, {pos_mm[1]:+6.1f}, {pos_mm[2]:+6.1f}]` | `{dist:.1f} mm` |")
 
+    if getattr(res, "observability_diagnostics", None):
+        diag = res.observability_diagnostics
+        lines += [
+            "",
+            "---",
+            "",
+            "## 4. Parameter Observability & Covariance Uncertainty",
+            f"- **Jacobian Condition Number $\\kappa$**: `{diag.get('jacobian_condition_number', 'N/A')}`",
+            f"- **Minimum Singular Value $\\sigma_{{min}}$**: `{diag.get('min_singular_value', 'N/A')}`",
+            f"- **Top Singular Values**: `{diag.get('singular_values', [])}`",
+            f"- **D415 Estimated Position 1-$\\sigma$ Uncertainty $(X, Y, Z)$**: `±{diag.get('d415_pos_std_err_mm', 'N/A')} mm`",
+            f"- **D415 Estimated Rotation 1-$\\sigma$ Uncertainty $(Roll, Pitch, Yaw)$**: `±{diag.get('d415_rot_std_err_deg', 'N/A')}°`",
+        ]
+        if "usb_pos_std_err_mm" in diag:
+            lines += [
+                f"- **USB Estimated Position 1-$\\sigma$ Uncertainty $(X, Y, Z)$**: `±{diag.get('usb_pos_std_err_mm', 'N/A')} mm`",
+                f"- **USB Estimated Rotation 1-$\\sigma$ Uncertainty $(Roll, Pitch, Yaw)$**: `±{diag.get('usb_rot_std_err_deg', 'N/A')}°`",
+            ]
+
     lines += [
         "",
         "---",
         "",
-        "## 4. Per-Pose Sighting Residuals & Reprojection Errors",
+        "## 5. Per-Pose Sighting Residuals & Reprojection Errors",
         "",
         "| Pose Name | Tag ID | 3D Position Error [mm] | 3D Rotation Error [deg] | 2D Reprojection Error [px] |",
         "|:---|:---:|:---:|:---:|:---:|",
@@ -393,6 +414,7 @@ def run_benchmarks(
                 "rotation_max_deg": res.rot_max_deg,
                 "box_coplanarity_rmse_mm": res.box_coplanarity_rmse_mm,
             },
+            "observability_diagnostics": getattr(res, "observability_diagnostics", {}),
             "acceptance_criteria": ACCEPTANCE_THRESHOLDS,
             "camera_position_m": res.T_base_d415[:3, 3].tolist(),
             "per_pose_residuals": res.per_pose_errors,

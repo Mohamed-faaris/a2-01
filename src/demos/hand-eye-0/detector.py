@@ -57,15 +57,43 @@ class TagDetector:
     def __init__(self, family: str = "tag36h11", nthreads: int = 4):
         pass
 
-    def detect(self, image: np.ndarray, K: np.ndarray, D: np.ndarray) -> dict[int, DetectedTag]:
+    def detect(self, image: np.ndarray, K: np.ndarray, D: np.ndarray, refine_subpix: bool = True) -> dict[int, DetectedTag]:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
+        h_img, w_img = gray.shape[:2]
         raw_dets = self.detector.detect(gray)
         results = {}
+
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.005)
 
         for d in raw_dets:
             tid = int(d.tag_id)
             nominal_size = TAG_SIZES_M.get(tid, DEFAULT_TAG_SIZE_M)
             h = nominal_size / 2.0
+
+            c_px = np.array(d.corners, dtype=np.float32)
+
+            # 1. Boundary rejection: reject tags truncated or distorted near image edges
+            margin = 5.0
+            if (c_px[:, 0] < margin).any() or (c_px[:, 0] > w_img - margin).any() or \
+               (c_px[:, 1] < margin).any() or (c_px[:, 1] > h_img - margin).any():
+                continue
+
+            # 2. Minimum area rejection: ignore tags below 80 px^2 (excessive noise)
+            area = float(cv2.contourArea(c_px))
+            if area < 80.0:
+                continue
+
+            # 3. Subpixel corner refinement on grayscale image
+            if refine_subpix:
+                try:
+                    c_ref = cv2.cornerSubPix(
+                        gray, c_px.copy(), winSize=(3, 3), zeroZone=(-1, -1), criteria=criteria
+                    )
+                    # Safety check: if corner moved > 4 px, keep original
+                    if np.max(np.linalg.norm(c_ref - c_px, axis=1)) < 4.0:
+                        c_px = c_ref
+                except Exception:
+                    pass
 
             obj_pts = np.array([
                 [-h,  h, 0.0],
@@ -74,7 +102,7 @@ class TagDetector:
                 [-h, -h, 0.0]
             ], dtype=np.float64)
 
-            img_pts = np.array(d.corners, dtype=np.float64)
+            img_pts = np.array(c_px, dtype=np.float64)
 
             success, rvecs, tvecs, repr_errs = cv2.solvePnPGeneric(
                 obj_pts,
@@ -86,14 +114,27 @@ class TagDetector:
             if not success or len(rvecs) == 0:
                 continue
 
-            # Pick the solution with positive depth and lowest reprojection error
+            # 4. Resolve IPPE planar pose ambiguity:
+            # Check positive depth and ensure tag surface normal points toward camera
             best_idx = 0
-            best_err = 1e9
+            best_score = 1e9
             for i in range(len(rvecs)):
                 tz = float(tvecs[i][2, 0])
+                if tz <= 0.05:
+                    continue
+                R_cand, _ = cv2.Rodrigues(rvecs[i])
+                t_cand = tvecs[i].ravel()
+                # Surface normal in camera frame (Z axis of tag)
+                n_cam = R_cand[:, 2]
+                v_cam = t_cand / (np.linalg.norm(t_cand) + 1e-9)
+                cos_view = -float(np.dot(n_cam, v_cam))
+                if cos_view < 0.05:  # Facing away from camera
+                    continue
+
                 err = float(repr_errs[i, 0]) if repr_errs is not None and len(repr_errs) > i else 0.0
-                if tz > 0.01 and err < best_err:
-                    best_err = err
+                score = err / max(cos_view, 0.1)
+                if score < best_score:
+                    best_score = score
                     best_idx = i
 
             R, _ = cv2.Rodrigues(rvecs[best_idx])
@@ -106,9 +147,9 @@ class TagDetector:
             results[tid] = DetectedTag(
                 tag_id=tid,
                 corners_px=img_pts,
-                center_px=np.array(d.center, dtype=np.float64),
+                center_px=np.mean(img_pts, axis=0),
                 T_cam_tag=T,
-                reprojection_error_px=best_err,
+                reprojection_error_px=float(repr_errs[best_idx, 0]) if repr_errs is not None and len(repr_errs) > best_idx else 0.0,
                 decision_margin=float(getattr(d, "decision_margin", 0.0)),
             )
 
