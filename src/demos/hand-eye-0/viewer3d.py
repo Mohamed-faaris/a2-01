@@ -118,18 +118,20 @@ class HandEye3DViewer:
         host: str = "0.0.0.0",
         port: int = 8085,
     ) -> None:
+        calib_json_path = Path(calib_json_path)
+        dataset_dir = Path(dataset_dir)
         self.calib_json_path = calib_json_path
         self.dataset_dir = dataset_dir
-        self.resource_dir = resource_dir
+        self.resource_dir = Path(resource_dir)
         self.port = port
         self.lock = threading.Lock()
 
         # Load calibration results
         if calib_json_path.is_dir():
-            if (calib_json_path / "handeye_calibration.json").is_file():
-                calib_json_path = calib_json_path / "handeye_calibration.json"
-            elif (calib_json_path / "scene.json").is_file():
+            if (calib_json_path / "scene.json").is_file():
                 calib_json_path = calib_json_path / "scene.json"
+            elif (calib_json_path / "handeye_calibration.json").is_file():
+                calib_json_path = calib_json_path / "handeye_calibration.json"
 
         if not calib_json_path.is_file():
             raise FileNotFoundError(f"Missing calibration file: {calib_json_path}")

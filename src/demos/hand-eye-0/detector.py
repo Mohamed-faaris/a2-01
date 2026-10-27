@@ -41,10 +41,21 @@ class PoseObservation:
 
 
 class TagDetector:
-    """Wraps pupil-apriltags detector with OpenCV solvePnP."""
+    """Wraps pupil-apriltags detector with OpenCV solvePnP.
+    Uses singleton caching to prevent C library double-free SIGSEGV in pupil_apriltags __del__.
+    """
+    _instances: dict[tuple[str, int], TagDetector] = {}
+
+    def __new__(cls, family: str = "tag36h11", nthreads: int = 4):
+        key = (family, nthreads)
+        if key not in cls._instances:
+            inst = super().__new__(cls)
+            inst.detector = Detector(families=family, nthreads=nthreads, quad_decimate=1.0)
+            cls._instances[key] = inst
+        return cls._instances[key]
 
     def __init__(self, family: str = "tag36h11", nthreads: int = 4):
-        self.detector = Detector(families=family, nthreads=nthreads, quad_decimate=1.0)
+        pass
 
     def detect(self, image: np.ndarray, K: np.ndarray, D: np.ndarray) -> dict[int, DetectedTag]:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
