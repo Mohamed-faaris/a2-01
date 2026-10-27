@@ -1,0 +1,21 @@
+# Environment Constraints & Static Obstacles Configuration
+# Defines persistent collision geometry such as the ground floor and the robot mounting pedestal.
+
+constraints:
+  # 1. Ground Plane Collision Floor
+  ground_plane:
+    id: "ground_plane"
+    kind: "obstacle"
+    size_xy_m: [10.0, 10.0]        # 10m x 10m wide safety floor
+    thickness_m: 0.05             # 5cm thick
+    tag_id: 4                     # Surface height dynamically derived from Tag 4
+    default_surface_z_m: -0.7429  # Fallback surface Z in base_link frame if Tag 4 is not seen
+
+  # 2. Base Pedestal Stand (Mounting box from robot base_link down to ground)
+  base_pedestal:
+    id: "base_pedestal"
+    kind: "obstacle"
+    size_xy_m: [0.40, 0.40]        # 40 cm x 40 cm square column
+    top_offset_m: -0.01           # Sits 1 cm below base_link bottom (Z = -0.01) to prevent false self-collision
+    center_xy_m: [0.0, 0.0]       # Centered directly under robot base_link
+    enabled: true

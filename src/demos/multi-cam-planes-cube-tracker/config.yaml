@@ -1,0 +1,92 @@
+# ==============================================================================
+# Multi-Camera Planes & Cube Tracker Configuration
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Cameras Configuration
+# ------------------------------------------------------------------------------
+# Standard camera sources and calibration profiles
+cameras:
+  sources: [null, null]
+  calibs: ["see3cam", "rl720"]
+
+# ------------------------------------------------------------------------------
+# 2. Static Tags (Rigid World Reference & Ground Surface)
+# ------------------------------------------------------------------------------
+# Tags that remain stationary in the environment during robot operations.
+# User specification:
+# - 0, 1, 54, 55, 4, 5 are static tags
+# - platform tags (42..45 and 50..53) are static too
+# - 40, 41 are static reference pair
+static_tags:
+  base_origin: 0
+  ground_marker: 4
+  all_static: [0, 1, 4, 5, 40, 41, 42, 43, 44, 45, 50, 51, 52, 53, 54, 55]
+
+# ------------------------------------------------------------------------------
+# 3. Moveable Cube ("box stays the same")
+# ------------------------------------------------------------------------------
+# Graspable 5 cm cube, Tags 20..25
+moveable_cube:
+  name: "box"
+  tag_ids: [20, 21, 22, 23, 24, 25]
+  side_length_m: 0.050        # 5 cm cube (0.050 m)
+  tag_size_m: 0.041           # 41 mm physical tag size
+
+  # Optional: Platform where the moveable object is located.
+  # Options:
+  #   - "box" (or "platform_box"): located on source platform (tags 42..45)
+  #   - "box2": located on target destination platform (tags 50..53)
+  #   - null (or omitted): auto-detected dynamically based on closest platform XY footprint
+  parent_platform: null
+  face_normals:
+    20: [ 0.0,  0.0,  1.0]    # Top face
+    21: [ 0.0,  0.0, -1.0]    # Bottom face
+    22: [ 0.0,  1.0,  0.0]    # Front face
+    23: [ 0.0, -1.0,  0.0]    # Back face
+    24: [ 1.0,  0.0,  0.0]    # Right face
+    25: [-1.0,  0.0,  0.0]    # Left face
+
+# ------------------------------------------------------------------------------
+# 4. Box & Platform Tags (Workpiece Placement Platforms)
+# ------------------------------------------------------------------------------
+# Platforms: 42-45 ("box" / source) and 50-53 ("box2" / destination)
+boxes:
+  # Source platform: box (tags 42, 43, 44, 45, 66 mm)
+  box:
+    id: "platform_box"
+    name: "box"
+    type: "quad_plane"
+    tag_ids: [42, 43, 44, 45]
+    tag_size_m: 0.066
+    description: "Source workpiece platform (tags 42..45, 66 mm)"
+    size_m: [0.30, 0.30]
+    expected_normal: [0.0, 0.0, 1.0]
+
+  # Target destination platform: box2 (tags 50, 51, 52, 53, 70 mm)
+  box2:
+    id: "box2"
+    name: "box2"
+    type: "quad_plane"
+    tag_ids: [50, 51, 52, 53]
+    tag_size_m: 0.070
+    description: "Destination workpiece platform (tags 50..53, 70 mm)"
+    size_m: [0.30, 0.30]
+    expected_normal: [0.0, 0.0, 1.0]
+
+  # Reference baseline / pair plane (tags 40, 41)
+  plane_a:
+    id: "plane_a"
+    type: "pair_line"
+    tag_ids: [40, 41]
+    tag_size_m: 0.066
+    description: "Reference baseline pair (tags 40, 41, 66 mm)"
+
+# ------------------------------------------------------------------------------
+# 5. Base Pedestal Stand (Mounting column under robot base_link)
+# ------------------------------------------------------------------------------
+base_pedestal:
+  id: "base_pedestal"
+  size_xy_m: [0.40, 0.40]       # 40 cm x 40 cm column footprint
+  top_clearance_m: 0.01         # 1 cm margin below base_link bottom to prevent false self-collision
+  enabled: true

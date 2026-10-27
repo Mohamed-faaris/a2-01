@@ -755,6 +755,7 @@ class MultiCameraPlanesCubePipeline:
         markers_yaml: Path | str | None = None,
         active_ratio: float = 1.0,
         base_link_config: Path | str | None = None,
+        config: dict | str | Path | None = None,
     ):
         if not calibs:
             raise ValueError("MultiCameraPlanesCubePipeline requires at least one CameraCalibration profile.")
@@ -774,11 +775,48 @@ class MultiCameraPlanesCubePipeline:
         # Load markers registry
         self.registry = MarkerRegistry(markers_yaml)
 
-        # Configure cube for tags 20..25 (41 mm each)
-        cube_size = self.registry.get_size(20)
-        self.cube_config = CubeConfig(
-            side_length_m=cube_size,
-            face_normals={
+        # Load config.yaml if provided or auto-discover from demo directory
+        self.config = {}
+        if isinstance(config, (str, Path)):
+            p = Path(config).expanduser().resolve()
+            if p.is_file():
+                import yaml
+                try:
+                    self.config = yaml.safe_load(p.read_text()) or {}
+                    log.info(f"Loaded pipeline config from: {p}")
+                except Exception as exc:
+                    log.warning(f"Failed to parse config YAML {p}: {exc}")
+        elif isinstance(config, dict):
+            self.config = config
+        else:
+            default_cfg_p = Path(__file__).resolve().parent / "config.yaml"
+            if default_cfg_p.is_file():
+                import yaml
+                try:
+                    self.config = yaml.safe_load(default_cfg_p.read_text()) or {}
+                    log.info(f"Auto-loaded pipeline config from: {default_cfg_p}")
+                except Exception:
+                    pass
+
+        # Static reference tags for multi-tag bundle / auto-survey
+        cfg_static = self.config.get("static_tags", {})
+        if "all_static" in cfg_static:
+            self.static_tag_ids = frozenset(cfg_static["all_static"])
+        else:
+            # Default: 0, 1, 4, 5, 54, 55 + platform tags 42..45, 50..53 + baseline 40, 41
+            self.static_tag_ids = frozenset({0, 1, 4, 5, 40, 41, 42, 43, 44, 45, 50, 51, 52, 53, 54, 55})
+
+        # Moveable cube configuration (5 cm cube, Tags 20..25)
+        cube_cfg = self.config.get("moveable_cube", {})
+        cube_tag_ids = cube_cfg.get("tag_ids", list(range(20, 26)))
+        self.cube_tag_ids = frozenset(cube_tag_ids)
+        self.cube_name = cube_cfg.get("name", "box")
+        cube_side_length_m = cube_cfg.get("side_length_m", 0.050)
+        face_normals_cfg = cube_cfg.get("face_normals", {})
+        if face_normals_cfg:
+            face_normals = {int(k): np.array(v, dtype=np.float64) for k, v in face_normals_cfg.items()}
+        else:
+            face_normals = {
                 20: np.array([ 0.0,  0.0,  1.0]),  # Face 20: Top
                 21: np.array([ 0.0,  0.0, -1.0]),  # Face 21: Bottom
                 22: np.array([ 0.0,  1.0,  0.0]),  # Face 22: Front
@@ -786,7 +824,32 @@ class MultiCameraPlanesCubePipeline:
                 24: np.array([ 1.0,  0.0,  0.0]),  # Face 24: Right
                 25: np.array([-1.0,  0.0,  0.0]),  # Face 25: Left
             }
+        self.cube_config = CubeConfig(
+            side_length_m=cube_side_length_m,
+            face_normals=face_normals,
         )
+        # Optional configured parent platform where moveable cube is located (e.g. "box", "box2", or None)
+        self.cube_parent_platform = cube_cfg.get("parent_platform") or cube_cfg.get("platform")
+
+        # Platform boxes configuration (box: 42..45, box2: 50..53)
+        self.boxes_config = self.config.get("boxes", {
+            "box": {
+                "id": "platform_box",
+                "name": "box",
+                "type": "quad_plane",
+                "tag_ids": [42, 43, 44, 45],
+                "tag_size_m": 0.066,
+                "description": "Source platform (tags 42..45, 66 mm)",
+            },
+            "box2": {
+                "id": "box2",
+                "name": "box2",
+                "type": "quad_plane",
+                "tag_ids": [50, 51, 52, 53],
+                "tag_size_m": 0.070,
+                "description": "Destination platform (tags 50..53, 70 mm)",
+            },
+        })
 
         # Initialize detector for each camera
         self.detectors = [
@@ -828,8 +891,55 @@ class MultiCameraPlanesCubePipeline:
         self.world_map[0] = (_R_basis @ _lc0.T).T
         self.world_map_obs[0] = 9999
 
+        # Pre-seed all static anchor landmarks from most-scene.json / scene.json if available
+        self._seed_static_landmarks_from_scene()
+
         # Base Link configuration and transformation constants
         self.base_link_origin_m, self.base_link_R, self.auto_base_link = load_base_link_config(base_link_config)
+
+    def _seed_static_landmarks_from_scene(self) -> None:
+        """Pre-seed static tag landmarks from most-scene.json into the multi-tag world map."""
+        scene_candidates = [
+            REPO_ROOT / "output-dobots" / "scenes" / "most-scene.json",
+            REPO_ROOT / "outputs" / "scenes" / "most-scene.json",
+            REPO_ROOT.parent.parent / "cr5a-moveit" / "DOBOT_6Axis_ROS2_V4_fresh" / "output-a201" / "scenes" / "scene.json",
+        ]
+        for sc_p in scene_candidates:
+            if sc_p.is_file():
+                try:
+                    with open(sc_p, "r", encoding="utf-8") as f:
+                        sc_data = json.load(f)
+                    landmarks = sc_data.get("static_landmarks", {})
+                    if "0" not in landmarks or "T_base_tag" not in landmarks["0"]:
+                        continue
+
+                    T_base_tag0 = np.array(landmarks["0"]["T_base_tag"])
+                    R_base_tag0 = T_base_tag0[:3, :3]
+                    t_base_tag0 = T_base_tag0[:3, 3]
+
+                    R_basis = np.diag([-1.0, 1.0, -1.0])
+                    R_custom = R_basis @ R_base_tag0.T
+
+                    seeded_count = 0
+                    for tid_str, lm in landmarks.items():
+                        try:
+                            tid = int(tid_str)
+                        except ValueError:
+                            continue
+                        corners_base = lm.get("corners_base_m")
+                        if not corners_base or len(corners_base) != 4:
+                            continue
+
+                        c_base = np.array(corners_base, dtype=np.float64)
+                        c_map = (R_custom @ (c_base.T - t_base_tag0.reshape(3, 1))).T
+                        self.world_map[tid] = c_map
+                        self.world_map_obs[tid] = 9999
+                        seeded_count += 1
+
+                    log.info(f"Loaded {seeded_count} static anchor markers from {sc_p.name}: {sorted(self.world_map.keys())}")
+                    break
+                except Exception as exc:
+                    log.warning(f"Could not seed static landmarks from {sc_p}: {exc}")
 
     def _survey_tags(
         self,
@@ -842,7 +952,7 @@ class MultiCameraPlanesCubePipeline:
         t_b_c = -R_b_c @ t_c_base
 
         for tid, pose in dets.items():
-            if tid not in STATIC_TAG_IDS or tid == 0:
+            if tid not in self.static_tag_ids or tid == 0:
                 continue
 
             h = self.registry.get_size(tid) / 2.0
@@ -878,7 +988,7 @@ class MultiCameraPlanesCubePipeline:
         tags_used = []
 
         for tid, pose in dets.items():
-            if tid in CUBE_TAG_IDS or tid not in self.world_map:
+            if tid in self.cube_tag_ids or tid not in self.world_map:
                 continue
             if self.world_map_obs.get(tid, 0) < 1:
                 continue
@@ -914,6 +1024,97 @@ class MultiCameraPlanesCubePipeline:
         except cv2.error:
             return None
 
+    def _track_quad_plane(
+        self,
+        all_dets: list[dict[int, DetectedTagPose]],
+        cam_extrinsics: dict[int, tuple[np.ndarray, np.ndarray]],
+        tag_ids: Sequence[int],
+    ) -> dict | None:
+        """Estimate consensus plane normal, centroid, and coplanarity RMSE for quad platform tags."""
+        raw_pts = []
+        centers = {}
+        normals = {}
+        tag_corners = {}
+
+        for tid in tag_ids:
+            cand_centers = []
+            cand_normals = []
+            cand_corners = []
+            half = self.registry.get_size(tid) / 2.0
+            local_corners = np.array([
+                [-half,  half, 0.0],
+                [ half,  half, 0.0],
+                [ half, -half, 0.0],
+                [-half, -half, 0.0],
+            ], dtype=np.float64)
+
+            for c_id, dets in enumerate(all_dets):
+                if c_id in cam_extrinsics and tid in dets:
+                    R_c_base, t_c_base = cam_extrinsics[c_id]
+                    c_base, R_t_base = project_tag_to_base(dets[tid], R_c_base, t_c_base)
+                    cand_centers.append(c_base)
+                    n_tag = R_t_base[:, 2].copy()
+                    if n_tag[2] < 0:
+                        n_tag = -n_tag
+                    cand_normals.append(n_tag)
+                    corners_base = c_base + (R_t_base @ local_corners.T).T
+                    cand_corners.append(corners_base)
+
+            if cand_centers:
+                avg_c = np.mean(cand_centers, axis=0)
+                centers[tid] = avg_c
+                avg_n = np.mean(cand_normals, axis=0)
+                normals[tid] = avg_n / max(1e-6, np.linalg.norm(avg_n))
+                avg_corners = np.mean(cand_corners, axis=0)
+                tag_corners[tid] = avg_corners
+                raw_pts.append(avg_c)
+                for pt in avg_corners:
+                    raw_pts.append(pt)
+
+        if not normals:
+            return None
+
+        normals_list = list(normals.values())
+        med_n = np.median(normals_list, axis=0)
+        med_n = med_n / max(1e-6, np.linalg.norm(med_n))
+        inlier_normals = [
+            n for n in normals_list
+            if float(np.dot(n, med_n)) >= np.cos(np.radians(25.0))
+        ]
+        if inlier_normals:
+            plane_normal = np.mean(inlier_normals, axis=0)
+            plane_normal = plane_normal / max(1e-6, np.linalg.norm(plane_normal))
+        else:
+            plane_normal = med_n
+        if plane_normal[2] < 0:
+            plane_normal = -plane_normal
+
+        plane_d = -float(np.median([np.dot(plane_normal, p) for p in raw_pts]))
+        residuals = np.abs(np.array([np.dot(plane_normal, p) + plane_d for p in raw_pts]))
+        rmse_mm = float(np.sqrt(np.mean(residuals ** 2))) * 1000.0
+
+        proj_centers = {}
+        for tid, pt in centers.items():
+            pt_proj = pt - (np.dot(plane_normal, pt) + plane_d) * plane_normal
+            proj_centers[tid] = pt_proj
+
+        proj_corners = {}
+        for tid, crn_arr in tag_corners.items():
+            proj_crn = [pt - (np.dot(plane_normal, pt) + plane_d) * plane_normal for pt in crn_arr]
+            proj_corners[tid] = np.mean(proj_crn, axis=0)
+
+        center_plane = np.mean(list(proj_centers.values()), axis=0)
+        return {
+            "detected_tags": list(proj_centers.keys()),
+            "normal": plane_normal.tolist(),
+            "d_offset_m": plane_d,
+            "center_mm": (center_plane * 1000.0).tolist(),
+            "z_height_mm": float(center_plane[2] * 1000.0),
+            "coplanarity_rmse_mm": rmse_mm,
+            "centers_mm": {tid: (pt * 1000.0).tolist() for tid, pt in proj_centers.items()},
+            "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in proj_centers.items()},
+        }
+
     def process_frames(self, frames: Sequence[np.ndarray]) -> dict:
         """Process frames from all cameras and compute fused geometric features."""
         num_cams = len(frames)
@@ -936,6 +1137,7 @@ class MultiCameraPlanesCubePipeline:
             "cube_centroid": None,
             "plane_a": None,
             "plane_b": None,
+            "boxes": {},
             "cam_tags": {c_id: list(all_dets[c_id].keys()) for c_id in range(num_cams)},
         }
 
@@ -991,91 +1193,21 @@ class MultiCameraPlanesCubePipeline:
             for c_id, (R, t) in cam_extrinsics.items()
         }
 
-        # 4. Track Plane B: Tags 42, 43, 44, 45 (Platform Quad Plane across all cameras)
-        plane_b_raw_pts = []
-        plane_b_centers = {}
-        plane_b_normals = {}
-        plane_b_tag_corners = {}
+        # 4. Track Platform Boxes (box: 42..45, box2: 50..53, etc.)
+        results["boxes"] = {}
+        for box_name, box_def in self.boxes_config.items():
+            if box_def.get("type") == "quad_plane":
+                tag_ids = box_def.get("tag_ids", [])
+                box_res = self._track_quad_plane(all_dets, cam_extrinsics, tag_ids)
+                if box_res:
+                    box_res["id"] = box_def.get("id", box_name)
+                    box_res["name"] = box_name
+                    results["boxes"][box_name] = box_res
 
-        for tid in (42, 43, 44, 45):
-            cand_centers = []
-            cand_normals = []
-            cand_corners = []
-            half = self.registry.get_size(tid) / 2.0
-            local_corners = np.array([
-                [-half,  half, 0.0],
-                [ half,  half, 0.0],
-                [ half, -half, 0.0],
-                [-half, -half, 0.0],
-            ], dtype=np.float64)
-
-            for c_id, dets in enumerate(all_dets):
-                if c_id in cam_extrinsics and tid in dets:
-                    R_c_base, t_c_base = cam_extrinsics[c_id]
-                    c_base, R_t_base = project_tag_to_base(dets[tid], R_c_base, t_c_base)
-                    cand_centers.append(c_base)
-                    n_tag = R_t_base[:, 2].copy()
-                    if n_tag[2] < 0:
-                        n_tag = -n_tag
-                    cand_normals.append(n_tag)
-                    corners_base = c_base + (R_t_base @ local_corners.T).T
-                    cand_corners.append(corners_base)
-
-            if cand_centers:
-                avg_c = np.mean(cand_centers, axis=0)
-                plane_b_centers[tid] = avg_c
-                avg_n = np.mean(cand_normals, axis=0)
-                plane_b_normals[tid] = avg_n / max(1e-6, np.linalg.norm(avg_n))
-                avg_corners = np.mean(cand_corners, axis=0)
-                plane_b_tag_corners[tid] = avg_corners
-                plane_b_raw_pts.append(avg_c)
-                for pt in avg_corners:
-                    plane_b_raw_pts.append(pt)
-
-        plane_b_normal = np.array([0.0, 0.0, 1.0])
-        plane_b_d = 0.0
-        rmse_mm = 0.0
-        if plane_b_normals:
-            normals_list = list(plane_b_normals.values())
-            med_n = np.median(normals_list, axis=0)
-            med_n = med_n / max(1e-6, np.linalg.norm(med_n))
-            inlier_normals = [
-                n for n in normals_list
-                if float(np.dot(n, med_n)) >= np.cos(np.radians(25.0))
-            ]
-            if inlier_normals:
-                plane_b_normal = np.mean(inlier_normals, axis=0)
-                plane_b_normal = plane_b_normal / max(1e-6, np.linalg.norm(plane_b_normal))
-            else:
-                plane_b_normal = med_n
-            if plane_b_normal[2] < 0:
-                plane_b_normal = -plane_b_normal
-
-            plane_b_d = -float(np.median([np.dot(plane_b_normal, p) for p in plane_b_raw_pts]))
-            residuals = np.abs(np.array([np.dot(plane_b_normal, p) + plane_b_d for p in plane_b_raw_pts]))
-            rmse_mm = float(np.sqrt(np.mean(residuals ** 2))) * 1000.0
-
-            proj_centers = {}
-            for tid, pt in plane_b_centers.items():
-                pt_proj = pt - (np.dot(plane_b_normal, pt) + plane_b_d) * plane_b_normal
-                proj_centers[tid] = pt_proj
-
-            proj_corners = {}
-            for tid, crn_arr in plane_b_tag_corners.items():
-                proj_crn = [pt - (np.dot(plane_b_normal, pt) + plane_b_d) * plane_b_normal for pt in crn_arr]
-                proj_corners[tid] = np.mean(proj_crn, axis=0)
-
-            center_plane = np.mean(list(proj_centers.values()), axis=0)
-            results["plane_b"] = {
-                "detected_tags": list(proj_centers.keys()),
-                "normal": plane_b_normal.tolist(),
-                "d_offset_m": plane_b_d,
-                "center_mm": (center_plane * 1000.0).tolist(),
-                "z_height_mm": float(center_plane[2] * 1000.0),
-                "coplanarity_rmse_mm": rmse_mm,
-                "centers_mm": {tid: (pt * 1000.0).tolist() for tid, pt in proj_centers.items()},
-                "corners_mm": {tid: (pt * 1000.0).tolist() for tid, pt in proj_centers.items()},
-            }
+        # Backward compatibility: plane_b points to "box" (or first detected quad plane)
+        results["plane_b"] = results["boxes"].get("box") or results["boxes"].get("platform_box")
+        if not results["plane_b"] and results["boxes"]:
+            results["plane_b"] = next(iter(results["boxes"].values()))
 
         # 5. Track Cube Centroid (Tags 20..25 across all cameras)
         cube_observations = []
@@ -1083,7 +1215,7 @@ class MultiCameraPlanesCubePipeline:
             if c_id not in cam_extrinsics:
                 continue
             R_c_base, t_c_base = cam_extrinsics[c_id]
-            for tid in range(20, 26):
+            for tid in self.cube_tag_ids:
                 if tid in dets:
                     cube_observations.append((
                         tid,
@@ -1115,12 +1247,42 @@ class MultiCameraPlanesCubePipeline:
             }
 
         if cube_observations:
-            if results["plane_b"]:
+            # Active supporting plane for cube:
+            # Check configured parent_platform first, otherwise auto-detect closest platform
+            supp_n = np.array([0.0, 0.0, 1.0], dtype=np.float64)
+            supp_d = 0.0
+            parent_plat_name = None
+
+            # 1. Check if parent_platform explicitly configured and present in results["boxes"]
+            if self.cube_parent_platform and self.cube_parent_platform in results.get("boxes", {}):
+                cfg_box = results["boxes"][self.cube_parent_platform]
+                supp_n = np.array(cfg_box["normal"], dtype=np.float64)
+                supp_d = float(cfg_box["d_offset_m"])
+                parent_plat_name = self.cube_parent_platform
+            elif results.get("boxes"):
+                # 2. Auto-detect closest platform based on preliminary XY centroid distance
+                prelim_c = np.mean([
+                    R_c_base.T @ t_c_t.ravel() - R_c_base.T @ t_c_base
+                    for _, _, t_c_t, R_c_base, t_c_base in cube_observations
+                ], axis=0)
+                best_box = None
+                best_dist = 999.0
+                best_name = None
+                for b_name, b_data in results["boxes"].items():
+                    b_center = np.array(b_data["center_mm"]) * 0.001
+                    dist_xy = float(np.linalg.norm(prelim_c[:2] - b_center[:2]))
+                    if dist_xy < best_dist:
+                        best_dist = dist_xy
+                        best_box = b_data
+                        best_name = b_name
+                if best_box and best_dist < 0.35:
+                    supp_n = np.array(best_box["normal"], dtype=np.float64)
+                    supp_d = float(best_box["d_offset_m"])
+                    parent_plat_name = best_name
+            elif results.get("plane_b"):
                 supp_n = np.array(results["plane_b"]["normal"], dtype=np.float64)
                 supp_d = float(results["plane_b"]["d_offset_m"])
-            else:
-                supp_n = np.array([0.0, 0.0, 1.0], dtype=np.float64)
-                supp_d = 0.0
+                parent_plat_name = "box"
 
             cube_size = self.cube_config.side_length_m
             half_L = cube_size / 2.0
@@ -1160,6 +1322,7 @@ class MultiCameraPlanesCubePipeline:
                     "visible_faces": sorted(face_cands.keys()),
                     "num_obs": len(centroid_cands),
                     "residual_spread_mm": spread_rmse,
+                    "parent_platform": parent_plat_name,
                 }
 
         # 6. Track Plane A: Tags 40, 41 (Line / Pair Plane across all cameras)
@@ -1267,9 +1430,8 @@ class MultiCameraPlanesCubePipeline:
             pa["center_mm"] = (mid_link * 1000.0).tolist()
             pa["z_height_mm"] = float(mid_link[2] * 1000.0)
 
-        # Transform Plane B into base_link
-        if results["plane_b"]:
-            pb = results["plane_b"]
+        # Transform Boxes into base_link
+        for box_name, pb in results.get("boxes", {}).items():
             c_base_m = np.array(pb["center_mm"]) / 1000.0
             c_link_m = R_L @ c_base_m + t_L
             n_base = np.array(pb["normal"], dtype=np.float64)
@@ -1289,6 +1451,11 @@ class MultiCameraPlanesCubePipeline:
                     tid: ((R_L @ (np.array(pt) / 1000.0) + t_L) * 1000.0).tolist()
                     for tid, pt in pb["corners_mm"].items()
                 }
+
+        # Keep plane_b in sync with transformed box
+        results["plane_b"] = results["boxes"].get("box") or results["boxes"].get("platform_box")
+        if not results["plane_b"] and results["boxes"]:
+            results["plane_b"] = next(iter(results["boxes"].values()))
 
         # Transform Camera Extrinsics into base_link
         for c_id in list(cam_extrinsics.keys()):

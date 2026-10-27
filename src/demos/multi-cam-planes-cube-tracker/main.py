@@ -30,6 +30,7 @@ os.environ.setdefault("OPENCV_VIDEOIO_DEBUG", "0")
 
 import cv2
 import numpy as np
+import yaml
 
 try:
     cv2.utils.logging.setLogLevel(cv2.utils.logging.LOG_LEVEL_ERROR)
@@ -120,15 +121,22 @@ def print_calib_inspection(search_dirs: Sequence[Path]):
     print("=" * 80)
 
 
-def build_camera_and_calib_lists(args) -> tuple[list[str | int | None], list[CameraCalibration]]:
-    """Resolve camera sources and calibration profiles from args."""
+def build_camera_and_calib_lists(args, config: dict | None = None) -> tuple[list[str | int | None], list[CameraCalibration]]:
+    """Resolve camera sources and calibration profiles from args and config.yaml."""
     # 1. Gather camera sources
     sources: list[str | int | None] = []
-    if args.cams:
+    if getattr(args, "cams", None):
         sources = list(args.cams)
 
     # Check explicit numbered flags (--cam0, --cam1, --cam2, ...)
-    direct_cams = [args.cam0, args.cam1, args.cam2, args.cam3, args.cam4, args.cam5]
+    direct_cams = [
+        getattr(args, "cam0", None),
+        getattr(args, "cam1", None),
+        getattr(args, "cam2", None),
+        getattr(args, "cam3", None),
+        getattr(args, "cam4", None),
+        getattr(args, "cam5", None),
+    ]
     for idx, c in enumerate(direct_cams):
         if c is not None:
             while len(sources) <= idx:
@@ -137,15 +145,32 @@ def build_camera_and_calib_lists(args) -> tuple[list[str | int | None], list[Cam
 
     # 2. Gather calibration queries
     calib_queries: list[str | None] = []
-    if args.calibs:
+    if getattr(args, "calibs", None):
         calib_queries = list(args.calibs)
 
-    direct_calibs = [args.calib0, args.calib1, args.calib2, args.calib3, args.calib4, args.calib5]
+    direct_calibs = [
+        getattr(args, "calib0", None),
+        getattr(args, "calib1", None),
+        getattr(args, "calib2", None),
+        getattr(args, "calib3", None),
+        getattr(args, "calib4", None),
+        getattr(args, "calib5", None),
+    ]
     for idx, c in enumerate(direct_calibs):
         if c is not None:
             while len(calib_queries) <= idx:
                 calib_queries.append(None)
             calib_queries[idx] = c
+
+    # 3. If neither CLI sources nor calibs provided, fallback to config.yaml if present
+    if not sources and not calib_queries and config and "cameras" in config:
+        cfg_cams = config["cameras"]
+        if isinstance(cfg_cams, dict):
+            sources = list(cfg_cams.get("sources", []))
+            calib_queries = list(cfg_cams.get("calibs", []))
+        elif isinstance(cfg_cams, list):
+            sources = [c.get("source") for c in cfg_cams if isinstance(c, dict)]
+            calib_queries = [c.get("calibration") or c.get("calib") for c in cfg_cams if isinstance(c, dict)]
 
     # Determine total camera count
     n_cams = max(len(sources), len(calib_queries))
@@ -160,7 +185,7 @@ def build_camera_and_calib_lists(args) -> tuple[list[str | int | None], list[Cam
     while len(calib_queries) < n_cams:
         calib_queries.append(None)
 
-    # Load calibrations
+    # Load calibrations using unified CameraCalibration loader
     calibs: list[CameraCalibration] = []
     for idx in range(n_cams):
         q = calib_queries[idx]
@@ -171,6 +196,10 @@ def build_camera_and_calib_lists(args) -> tuple[list[str | int | None], list[Cam
 
 
 def main():
+    import re
+    # Normalize accidental 3+ leading dashes (e.g. ---calibs -> --calibs)
+    sys.argv = [re.sub(r"^-{3,}", "--", a) for a in sys.argv]
+
     parser = argparse.ArgumentParser(description="Multi-Camera Planes (40,41 and 42..45) & Cube (20..25) Tracker Demo")
     parser.add_argument("--cams", nargs="+", type=str, default=None,
                         help="List of camera sources (e.g. --cams 0 1 2 or --cams /dev/video0 /dev/video2)")
@@ -193,6 +222,8 @@ def main():
     parser.add_argument("--calib4", type=str, default=None, help="Camera 4 calibration profile or .npz path")
     parser.add_argument("--calib5", type=str, default=None, help="Camera 5 calibration profile or .npz path")
 
+    parser.add_argument("--config", type=str, default=str(DEMO_DIR / "config.yaml"),
+                        help="Path to tracker config.yaml (defining static_tags, moveable_cube, boxes, and cameras)")
     parser.add_argument("--markers-yaml", type=str, default="calibrations/markers.yaml", help="Path to markers.yaml")
     parser.add_argument("--active-ratio", type=float, default=1.0, help="Ratio of active tag to border (default 1.0)")
     parser.add_argument("--no-display", action="store_true", help="Run headlessly without opening an OpenCV window")
@@ -223,7 +254,18 @@ def main():
         print_calib_inspection(DEFAULT_CALIB_SEARCH_DIRS)
         return
 
-    sources, calibs = build_camera_and_calib_lists(args)
+    # Load configuration YAML
+    config_data = {}
+    if args.config:
+        cfg_p = Path(args.config).expanduser().resolve()
+        if cfg_p.is_file():
+            try:
+                config_data = yaml.safe_load(cfg_p.read_text()) or {}
+                print(f"📖 Loaded tracker configuration from: {cfg_p}")
+            except Exception as exc:
+                print(f"⚠️  Warning: could not parse config file '{cfg_p}': {exc}")
+
+    sources, calibs = build_camera_and_calib_lists(args, config=config_data)
 
     print("=" * 80)
     print(f"🚀 INITIALIZING MULTI-CAMERA PLANES & CUBE TRACKER ({len(calibs)} CAMERAS)")
@@ -239,6 +281,7 @@ def main():
         markers_yaml=args.markers_yaml,
         active_ratio=args.active_ratio,
         base_link_config=args.base_link_config,
+        config=config_data,
     )
 
     out_p = Path(args.output_json) if args.output_json else None

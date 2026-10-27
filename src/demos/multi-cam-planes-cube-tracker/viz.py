@@ -32,7 +32,8 @@ COL_X = (0, 0, 255)          # Base +X axis: Red
 COL_Y = (0, 255, 0)          # Base +Y axis: Green
 COL_Z = (255, 0, 0)          # Base +Z axis: Blue
 COL_PLANE_A = (255, 200, 0)  # Plane A / Tags 40,41: Cyan
-COL_PLANE_B = (0, 140, 255)  # Plane B / Tags 42..45: Orange
+COL_PLANE_B = (0, 140, 255)  # Plane B / Tags 42..45 (box): Orange
+COL_BOX2 = (220, 80, 220)    # Platform Box2 / Tags 50..53: Purple/Magenta
 COL_CUBE = (220, 0, 220)     # Cube / Tags 20..25: Magenta
 COL_HFRAME = (0, 255, 255)   # Custom H frame: Yellow
 COL_CAM = (80, 200, 255)     # Camera frustums
@@ -145,6 +146,7 @@ class SessionLogger:
         "cube_x_mm", "cube_y_mm", "cube_z_mm", "cube_spread_mm", "cube_faces",
         "plane_a_x_mm", "plane_a_y_mm", "plane_a_z_mm", "plane_a_baseline_mm",
         "plane_b_x_mm", "plane_b_y_mm", "plane_b_z_mm", "plane_b_rmse_mm", "plane_b_tags",
+        "box2_x_mm", "box2_y_mm", "box2_z_mm", "box2_rmse_mm", "box2_tags",
         "h_origin_x_mm", "h_origin_y_mm", "h_origin_z_mm",
         "h_cube_x_mm", "h_cube_y_mm", "h_cube_z_mm",
     ]
@@ -186,6 +188,8 @@ class SessionLogger:
         cube_xyz = cube.get("xyz_mm") or [None, None, None]
         pa_c = pa.get("center_mm") or [None, None, None]
         pb_c = pb.get("center_mm") or [None, None, None]
+        p_box2 = (results.get("boxes") or {}).get("box2") or {}
+        p_box2_c = p_box2.get("center_mm") or [None, None, None]
         h_o = h.get("origin_base_mm") or [None, None, None]
         h_c = h.get("cube_centroid_in_h_mm") or [None, None, None]
 
@@ -206,6 +210,9 @@ class SessionLogger:
             cls._f(pb_c[0]), cls._f(pb_c[1]), cls._f(pb_c[2]),
             cls._f(pb.get("coplanarity_rmse_mm")),
             ";".join(map(str, pb.get("detected_tags") or [])),
+            cls._f(p_box2_c[0]), cls._f(p_box2_c[1]), cls._f(p_box2_c[2]),
+            cls._f(p_box2.get("coplanarity_rmse_mm")),
+            ";".join(map(str, p_box2.get("detected_tags") or [])),
             cls._f(h_o[0]), cls._f(h_o[1]), cls._f(h_o[2]),
             cls._f(h_c[0]), cls._f(h_c[1]), cls._f(h_c[2]),
         ]
@@ -335,8 +342,11 @@ def annotate_camera_view(frame: np.ndarray, dets: dict, cam_label: str,
             color = (255, 200, 0)     # Plane A (40, 41): Cyan
             label = f"Plane A [Tag {tid}]"
         elif tid in range(42, 46):
-            color = (0, 140, 255)     # Plane B (42..45): Orange
-            label = f"Plane B [Tag {tid}]"
+            color = (0, 140, 255)     # Box (42..45): Orange
+            label = f"Box [Tag {tid}]"
+        elif tid in range(50, 54):
+            color = (220, 80, 220)    # Box2 (50..53): Magenta
+            label = f"Box2 [Tag {tid}]"
         elif tid in range(20, 26):
             color = (220, 0, 220)     # Cube (20..25): Magenta
             label = f"Cube Face [Tag {tid}]"
@@ -424,35 +434,44 @@ def draw_base_frame_overlay(vis: np.ndarray, results: dict, cam_id: int,
             if pt is not None:
                 cv2.circle(vis, pt, 6, COL_PLANE_A, 2)
 
-    # 3. Plane B (Tags 42..45): convex hull outline, centers and normal arrow
-    pb = results.get("plane_b")
-    if pb:
-        proj_pts = []
-        for tid, c_mm in (pb.get("centers_mm") or {}).items():
-            u = proj(mm(c_mm))
-            if u is not None:
-                proj_pts.append(u)
-                pt = safe_pt(u)
-                if pt is not None:
-                    cv2.circle(vis, pt, 5, COL_PLANE_B, 2)
-                    label_px(u, f"B{tid} {fmt_xyz_mm(c_mm)}", COL_PLANE_B, dx=8, dy=12)
+    # 3. Platform Boxes (box: 42..45 and box2: 50..53)
+    boxes = results.get("boxes")
+    if not boxes and results.get("plane_b"):
+        boxes = {"box": results["plane_b"]}
+    if boxes:
+        for b_name, pb in boxes.items():
+            is_box2 = (b_name == "box2") or any(50 <= tid <= 53 for tid in pb.get("detected_tags", []))
+            b_col = COL_BOX2 if is_box2 else COL_PLANE_B
+            b_fill = (140, 50, 140) if is_box2 else (0, 100, 200)
+            prefix = "B2-" if is_box2 else "B"
 
-        if len(proj_pts) >= 3:
-            hull = convex_hull_polygon(np.array(proj_pts))
-            if hull is not None:
-                overlay = vis.copy()
-                cv2.fillPoly(overlay, [hull.astype(np.int32)], (0, 100, 200))
-                cv2.addWeighted(overlay, 0.25, vis, 0.75, 0, vis)
-                cv2.polylines(vis, [hull.astype(np.int32)], isClosed=True,
-                              color=COL_PLANE_B, thickness=2, lineType=cv2.LINE_AA)
+            proj_pts = []
+            for tid, c_mm in (pb.get("centers_mm") or {}).items():
+                u = proj(mm(c_mm))
+                if u is not None:
+                    proj_pts.append(u)
+                    pt = safe_pt(u)
+                    if pt is not None:
+                        cv2.circle(vis, pt, 5, b_col, 2)
+                        label_px(u, f"{prefix}{tid} {fmt_xyz_mm(c_mm)}", b_col, dx=8, dy=12)
 
-        c_base = mm(pb["center_mm"])
-        n_base = np.array(pb["normal"], dtype=np.float64)
-        c_pt, n_pt = safe_pt(proj(c_base)), safe_pt(proj(c_base + n_base * 0.12))
-        if c_pt is not None and n_pt is not None:
-            cv2.arrowedLine(vis, c_pt, n_pt, (0, 255, 255), 2, cv2.LINE_AA, tipLength=0.25)
-            label_px(n_pt, f"PL-B n=[{n_base[0]:+.2f},{n_base[1]:+.2f},{n_base[2]:+.2f}]",
-                     (0, 255, 255), dx=6, dy=-6)
+            if len(proj_pts) >= 3:
+                hull = convex_hull_polygon(np.array(proj_pts))
+                if hull is not None:
+                    overlay = vis.copy()
+                    cv2.fillPoly(overlay, [hull.astype(np.int32)], b_fill)
+                    cv2.addWeighted(overlay, 0.25, vis, 0.75, 0, vis)
+                    cv2.polylines(vis, [hull.astype(np.int32)], isClosed=True,
+                                  color=b_col, thickness=2, lineType=cv2.LINE_AA)
+
+            c_base = mm(pb["center_mm"])
+            n_base = np.array(pb["normal"], dtype=np.float64)
+            c_pt, n_pt = safe_pt(proj(c_base)), safe_pt(proj(c_base + n_base * 0.12))
+            if c_pt is not None and n_pt is not None:
+                arrow_col = (255, 180, 255) if is_box2 else (0, 255, 255)
+                cv2.arrowedLine(vis, c_pt, n_pt, arrow_col, 2, cv2.LINE_AA, tipLength=0.25)
+                label_px(n_pt, f"{b_name} n=[{n_base[0]:+.2f},{n_base[1]:+.2f},{n_base[2]:+.2f}]",
+                         arrow_col, dx=6, dy=-6)
 
     # 4. Cube Centroid (Tags 20..25)
     cube = results.get("cube_centroid")
@@ -514,9 +533,12 @@ def render_scene3d_panel(results: dict,
     pa = results.get("plane_a")
     if pa:
         pts += [np.asarray(pa["tag_40_mm"]) * 0.001, np.asarray(pa["tag_41_mm"]) * 0.001]
-    pb = results.get("plane_b")
-    if pb:
-        pts += [np.asarray(c) * 0.001 for c in (pb.get("centers_mm") or {}).values()]
+    boxes = results.get("boxes")
+    if not boxes and results.get("plane_b"):
+        boxes = {"box": results["plane_b"]}
+    if boxes:
+        for pb in boxes.values():
+            pts += [np.asarray(c) * 0.001 for c in (pb.get("centers_mm") or {}).values()]
     cube = results.get("cube_centroid")
     if cube:
         pts.append(np.asarray(cube["xyz_mm"]) * 0.001)
@@ -601,24 +623,30 @@ def render_scene3d_panel(results: dict,
             dot(p_m, COL_PLANE_A, 5)
             text_at(p_m, f"A{tid} {fmt_xyz_mm(np.asarray(p_m) * 1000.0)}", COL_PLANE_A)
 
-    # Plane B
-    if pb:
-        proj_pts = []
-        for tid, c_mm in (pb.get("centers_mm") or {}).items():
-            p_m = np.asarray(c_mm) * 0.001
-            u = proj(p_m)
-            if u is not None:
-                proj_pts.append(u)
-            dot(p_m, COL_PLANE_B, 4)
-            text_at(p_m, f"B{tid}", COL_PLANE_B, scale=0.32)
-        hull = convex_hull_polygon(np.array(proj_pts)) if len(proj_pts) >= 3 else None
-        if hull is not None:
-            cv2.fillPoly(panel, [hull.astype(np.int32)], (45, 70, 105))
-            cv2.polylines(panel, [hull.astype(np.int32)], True, COL_PLANE_B, 2, cv2.LINE_AA)
-        c_m = np.asarray(pb["center_mm"]) * 0.001
-        n_m = np.asarray(pb["normal"], dtype=np.float64)
-        seg(c_m, c_m + n_m * 0.08, (255, 255, 255), 2)
-        text_at(c_m, f"PL-B {fmt_xyz_mm(pb['center_mm'])}", (255, 255, 255), dy=16)
+    # Platform Boxes (box & box2)
+    if boxes:
+        for b_name, pb in boxes.items():
+            is_box2 = (b_name == "box2") or any(50 <= tid <= 53 for tid in pb.get("detected_tags", []))
+            b_col = COL_BOX2 if is_box2 else COL_PLANE_B
+            b_fill = (65, 40, 85) if is_box2 else (45, 70, 105)
+            prefix = "B2-" if is_box2 else "B"
+
+            proj_pts = []
+            for tid, c_mm in (pb.get("centers_mm") or {}).items():
+                p_m = np.asarray(c_mm) * 0.001
+                u = proj(p_m)
+                if u is not None:
+                    proj_pts.append(u)
+                dot(p_m, b_col, 4)
+                text_at(p_m, f"{prefix}{tid}", b_col, scale=0.32)
+            hull = convex_hull_polygon(np.array(proj_pts)) if len(proj_pts) >= 3 else None
+            if hull is not None:
+                cv2.fillPoly(panel, [hull.astype(np.int32)], b_fill)
+                cv2.polylines(panel, [hull.astype(np.int32)], True, b_col, 2, cv2.LINE_AA)
+            c_m = np.asarray(pb["center_mm"]) * 0.001
+            n_m = np.asarray(pb["normal"], dtype=np.float64)
+            seg(c_m, c_m + n_m * 0.08, (255, 255, 255), 2)
+            text_at(c_m, f"{b_name} {fmt_xyz_mm(pb['center_mm'])}", (255, 255, 255), dy=16)
 
     # Cube
     for tid, corners_mm in (results.get("cube_faces_mm") or {}).items():
@@ -746,8 +774,9 @@ def render_hud_dashboard(results: dict, custom_h_frame_active: bool = False,
     if cube:
         x, yp, z = cube["xyz_mm"]
         faces = ",".join(map(str, cube["visible_faces"]))
-        cv2.putText(panel, f"Centroid (X,Y,Z): [{x:+6.1f}, {yp:+6.1f}, {z:+6.1f}] mm", (24, y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1, cv2.LINE_AA)
+        plat_str = f" [Platform: {cube['parent_platform']}]" if cube.get("parent_platform") else ""
+        cv2.putText(panel, f"Centroid (X,Y,Z): [{x:+6.1f}, {yp:+6.1f}, {z:+6.1f}] mm{plat_str}", (24, y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 255), 1, cv2.LINE_AA)
         y += 20
         cv2.putText(panel, f"Visible Faces: [{faces}] | Obs: {cube['num_obs']} | Spread: ±{cube['residual_spread_mm']:.1f} mm",
                     (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1, cv2.LINE_AA)
@@ -774,25 +803,45 @@ def render_hud_dashboard(results: dict, custom_h_frame_active: bool = False,
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, (120, 120, 150), 1, cv2.LINE_AA)
     y += 65
 
-    # Section 4: Plane B (Tags 42..45)
-    pb = results.get("plane_b")
-    cv2.rectangle(panel, (14, y - 18), (width - 14, y + 96), (25, 30, 38), -1)
-    cv2.putText(panel, "PLANE B: PLATFORM QUAD (Tags 42..45, 66 mm)", (20, y),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 150, 255), 1, cv2.LINE_AA)
-    y += 22
-    if pb:
-        norm = pb["normal"]
-        tags = ",".join(map(str, pb["detected_tags"]))
-        cv2.putText(panel, f"Normal: [{norm[0]:+5.2f}, {norm[1]:+5.2f}, {norm[2]:+5.2f}] | Coplanar RMSE: {pb['coplanarity_rmse_mm']:.2f} mm",
-                    (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
-        y += 20
-        c = pb["center_mm"]
+    # Section 4A: Box (Source Platform, Tags 42..45, 66 mm)
+    p_box = (results.get("boxes") or {}).get("box") or results.get("plane_b")
+    cv2.rectangle(panel, (14, y - 18), (width - 14, y + 68), (25, 30, 38), -1)
+    cv2.putText(panel, "BOX: SOURCE PLATFORM (Tags 42..45, 66 mm)", (20, y),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 150, 255), 1, cv2.LINE_AA)
+    y += 20
+    if p_box:
+        norm = p_box["normal"]
+        tags = ",".join(map(str, p_box["detected_tags"]))
+        cv2.putText(panel, f"Normal: [{norm[0]:+5.2f}, {norm[1]:+5.2f}, {norm[2]:+5.2f}] | RMSE: {p_box['coplanarity_rmse_mm']:.2f} mm",
+                    (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
+        y += 18
+        c = p_box["center_mm"]
         cv2.putText(panel, f"Center (X,Y,Z): [{c[0]:+6.1f}, {c[1]:+6.1f}, {c[2]:+6.1f}] mm (Tags: {tags})",
-                    (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (200, 200, 200), 1, cv2.LINE_AA)
+                    (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (200, 200, 200), 1, cv2.LINE_AA)
     else:
         cv2.putText(panel, "Status: Searching for Tags 42, 43, 44, 45...", (24, y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (120, 120, 150), 1, cv2.LINE_AA)
-    y += 82
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (120, 120, 150), 1, cv2.LINE_AA)
+    y += 58
+
+    # Section 4B: Box2 (Destination Platform, Tags 50..53, 70 mm)
+    p_box2 = (results.get("boxes") or {}).get("box2")
+    cv2.rectangle(panel, (14, y - 18), (width - 14, y + 68), (25, 30, 38), -1)
+    cv2.putText(panel, "BOX2: DESTINATION PLATFORM (Tags 50..53, 70 mm)", (20, y),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.42, (220, 80, 220), 1, cv2.LINE_AA)
+    y += 20
+    if p_box2:
+        norm = p_box2["normal"]
+        tags = ",".join(map(str, p_box2["detected_tags"]))
+        cv2.putText(panel, f"Normal: [{norm[0]:+5.2f}, {norm[1]:+5.2f}, {norm[2]:+5.2f}] | RMSE: {p_box2['coplanarity_rmse_mm']:.2f} mm",
+                    (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
+        y += 18
+        c = p_box2["center_mm"]
+        cv2.putText(panel, f"Center (X,Y,Z): [{c[0]:+6.1f}, {c[1]:+6.1f}, {c[2]:+6.1f}] mm (Tags: {tags})",
+                    (24, y), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (200, 200, 200), 1, cv2.LINE_AA)
+    else:
+        cv2.putText(panel, "Status: Searching for Tags 50, 51, 52, 53...", (24, y),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.38, (120, 120, 150), 1, cv2.LINE_AA)
+    y += 58
 
     # Section 5: base_link Reference Frame
     bl = results.get("base_link") or results.get("custom_h_frame")
