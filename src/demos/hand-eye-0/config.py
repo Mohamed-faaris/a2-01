@@ -21,6 +21,14 @@ TAG_SIZES_M = {
     1: 0.1240,
     4: 0.0885,
     5: 0.0885,
+    6: 0.0575,
+    7: 0.0575,
+    8: 0.0575,
+    9: 0.0575,
+    10: 0.0575,
+    11: 0.0575,
+    12: 0.0575,
+    13: 0.0575,
     20: 0.0410,
     21: 0.0410,
     40: 0.0660,
@@ -39,14 +47,14 @@ TAG_SIZES_M = {
 DEFAULT_TAG_SIZE_M = 0.0885
 
 # Tag Roles & Workpiece Box Groups
-BASE_LINKED_TAGS = frozenset({0, 1, 4, 5, 41})
+BASE_LINKED_TAGS = frozenset({0, 1, 4, 5, 41, 54, 55})
 BOX_TAG_GROUPS: dict[str, frozenset[int]] = {
     "box": frozenset({42, 43, 44, 45}),
     "box2": frozenset({50, 51, 52, 53}),
 }
 OBJECT_LINKED_TAGS = frozenset().union(*BOX_TAG_GROUPS.values())
 STATIC_TAGS = BASE_LINKED_TAGS | OBJECT_LINKED_TAGS
-TOOL_TCP_TAGS = frozenset({20, 21, 40})
+TOOL_TCP_TAGS = frozenset({6, 7, 8, 9, 10, 11, 12, 13, 20, 21, 40})
 
 PROJECTS_ROOT = REPO_ROOT.parent.parent  # /home/mfk01/Projects/econ-systems
 

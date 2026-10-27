@@ -1,0 +1,207 @@
+# Centralized AprilTag Calibration Marker Configuration
+# Dobot Vision - 28 Tags Setup
+# Unit: meters (m)
+
+family: "tag36h11"
+default_size_m: 0.0885
+
+# Marker roles and link assignments
+groups:
+  tcp_markers:
+    link: "tcp"
+    role: "calibrate"
+    description: "End-effector mounted calibration markers"
+    tags:
+      - ids: [6, 7, 8, 9, 10, 11, 12, 13]
+        size_m: 0.0575
+        size_mm: 57.5
+        description: "Compact tool tags 06-13"
+      - ids: [40]
+        size_m: 0.0660
+        size_mm: 66.0
+        description: "Tool head / gripper tag 40"
+      - ids: [20, 21]
+        size_m: 0.0410
+        size_mm: 41.0
+        description: "Mini cube tool tags 20, 21"
+
+  base_markers:
+    link: "base_link"
+    role: "static"
+    description: "Stationary environment & robot base reference markers"
+    tags:
+      - ids: [0, 1]
+        size_m: 0.1240
+        size_mm: 124.0
+        description: "Large base reference markers"
+      - ids: [4, 5]
+        size_m: 0.0885
+        size_mm: 88.5
+        description: "Medium base fiducial markers"
+      - ids: [41]
+        size_m: 0.0660
+        size_mm: 66.0
+        description: "Base fixture tag 41"
+      - ids: [54, 55]
+        size_m: 0.0700
+        size_mm: 70.0
+        description: "Base boundary static tags 54, 55"
+
+  workpiece_box1:
+    link: "box"
+    role: "box"
+    description: "Workpiece Box 1 (42..45)"
+    grid:
+      pitch: 0.060
+      face_ids: [42, 43, 44, 45]
+    tags:
+      - ids: [42, 43, 44, 45]
+        size_m: 0.0660
+        size_mm: 66.0
+        description: "Workpiece 1 face tags"
+
+  workpiece_box2:
+    link: "box2"
+    role: "box"
+    description: "Workpiece Box 2 (50..53)"
+    grid:
+      pitch: 0.060
+      face_ids: [50, 51, 52, 53]
+    tags:
+      - ids: [50, 51, 52, 53]
+        size_m: 0.0700
+        size_mm: 70.0
+        description: "Workpiece 2 face tags"
+
+# Complete flat lookup table by Tag ID
+tags:
+  0:
+    name: "tag_base_00"
+    link: "base_link"
+    role: "static"
+    size_m: 0.1240
+  1:
+    name: "tag_base_01"
+    link: "base_link"
+    role: "static"
+    size_m: 0.1240
+  4:
+    name: "tag_base_04"
+    link: "base_link"
+    role: "static"
+    size_m: 0.0885
+  5:
+    name: "tag_base_05"
+    link: "base_link"
+    role: "static"
+    size_m: 0.0885
+  6:
+    name: "tag_tool_06"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0575
+  7:
+    name: "tag_tool_07"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0575
+  8:
+    name: "tag_tool_08"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0575
+  9:
+    name: "tag_tool_09"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0575
+  10:
+    name: "tag_tool_10"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0575
+  11:
+    name: "tag_tool_11"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0575
+  12:
+    name: "tag_tool_12"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0575
+  13:
+    name: "tag_tool_13"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0575
+  20:
+    name: "tag_tool_20"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0410
+  21:
+    name: "tag_tool_21"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0410
+  40:
+    name: "tag_tool_40"
+    link: "tcp"
+    role: "calibrate"
+    size_m: 0.0660
+  41:
+    name: "tag_base_41"
+    link: "base_link"
+    role: "static"
+    size_m: 0.0660
+  42:
+    name: "tag_box_0"
+    link: "box"
+    role: "box"
+    size_m: 0.0660
+  43:
+    name: "tag_box_1"
+    link: "box"
+    role: "box"
+    size_m: 0.0660
+  44:
+    name: "tag_box_2"
+    link: "box"
+    role: "box"
+    size_m: 0.0660
+  45:
+    name: "tag_box_3"
+    link: "box"
+    role: "box"
+    size_m: 0.0660
+  50:
+    name: "tag_box2_0"
+    link: "box2"
+    role: "box"
+    size_m: 0.0700
+  51:
+    name: "tag_box2_1"
+    link: "box2"
+    role: "box"
+    size_m: 0.0700
+  52:
+    name: "tag_box2_2"
+    link: "box2"
+    role: "box"
+    size_m: 0.0700
+  53:
+    name: "tag_box2_3"
+    link: "box2"
+    role: "box"
+    size_m: 0.0700
+  54:
+    name: "tag_base_54"
+    link: "base_link"
+    role: "static"
+    size_m: 0.0700
+  55:
+    name: "tag_base_55"
+    link: "base_link"
+    role: "static"
+    size_m: 0.0700

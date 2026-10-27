@@ -330,74 +330,118 @@ def solve_handeye_pipeline(
             final_mounts[tid] = M
 
     elif method == "rigid_cube_ba":
-        # Rigid Cube Model: Tags 20 and 21 belong to a 41 mm rigid cube
-        # Rather than optimizing Tag 20 and Tag 21 independently, we optimize:
-        # rvec_cam (3), tvec_cam (3), rvec_cube (3), tvec_cube (3), rvec_tag40 (3), tvec_tag40 (3)
-        # Lock relative transform T_cube_tag20 and T_cube_tag21
-        r_cam0 = Rotation.from_matrix(R_init).as_rotvec()
-        M20 = init_mounts.get(20, np.eye(4))
-        M21 = init_mounts.get(21, np.eye(4))
-        M40 = init_mounts.get(40, np.eye(4))
+        if 20 in tag_list and 21 in tag_list:
+            # Rigid Cube Model: Tags 20 and 21 belong to a 41 mm rigid cube
+            r_cam0 = Rotation.from_matrix(R_init).as_rotvec()
+            M20 = init_mounts.get(20, np.eye(4))
+            M21 = init_mounts.get(21, np.eye(4))
+            M40 = init_mounts.get(40, np.eye(4))
+            T_20_21 = np.linalg.inv(M20) @ M21
 
-        # Relative transform between 20 and 21 locked
-        T_20_21 = np.linalg.inv(M20) @ M21
+            x0 = np.concatenate([
+                r_cam0, t_cam_init,
+                Rotation.from_matrix(M20[:3, :3]).as_rotvec(), M20[:3, 3],
+                Rotation.from_matrix(M40[:3, :3]).as_rotvec(), M40[:3, 3],
+            ])
 
-        # Parameter vector: r_cam(3), t_cam(3), r_m20(3), t_m20(3), r_m40(3), t_m40(3) -> 18 params
-        x0 = np.concatenate([
-            r_cam0, t_cam_init,
-            Rotation.from_matrix(M20[:3, :3]).as_rotvec(), M20[:3, 3],
-            Rotation.from_matrix(M40[:3, :3]).as_rotvec(), M40[:3, 3],
-        ])
+            def res_cube(p):
+                R_c = Rotation.from_rotvec(p[0:3]).as_matrix()
+                t_c = p[3:6]
+                T_c = np.eye(4); T_c[:3, :3] = R_c; T_c[:3, 3] = t_c
+                T_c_b = np.linalg.inv(T_c)
 
-        def res_cube(p):
-            R_c = Rotation.from_rotvec(p[0:3]).as_matrix()
-            t_c = p[3:6]
-            T_c = np.eye(4); T_c[:3, :3] = R_c; T_c[:3, 3] = t_c
-            T_c_b = np.linalg.inv(T_c)
+                R_20 = Rotation.from_rotvec(p[6:9]).as_matrix()
+                t_20 = p[9:12]
+                T_20 = np.eye(4); T_20[:3, :3] = R_20; T_20[:3, 3] = t_20
+                T_21 = T_20 @ T_20_21
 
-            R_20 = Rotation.from_rotvec(p[6:9]).as_matrix()
-            t_20 = p[9:12]
-            T_20 = np.eye(4); T_20[:3, :3] = R_20; T_20[:3, 3] = t_20
+                R_40 = Rotation.from_rotvec(p[12:15]).as_matrix()
+                t_40 = p[15:18]
+                T_40 = np.eye(4); T_40[:3, :3] = R_40; T_40[:3, 3] = t_40
 
-            # Rigid cube constraint
+                cur_mounts = {20: T_20, 21: T_21, 40: T_40}
+
+                residuals = []
+                for s in tool_samples:
+                    tid = s["tid"]
+                    if tid not in cur_mounts:
+                        continue
+                    corners_local = get_tag_corners_local(tid)
+                    T_b_tag = s["T_b_tcp"] @ cur_mounts[tid]
+                    T_c_tag = T_c_b @ T_b_tag
+
+                    rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
+                    tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
+
+                    proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
+                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                    residuals.extend(diff)
+                return np.array(residuals)
+
+            opt = least_squares(res_cube, x0, loss="cauchy", f_scale=1.5, max_nfev=250)
+            R_cam_opt = Rotation.from_rotvec(opt.x[0:3]).as_matrix()
+            T_base_d415[:3, :3] = R_cam_opt
+            T_base_d415[:3, 3] = opt.x[3:6]
+
+            R_20 = Rotation.from_rotvec(opt.x[6:9]).as_matrix()
+            T_20 = np.eye(4); T_20[:3, :3] = R_20; T_20[:3, 3] = opt.x[9:12]
             T_21 = T_20 @ T_20_21
 
-            R_40 = Rotation.from_rotvec(p[12:15]).as_matrix()
-            t_40 = p[15:18]
-            T_40 = np.eye(4); T_40[:3, :3] = R_40; T_40[:3, 3] = t_40
+            R_40 = Rotation.from_rotvec(opt.x[12:15]).as_matrix()
+            T_40 = np.eye(4); T_40[:3, :3] = R_40; T_40[:3, 3] = opt.x[15:18]
 
-            cur_mounts = {20: T_20, 21: T_21, 40: T_40}
+            final_mounts[20] = T_20
+            final_mounts[21] = T_21
+            final_mounts[40] = T_40
+        else:
+            # Fall back to general 2D corner bundle adjustment across all tool tags
+            r_cam0 = Rotation.from_matrix(R_init).as_rotvec()
+            params_init = [r_cam0, t_cam_init]
+            for tid in tag_list:
+                r_m = Rotation.from_matrix(init_mounts[tid][:3, :3]).as_rotvec()
+                t_m = init_mounts[tid][:3, 3]
+                params_init.extend([r_m, t_m])
+            x0 = np.concatenate(params_init)
 
-            residuals = []
-            for s in tool_samples:
-                tid = s["tid"]
-                corners_local = get_tag_corners_local(tid)
-                T_b_tag = s["T_b_tcp"] @ cur_mounts[tid]
-                T_c_tag = T_c_b @ T_b_tag
+            def res_general_ba(p):
+                R_c = Rotation.from_rotvec(p[0:3]).as_matrix()
+                t_c = p[3:6]
+                T_c = np.eye(4); T_c[:3, :3] = R_c; T_c[:3, 3] = t_c
+                T_c_b = np.linalg.inv(T_c)
 
-                rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
-                tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
+                cur_mounts = {}
+                for idx, tid in enumerate(tag_list):
+                    base_p = 6 + 6 * idx
+                    R_m = Rotation.from_rotvec(p[base_p : base_p + 3]).as_matrix()
+                    t_m = p[base_p + 3 : base_p + 6]
+                    T_m = np.eye(4); T_m[:3, :3] = R_m; T_m[:3, 3] = t_m
+                    cur_mounts[tid] = T_m
 
-                proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
-                diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
-                residuals.extend(diff)
-            return np.array(residuals)
+                residuals = []
+                for s in tool_samples:
+                    tid = s["tid"]
+                    corners_local = get_tag_corners_local(tid)
+                    T_b_tag = s["T_b_tcp"] @ cur_mounts[tid]
+                    T_c_tag = T_c_b @ T_b_tag
 
-        opt = least_squares(res_cube, x0, loss="cauchy", f_scale=1.5, max_nfev=250)
-        R_cam_opt = Rotation.from_rotvec(opt.x[0:3]).as_matrix()
-        T_base_d415[:3, :3] = R_cam_opt
-        T_base_d415[:3, 3] = opt.x[3:6]
+                    rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
+                    tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
 
-        R_20 = Rotation.from_rotvec(opt.x[6:9]).as_matrix()
-        T_20 = np.eye(4); T_20[:3, :3] = R_20; T_20[:3, 3] = opt.x[9:12]
-        T_21 = T_20 @ T_20_21
+                    proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
+                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                    residuals.extend(diff)
+                return np.array(residuals)
 
-        R_40 = Rotation.from_rotvec(opt.x[12:15]).as_matrix()
-        T_40 = np.eye(4); T_40[:3, :3] = R_40; T_40[:3, 3] = opt.x[15:18]
-
-        final_mounts[20] = T_20
-        final_mounts[21] = T_21
-        final_mounts[40] = T_40
+            opt = least_squares(res_general_ba, x0, loss="cauchy", f_scale=1.5, max_nfev=250)
+            R_cam_opt = Rotation.from_rotvec(opt.x[0:3]).as_matrix()
+            T_base_d415[:3, :3] = R_cam_opt
+            T_base_d415[:3, 3] = opt.x[3:6]
+            for idx, tid in enumerate(tag_list):
+                base_p = 6 + 6 * idx
+                R_m = Rotation.from_rotvec(opt.x[base_p : base_p + 3]).as_matrix()
+                t_m = opt.x[base_p + 3 : base_p + 6]
+                M = np.eye(4); M[:3, :3] = R_m; M[:3, 3] = t_m
+                final_mounts[tid] = M
 
     else:
         raise ValueError(f"Unknown optimization method: {method}")
