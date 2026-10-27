@@ -174,6 +174,10 @@ class HandEye3DViewer:
         self.is_playing = False
         self.play_thread: threading.Thread | None = None
 
+        # Camera POV & image overlay state
+        self.active_camera_pov: str | None = None
+        self._img_cache: dict[tuple[str, str, bool], np.ndarray] = {}
+
         # Start Viser server
         log.info(f"Initializing Viser 3D server on port {port}...")
         self.server = viser.ViserServer(host=host, port=port, verbose=False)
@@ -439,57 +443,109 @@ class HandEye3DViewer:
                     self.gui_points_info.content = self._get_points_info_markdown()
                     self.update_scene()
 
-        # Camera POV Shortcuts Folder
-        with server.gui.add_folder("🎥 Camera POV Views"):
-            self.btn_view_home = server.gui.add_button("Home 3D View")
-            self.btn_view_top = server.gui.add_button("Top-Down View")
-            self.btn_view_d415 = server.gui.add_button("Look from D415 Camera")
-            self.btn_view_usb = server.gui.add_button("Look from USB Camera")
-            self.btn_view_tcp = server.gui.add_button("Follow Robot TCP")
+        # Camera POV Shortcuts & Image Overlay Folder
+        with server.gui.add_folder("🎥 Camera POV & Image Overlay"):
+            self.btn_view_home = server.gui.add_button("🏠 Home 3D View")
+            self.btn_view_top = server.gui.add_button("⬆️ Top-Down View")
+            self.btn_view_d415 = server.gui.add_button("📷 Look from D415 Camera")
+            self.btn_view_usb = server.gui.add_button("📷 Look from USB Camera")
+            self.btn_view_tcp = server.gui.add_button("🦾 Follow Robot TCP")
+
+            self.gui_overlay_mode = server.gui.add_dropdown(
+                "Overlay Image Mode",
+                options=[
+                    "Background (Look-Through)",
+                    "Frustum Plane (3D)",
+                    "Both (Background + Frustum)",
+                    "Disabled",
+                ],
+                initial_value="Background (Look-Through)",
+            )
+            self.gui_overlay_annotated = server.gui.add_checkbox("Show Tag Annotations", initial_value=True)
+            self.gui_frustum_distance = server.gui.add_slider(
+                "Frustum Image Plane (m)", min=0.2, max=3.0, step=0.05, initial_value=1.2
+            )
+            self.btn_clear_overlay = server.gui.add_button("🚫 Clear Background Image")
+
+            for ctrl in [
+                self.gui_overlay_mode,
+                self.gui_overlay_annotated,
+                self.gui_frustum_distance,
+            ]:
+                ctrl.on_update(lambda _: self.update_scene())
 
             @self.btn_view_home.on_click
             def _(_) -> None:
+                self.active_camera_pov = None
+                self.server.scene.set_background_image(None)
                 for client in server.get_clients().values():
                     client.camera.position = (2.2, -1.2, 1.4)
                     client.camera.look_at = (0.5, 0.0, 0.1)
                     client.camera.up_direction = (0.0, 0.0, 1.0)
+                    client.camera.fov = math.radians(60.0)
 
             @self.btn_view_top.on_click
             def _(_) -> None:
+                self.active_camera_pov = None
+                self.server.scene.set_background_image(None)
                 for client in server.get_clients().values():
                     client.camera.position = (0.6, 0.0, 2.5)
                     client.camera.look_at = (0.6, 0.0, 0.0)
                     client.camera.up_direction = (1.0, 0.0, 0.0)
+                    client.camera.fov = math.radians(60.0)
 
             @self.btn_view_d415.on_click
             def _(_) -> None:
+                if "d415" not in self.calib_data.get("cameras", {}):
+                    return
+                self.active_camera_pov = "d415"
                 T = np.array(self.calib_data["cameras"]["d415"]["T_base_camera"])
                 pos = T[:3, 3]
                 fwd = T[:3, 2]
+                fov = 2.0 * math.atan(self.h_d / (2.0 * self.K_d415[1, 1]))
+                aspect = float(self.w_d) / float(self.h_d)
                 for client in server.get_clients().values():
                     client.camera.position = tuple(pos)
                     client.camera.look_at = tuple(pos + fwd * 1.5)
                     client.camera.up_direction = tuple(-T[:3, 1])
+                    client.camera.fov = fov
+                    client.camera.aspect = aspect
+                self._update_overlay()
 
             @self.btn_view_usb.on_click
             def _(_) -> None:
-                if "usb" in self.calib_data["cameras"]:
-                    T = np.array(self.calib_data["cameras"]["usb"]["T_base_camera"])
-                    pos = T[:3, 3]
-                    fwd = T[:3, 2]
-                    for client in server.get_clients().values():
-                        client.camera.position = tuple(pos)
-                        client.camera.look_at = tuple(pos + fwd * 1.5)
-                        client.camera.up_direction = tuple(-T[:3, 1])
+                if "usb" not in self.calib_data.get("cameras", {}):
+                    return
+                self.active_camera_pov = "usb"
+                T = np.array(self.calib_data["cameras"]["usb"]["T_base_camera"])
+                pos = T[:3, 3]
+                fwd = T[:3, 2]
+                fov = 2.0 * math.atan(self.h_u / (2.0 * self.K_usb[1, 1]))
+                aspect = float(self.w_u) / float(self.h_u)
+                for client in server.get_clients().values():
+                    client.camera.position = tuple(pos)
+                    client.camera.look_at = tuple(pos + fwd * 1.5)
+                    client.camera.up_direction = tuple(-T[:3, 1])
+                    client.camera.fov = fov
+                    client.camera.aspect = aspect
+                self._update_overlay()
 
             @self.btn_view_tcp.on_click
             def _(_) -> None:
+                self.active_camera_pov = None
+                self.server.scene.set_background_image(None)
                 obs = self.observations[self.current_pose_idx]
                 tcp_pos = obs.T_base_tcp[:3, 3]
                 for client in server.get_clients().values():
                     client.camera.position = tuple(tcp_pos + np.array([0.4, -0.4, 0.3]))
                     client.camera.look_at = tuple(tcp_pos)
                     client.camera.up_direction = (0.0, 0.0, 1.0)
+                    client.camera.fov = math.radians(60.0)
+
+            @self.btn_clear_overlay.on_click
+            def _(_) -> None:
+                self.active_camera_pov = None
+                self.server.scene.set_background_image(None)
 
         # Telemetry Markdown Card
         self.gui_telemetry_card = server.gui.add_markdown("")
@@ -584,7 +640,7 @@ class HandEye3DViewer:
 
             # 5. Cameras (D415 & USB)
             if self.gui_show_cameras.value:
-                self._render_cameras()
+                self._render_cameras(obs)
 
             # 6. Sighting Rays
             if self.gui_show_rays.value:
@@ -593,6 +649,9 @@ class HandEye3DViewer:
             # 7. Additional Points / Waypoints
             if self.gui_show_points.value:
                 self._render_additional_points()
+
+            # 8. Camera POV Background Overlay
+            self._update_overlay()
 
     def _render_additional_points(self) -> None:
         """Renders user-loaded additional points/waypoints and trajectory path in 3D."""
@@ -957,9 +1016,74 @@ class HandEye3DViewer:
                         color=(255, 30, 30),
                     )
 
-    def _render_cameras(self) -> None:
-        """Renders D415 and USB camera bodies and optical viewing frustums."""
+    def _get_camera_image(self, obs: PoseObservation, camera: str, annotated: bool = False) -> np.ndarray | None:
+        """Retrieves and caches the camera image for the given observation, optionally annotated with detected tag corners."""
+        cache_key = (obs.pose_name, camera, annotated)
+        if cache_key in self._img_cache:
+            return self._img_cache[cache_key]
+
+        img_path = obs.d415_path if camera == "d415" else obs.usb_path
+        if img_path is None or not img_path.is_file():
+            return None
+
+        img_bgr = cv2.imread(str(img_path))
+        if img_bgr is None:
+            return None
+
+        if annotated:
+            # Draw detected AprilTags on the image
+            tags = obs.d415_tags if camera == "d415" else obs.usb_tags
+            for tid, det in tags.items():
+                pts = det.corners_px.astype(np.int32).reshape((-1, 1, 2))
+                col = (0, 220, 255) if (6 <= tid <= 13 or tid in (20, 21, 40)) else (0, 255, 0)
+                cv2.polylines(img_bgr, [pts], isClosed=True, color=col, thickness=2)
+                c_int = tuple(det.center_px.astype(int))
+                cv2.circle(img_bgr, c_int, radius=3, color=(0, 0, 255), thickness=-1)
+                text_pos = tuple((det.corners_px[0] + [0, -6]).astype(int))
+                cv2.putText(
+                    img_bgr,
+                    f"Tag {tid}",
+                    text_pos,
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.55,
+                    (255, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+                cv2.putText(
+                    img_bgr,
+                    f"Tag {tid}",
+                    text_pos,
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.55,
+                    (0, 0, 0),
+                    1,
+                    cv2.LINE_AA,
+                )
+
+        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        self._img_cache[cache_key] = img_rgb
+        return img_rgb
+
+    def _update_overlay(self) -> None:
+        """Updates background overlay image if in camera POV mode."""
+        if not self.observations:
+            return
+        mode = self.gui_overlay_mode.value
+        if self.active_camera_pov in ("d415", "usb") and ("Background" in mode or "Both" in mode):
+            obs = self.observations[self.current_pose_idx]
+            img = self._get_camera_image(obs, self.active_camera_pov, annotated=self.gui_overlay_annotated.value)
+            if img is not None:
+                self.server.scene.set_background_image(img, format="jpeg")
+                return
+        self.server.scene.set_background_image(None)
+
+    def _render_cameras(self, obs: PoseObservation) -> None:
+        """Renders D415 and USB camera bodies and optical viewing frustums with optional image overlays."""
         cams = self.calib_data.get("cameras", {})
+        mode = self.gui_overlay_mode.value
+        show_frustum_img = ("Frustum" in mode or "Both" in mode)
+        frustum_dist = float(self.gui_frustum_distance.value)
 
         # D415 Camera
         if "d415" in cams:
@@ -977,14 +1101,21 @@ class HandEye3DViewer:
             # Frustum
             fov = 2.0 * math.atan(self.h_d / (2.0 * self.K_d415[1, 1]))
             aspect = float(self.w_d) / float(self.h_d)
+            img_d415 = (
+                self._get_camera_image(obs, "d415", annotated=self.gui_overlay_annotated.value)
+                if show_frustum_img
+                else None
+            )
+            scale_d = frustum_dist if img_d415 is not None else 0.35
             self.server.scene.add_camera_frustum(
                 "/cameras/d415_frustum",
                 fov=fov,
                 aspect=aspect,
-                scale=0.35,
+                scale=scale_d,
                 position=tuple(pos),
                 wxyz=q_wxyz,
                 color=(0, 160, 255),
+                image=img_d415,
             )
             self.server.scene.add_label(
                 "/cameras/d415_label",
@@ -1006,14 +1137,21 @@ class HandEye3DViewer:
             )
             fov_u = 2.0 * math.atan(self.h_u / (2.0 * self.K_usb[1, 1]))
             aspect_u = float(self.w_u) / float(self.h_u)
+            img_usb = (
+                self._get_camera_image(obs, "usb", annotated=self.gui_overlay_annotated.value)
+                if show_frustum_img
+                else None
+            )
+            scale_u = frustum_dist if img_usb is not None else 0.35
             self.server.scene.add_camera_frustum(
                 "/cameras/usb_frustum",
                 fov=fov_u,
                 aspect=aspect_u,
-                scale=0.35,
+                scale=scale_u,
                 position=tuple(pos_u),
                 wxyz=q_u_wxyz,
                 color=(255, 140, 0),
+                image=img_usb,
             )
             self.server.scene.add_label(
                 "/cameras/usb_label",
