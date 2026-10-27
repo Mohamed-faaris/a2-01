@@ -37,7 +37,7 @@ from config import (
     TAG_SIZES_M,
     load_camera_intrinsics,
 )
-from detector import load_all_poses, PoseObservation
+from detector import load_all_poses, PoseObservation, cluster_and_fuse_repeated_poses
 from solver import solve_handeye_pipeline, HandEyeCalibrationResult, get_tag_corners_local
 from viz import save_annotated_gallery
 
@@ -355,6 +355,7 @@ def create_method_report_md(res: HandEyeCalibrationResult) -> str:
 def run_benchmarks(
     dataset_dir: Path = DEFAULT_DATASET_DIR,
     output_root: Path = DEMO_DIR / "outputs",
+    fuse_repeats: bool = True,
 ) -> None:
     output_root.mkdir(parents=True, exist_ok=True)
 
@@ -362,7 +363,19 @@ def run_benchmarks(
     K_d, D_d, _ = load_camera_intrinsics(DEFAULT_D415_CALIB)
     K_u, D_u, _ = load_camera_intrinsics(DEFAULT_USB_CALIB)
     observations = load_all_poses(dataset_dir, K_d, D_d, K_u, D_u)
-    log.info(f"Loaded {len(observations)} pose observations.")
+    log.info(f"Loaded {len(observations)} raw pose observations.")
+
+    repeat_stats = {}
+    if fuse_repeats:
+        raw_count = len(observations)
+        observations, repeat_stats = cluster_and_fuse_repeated_poses(observations, K_d, D_d, K_u, D_u)
+        if repeat_stats.get("repeated_clusters", 0) > 0:
+            log.info(
+                f"Multi-Observation Pose Fusion: Reduced {raw_count} raw poses to "
+                f"{len(observations)} fused poses ({repeat_stats['repeated_clusters']} clusters). "
+                f"Avg corner jitter: {repeat_stats['avg_corner_jitter_px']:.3f} px. "
+                f"Theoretical noise reduction: {repeat_stats['theoretical_noise_reduction_pct']}%."
+            )
 
     algorithms = [
         ("algo_3d_pose_cauchy", "3d_pose_cauchy", "Baseline SVD + 3D SE(3) pose error minimization with Cauchy robust loss"),
@@ -533,6 +546,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run Hand-Eye Calibration Benchmarks")
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET_DIR, help="Path to pose dataset directory")
     parser.add_argument("--output-dir", type=Path, default=None, help="Output directory")
+    parser.add_argument("--no-fuse-repeats", action="store_true", help="Disable temporal corner fusion and uncertainty weighting for repeated poses")
     args = parser.parse_args()
 
     out_root = args.output_dir
@@ -542,4 +556,4 @@ if __name__ == "__main__":
         slug = f"{parts[-2]}-{parts[-1]}" if len(parts) >= 2 else ds_path.name
         out_root = REPO_ROOT / "outputs" / slug
 
-    run_benchmarks(dataset_dir=args.dataset, output_root=out_root)
+    run_benchmarks(dataset_dir=args.dataset, output_root=out_root, fuse_repeats=not args.no_fuse_repeats)

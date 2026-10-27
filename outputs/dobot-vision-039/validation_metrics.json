@@ -1,0 +1,457 @@
+{
+  "dataset": "inputs/dobot-vision/039",
+  "total_observations": 15,
+  "total_tool_sightings": 184,
+  "camera_breakdown": {
+    "d415": {
+      "sightings": 81,
+      "reproj_rms_px": 1.4678003873700707,
+      "reproj_mean_px": 1.2536137413464605,
+      "reproj_max_px": 4.834170617588155,
+      "pos_rms_mm": 38.50869136578352,
+      "pos_mean_mm": 36.296257395236886,
+      "optical_z_rms_mm": 37.04520818005042,
+      "lateral_xy_rms_mm": 10.515315573100779
+    },
+    "usb": {
+      "sightings": 103,
+      "reproj_rms_px": 1.2090986377985506,
+      "reproj_mean_px": 1.0717445274082484,
+      "reproj_max_px": 3.5032075447916426,
+      "pos_rms_mm": 46.00425304257043,
+      "pos_mean_mm": 32.592204278346685,
+      "optical_z_rms_mm": 41.25421670879244,
+      "lateral_xy_rms_mm": 20.358804035326866
+    }
+  },
+  "cross_validation_5fold": {
+    "folds": [
+      {
+        "fold": 1,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 48,
+        "d415_xyz_m": [
+          1.9041,
+          -0.3604,
+          0.7772
+        ],
+        "held_out_reproj_rms_px": 1.6563334578723274,
+        "held_out_reproj_mean_px": 1.536994594041224,
+        "held_out_pos_rms_mm": 61.211318217225866,
+        "held_out_pos_mean_mm": 49.714869231708256,
+        "held_out_rot_rms_deg": 51.202306408839114
+      },
+      {
+        "fold": 2,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 48,
+        "d415_xyz_m": [
+          1.9046,
+          -0.3695,
+          0.7819
+        ],
+        "held_out_reproj_rms_px": 2.002558489489778,
+        "held_out_reproj_mean_px": 1.7609312758545694,
+        "held_out_pos_rms_mm": 31.303038471552757,
+        "held_out_pos_mean_mm": 27.890113539990676,
+        "held_out_rot_rms_deg": 35.736736455687165
+      },
+      {
+        "fold": 3,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 48,
+        "d415_xyz_m": [
+          1.8976,
+          -0.3726,
+          0.7894
+        ],
+        "held_out_reproj_rms_px": 1.7035355594942512,
+        "held_out_reproj_mean_px": 1.5097749417407638,
+        "held_out_pos_rms_mm": 36.00150395401413,
+        "held_out_pos_mean_mm": 32.13729973198618,
+        "held_out_rot_rms_deg": 11.159528485584737
+      },
+      {
+        "fold": 4,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 17,
+        "d415_xyz_m": [
+          1.9026,
+          -0.361,
+          0.7832
+        ],
+        "held_out_reproj_rms_px": 3.5347338203727747,
+        "held_out_reproj_mean_px": 3.146460482856167,
+        "held_out_pos_rms_mm": 42.397782785149715,
+        "held_out_pos_mean_mm": 30.617064776584623,
+        "held_out_rot_rms_deg": 3.782662734455629
+      },
+      {
+        "fold": 5,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 21,
+        "d415_xyz_m": [
+          1.9047,
+          -0.3603,
+          0.7816
+        ],
+        "held_out_reproj_rms_px": 1.4885631282767753,
+        "held_out_reproj_mean_px": 1.4347119120785556,
+        "held_out_pos_rms_mm": 36.01457711547978,
+        "held_out_pos_mean_mm": 30.58376528748392,
+        "held_out_rot_rms_deg": 41.9206966612041
+      }
+    ],
+    "d415_mean_mm": [
+      1902.71,
+      -364.77,
+      782.67
+    ],
+    "d415_std_mm": [
+      2.67,
+      5.21,
+      3.93
+    ],
+    "d415_max_diff_mm": [
+      7.13,
+      12.25,
+      12.2
+    ],
+    "usb_mean_mm": [
+      1672.89,
+      -997.1,
+      813.89
+    ],
+    "usb_std_mm": [
+      3.18,
+      1.75,
+      2.76
+    ],
+    "usb_max_diff_mm": [
+      9.53,
+      4.83,
+      7.03
+    ]
+  },
+  "multistart_sensitivity": {
+    "seeds": [
+      {
+        "seed_idx": 0,
+        "seed_desc": "Closed-form baseline",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 1,
+        "seed_desc": "Random perturbation #1",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 2,
+        "seed_desc": "Random perturbation #2",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 3,
+        "seed_desc": "Random perturbation #3",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 4,
+        "seed_desc": "Random perturbation #4",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 5,
+        "seed_desc": "Random perturbation #5",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 6,
+        "seed_desc": "Random perturbation #6",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 7,
+        "seed_desc": "Random perturbation #7",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 8,
+        "seed_desc": "Random perturbation #8",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      },
+      {
+        "seed_idx": 9,
+        "seed_desc": "Random perturbation #9",
+        "final_cost": 432.59,
+        "reproj_rms_px": 0.985,
+        "d415_xyz_mm": [
+          1901.7,
+          -364.6,
+          785.1
+        ],
+        "usb_xyz_mm": [
+          1673.1,
+          -997.6,
+          814.4
+        ]
+      }
+    ],
+    "d415_spread_mm": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "d415_std_mm": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "usb_spread_mm": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "usb_std_mm": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "tag_breakdown": {
+    "6": {
+      "sightings": 25,
+      "reproj_rms_px": 1.602,
+      "reproj_mean_px": 1.472,
+      "pos_rms_mm": 32.42,
+      "pos_mean_mm": 29.72,
+      "rot_rms_deg": 27.42
+    },
+    "7": {
+      "sightings": 24,
+      "reproj_rms_px": 1.547,
+      "reproj_mean_px": 1.406,
+      "pos_rms_mm": 46.54,
+      "pos_mean_mm": 38.06,
+      "rot_rms_deg": 31.06
+    },
+    "8": {
+      "sightings": 25,
+      "reproj_rms_px": 1.366,
+      "reproj_mean_px": 1.163,
+      "pos_rms_mm": 40.08,
+      "pos_mean_mm": 31.38,
+      "rot_rms_deg": 2.87
+    },
+    "9": {
+      "sightings": 19,
+      "reproj_rms_px": 1.159,
+      "reproj_mean_px": 1.041,
+      "pos_rms_mm": 48.27,
+      "pos_mean_mm": 32.52,
+      "rot_rms_deg": 32.36
+    },
+    "10": {
+      "sightings": 26,
+      "reproj_rms_px": 1.552,
+      "reproj_mean_px": 1.263,
+      "pos_rms_mm": 49.27,
+      "pos_mean_mm": 37.49,
+      "rot_rms_deg": 23.1
+    },
+    "11": {
+      "sightings": 19,
+      "reproj_rms_px": 0.977,
+      "reproj_mean_px": 0.866,
+      "pos_rms_mm": 44.89,
+      "pos_mean_mm": 33.71,
+      "rot_rms_deg": 59.84
+    },
+    "12": {
+      "sightings": 23,
+      "reproj_rms_px": 1.142,
+      "reproj_mean_px": 1.019,
+      "pos_rms_mm": 41.42,
+      "pos_mean_mm": 36.47,
+      "rot_rms_deg": 48.24
+    },
+    "13": {
+      "sightings": 19,
+      "reproj_rms_px": 0.954,
+      "reproj_mean_px": 0.857,
+      "pos_rms_mm": 42.45,
+      "pos_mean_mm": 39.62,
+      "rot_rms_deg": 41.45
+    },
+    "40": {
+      "sightings": 4,
+      "reproj_rms_px": 0.897,
+      "reproj_mean_px": 0.878,
+      "pos_rms_mm": 8.99,
+      "pos_mean_mm": 7.81,
+      "rot_rms_deg": 1.83
+    }
+  },
+  "radial_distance_breakdown": {
+    "Center (r < 250 px)": {
+      "sightings": 49,
+      "reproj_rms_px": 1.198,
+      "pos_rms_mm": 30.96
+    },
+    "Mid-field (250 <= r < 450 px)": {
+      "sightings": 76,
+      "reproj_rms_px": 1.534,
+      "pos_rms_mm": 41.0
+    },
+    "Periphery (r >= 450 px)": {
+      "sightings": 59,
+      "reproj_rms_px": 1.134,
+      "pos_rms_mm": 52.62
+    }
+  },
+  "viewing_angle_breakdown": {
+    "Steep Slant (> 40\u00b0)": {
+      "sightings": 184,
+      "reproj_rms_px": 1.329,
+      "pos_rms_mm": 42.87
+    }
+  },
+  "analytical_uncertainty": {
+    "jacobian_condition_number": 474702541.99,
+    "singular_values": [
+      74271.077,
+      64837.195,
+      49924.387,
+      40493.024,
+      20630.101,
+      17153.835,
+      15819.09,
+      15135.396
+    ],
+    "min_singular_value": 0.0002,
+    "d415_pos_std_err_mm": [
+      0.7,
+      1.13,
+      0.89
+    ],
+    "d415_rot_std_err_deg": [
+      0.03,
+      0.04,
+      0.04
+    ],
+    "usb_pos_std_err_mm": [
+      0.73,
+      0.62,
+      0.71
+    ],
+    "usb_rot_std_err_deg": [
+      0.02,
+      0.03,
+      0.02
+    ]
+  }
+}

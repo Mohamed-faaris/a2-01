@@ -26,6 +26,8 @@ class DetectedTag:
     T_cam_tag: np.ndarray           # (4, 4) SE(3) transform from camera to tag
     reprojection_error_px: float    # RMS reprojection error
     decision_margin: float          # Tag decode confidence
+    corner_jitter_px: float = 0.0   # Repeatability uncertainty
+    repeat_count: int = 1           # Number of fused repeats
 
 
 @dataclass
@@ -195,39 +197,211 @@ def load_all_poses(
                 np.radians(joint_angles_deg.get(f"joint{i}", 0.0)) for i in range(1, 7)
             ]
 
-        # D415 Image (accepts d415.png or front.png)
-        d415_img_path = pdir / "d415.png"
-        if not d415_img_path.is_file():
-            d415_img_path = pdir / "front.png"
-        d415_tags = {}
-        if d415_img_path.is_file():
-            img_d415 = cv2.imread(str(d415_img_path))
-            if img_d415 is not None:
-                d415_tags = detector.detect(img_d415, K_d415, D_d415)
+        # Multi-frame and single-frame image discovery
+        d415_candidates = sorted([p for p in pdir.glob("front_*.png")])
+        if not d415_candidates:
+            d415_candidates = sorted([p for p in pdir.glob("d415_*.png") if "depth" not in p.name])
+        if not d415_candidates:
+            for fname in ["front.png", "d415.png"]:
+                p = pdir / fname
+                if p.is_file():
+                    d415_candidates.append(p)
+                    break
 
-        # USB / Secondary Image (accepts usb.png, see3.png, or down.png)
-        usb_img_path = pdir / "usb.png"
-        if not usb_img_path.is_file():
-            usb_img_path = pdir / "see3.png"
-        if not usb_img_path.is_file():
-            usb_img_path = pdir / "down.png"
-        usb_tags = {}
-        if usb_img_path.is_file():
-            img_usb = cv2.imread(str(usb_img_path))
-            if img_usb is not None:
-                usb_tags = detector.detect(img_usb, K_usb, D_usb)
+        usb_candidates = sorted([p for p in pdir.glob("see3_*.png")])
+        if not usb_candidates:
+            usb_candidates = sorted([p for p in pdir.glob("usb_*.png")])
+        if not usb_candidates:
+            usb_candidates = sorted([p for p in pdir.glob("down_*.png")])
+        if not usb_candidates:
+            for fname in ["see3.png", "usb.png", "down.png"]:
+                p = pdir / fname
+                if p.is_file():
+                    usb_candidates.append(p)
+                    break
 
-        obs = PoseObservation(
-            pose_name=pdir.name,
-            T_base_tcp=T_base_tcp,
-            joint_angles_deg=joint_angles_deg,
-            d415_tags=d415_tags,
-            usb_tags=usb_tags,
-            joint_angles_rad=joint_angles_rad,
-            d415_path=d415_img_path if d415_img_path.is_file() else None,
-            usb_path=usb_img_path if usb_img_path.is_file() else None,
-        )
-        observations.append(obs)
+        num_shots = max(len(d415_candidates), len(usb_candidates), 1)
+        for shot_idx in range(num_shots):
+            d415_path = d415_candidates[shot_idx] if shot_idx < len(d415_candidates) else (d415_candidates[0] if d415_candidates else None)
+            usb_path = usb_candidates[shot_idx] if shot_idx < len(usb_candidates) else (usb_candidates[0] if usb_candidates else None)
+
+            d415_tags = {}
+            if d415_path is not None and d415_path.is_file():
+                img_d415 = cv2.imread(str(d415_path))
+                if img_d415 is not None:
+                    d415_tags = detector.detect(img_d415, K_d415, D_d415)
+
+            usb_tags = {}
+            if usb_path is not None and usb_path.is_file():
+                img_usb = cv2.imread(str(usb_path))
+                if img_usb is not None:
+                    usb_tags = detector.detect(img_usb, K_usb, D_usb)
+
+            pose_label = f"{pdir.name}_shot{shot_idx+1:02d}" if num_shots > 1 else pdir.name
+            obs = PoseObservation(
+                pose_name=pose_label,
+                T_base_tcp=T_base_tcp,
+                joint_angles_deg=joint_angles_deg,
+                d415_tags=d415_tags,
+                usb_tags=usb_tags,
+                joint_angles_rad=joint_angles_rad,
+                d415_path=d415_path,
+                usb_path=usb_path,
+            )
+            observations.append(obs)
 
     log.info(f"Loaded and processed {len(observations)} pose observations.")
     return observations
+
+
+def cluster_and_fuse_repeated_poses(
+    observations: list[PoseObservation],
+    K_d: np.ndarray | None = None,
+    D_d: np.ndarray | None = None,
+    K_u: np.ndarray | None = None,
+    D_u: np.ndarray | None = None,
+    pos_tol_m: float = 0.003,      # 3 mm translation tolerance
+    rot_tol_deg: float = 0.5,      # 0.5 deg rotation tolerance
+) -> tuple[list[PoseObservation], dict[str, Any]]:
+    """Groups repeated robot poses, rejects transient corner outliers, and fuses multi-observation
+    subpixel corners to suppress image sensor noise by 1 / sqrt(N).
+    
+    Returns:
+        fused_observations: List of observations with repeated captures merged into high-precision points.
+        stats: Diagnostic telemetry on repeats detected, jitter suppressed, and outlier rejections.
+    """
+    if not observations:
+        return [], {}
+
+    clusters: list[list[PoseObservation]] = []
+    for obs in observations:
+        matched = False
+        t_obs = obs.T_base_tcp[:3, 3]
+        R_obs = obs.T_base_tcp[:3, :3]
+        for cluster in clusters:
+            rep = cluster[0]
+            t_rep = rep.T_base_tcp[:3, 3]
+            R_rep = rep.T_base_tcp[:3, :3]
+            dist_m = float(np.linalg.norm(t_obs - t_rep))
+            angle_deg = float(np.linalg.norm(Rotation.from_matrix(R_obs.T @ R_rep).as_rotvec()) * 180.0 / np.pi)
+            if dist_m <= pos_tol_m and angle_deg <= rot_tol_deg:
+                cluster.append(obs)
+                matched = True
+                break
+        if not matched:
+            clusters.append([obs])
+
+    fused_observations: list[PoseObservation] = []
+    total_repeats = 0
+    jitter_estimates = []
+
+    for cluster in clusters:
+        if len(cluster) == 1:
+            fused_observations.append(cluster[0])
+            continue
+
+        total_repeats += len(cluster)
+        N = len(cluster)
+
+        # Average TCP pose
+        mean_t = np.mean([o.T_base_tcp[:3, 3] for o in cluster], axis=0)
+        R_sum = np.sum([o.T_base_tcp[:3, :3] for o in cluster], axis=0)
+        u, _, vt = np.linalg.svd(R_sum)
+        mean_R = u @ vt
+        if np.linalg.det(mean_R) < 0:
+            u[:, -1] *= -1.0
+            mean_R = u @ vt
+        T_fused_tcp = np.eye(4)
+        T_fused_tcp[:3, :3] = mean_R
+        T_fused_tcp[:3, 3] = mean_t
+
+        mean_deg = {}
+        for k in cluster[0].joint_angles_deg.keys():
+            mean_deg[k] = float(np.mean([o.joint_angles_deg.get(k, 0.0) for o in cluster]))
+        mean_rad = [
+            float(np.mean([o.joint_angles_rad[i] for o in cluster if i < len(o.joint_angles_rad)]))
+            for i in range(len(cluster[0].joint_angles_rad))
+        ]
+
+        def fuse_camera_tags(cam_attr: str, K: np.ndarray | None, D: np.ndarray | None) -> dict[int, DetectedTag]:
+            fused_tags = {}
+            all_tids = sorted(list({tid for o in cluster for tid in getattr(o, cam_attr).keys()}))
+            for tid in all_tids:
+                cand_dets = [getattr(o, cam_attr)[tid] for o in cluster if tid in getattr(o, cam_attr)]
+                cand_corners = [d.corners_px for d in cand_dets]
+                if not cand_corners:
+                    continue
+                cand_arr = np.array(cand_corners)  # (M, 4, 2)
+                M = len(cand_corners)
+                if M >= 3:
+                    med_corners = np.median(cand_arr, axis=0)
+                    dists = np.max(np.linalg.norm(cand_arr - med_corners, axis=2), axis=1)
+                    inliers = dists <= 2.0  # within 2 px of median
+                    if np.sum(inliers) >= 1:
+                        cand_arr = cand_arr[inliers]
+
+                fused_c = np.mean(cand_arr, axis=0)
+                jitter_px = float(np.mean(np.std(cand_arr, axis=0))) if len(cand_arr) > 1 else 0.0
+                jitter_estimates.append(jitter_px)
+                center_c = np.mean(fused_c, axis=0)
+
+                tag_size = TAG_SIZES_M.get(tid, DEFAULT_TAG_SIZE_M)
+                T_c_t = cand_dets[0].T_cam_tag
+                reproj_err = cand_dets[0].reprojection_error_px
+                if K is not None and D is not None:
+                    half = tag_size / 2.0
+                    obj_pts = np.array([
+                        [-half,  half, 0.0],
+                        [ half,  half, 0.0],
+                        [ half, -half, 0.0],
+                        [-half, -half, 0.0],
+                    ], dtype=np.float64)
+                    ok, rvec, tvec = cv2.solvePnP(obj_pts, fused_c, K, D, flags=cv2.SOLVEPNP_IPPE_SQUARE)
+                    if ok:
+                        R_c_t, _ = cv2.Rodrigues(rvec)
+                        T_c_t = np.eye(4)
+                        T_c_t[:3, :3] = R_c_t
+                        T_c_t[:3, 3] = tvec.ravel()
+                        proj, _ = cv2.projectPoints(obj_pts, rvec, tvec, K, D)
+                        reproj_err = float(np.mean(np.linalg.norm(proj.reshape(-1, 2) - fused_c, axis=1)))
+
+                fused_tags[tid] = DetectedTag(
+                    tag_id=tid,
+                    corners_px=fused_c,
+                    center_px=center_c,
+                    T_cam_tag=T_c_t,
+                    reprojection_error_px=reproj_err,
+                    decision_margin=float(np.mean([d.decision_margin for d in cand_dets])),
+                    corner_jitter_px=jitter_px,
+                    repeat_count=M,
+                )
+            return fused_tags
+
+        fused_d415 = fuse_camera_tags("d415_tags", K_d, D_d)
+        fused_usb = fuse_camera_tags("usb_tags", K_u, D_u)
+
+        fused_obs = PoseObservation(
+            pose_name=f"{cluster[0].pose_name}_fused_{N}x",
+            T_base_tcp=T_fused_tcp,
+            joint_angles_deg=mean_deg,
+            d415_tags=fused_d415,
+            usb_tags=fused_usb,
+            joint_angles_rad=mean_rad,
+            d415_path=cluster[0].d415_path,
+            usb_path=cluster[0].usb_path,
+        )
+        fused_observations.append(fused_obs)
+
+    avg_jitter = float(np.mean(jitter_estimates)) if jitter_estimates else 0.0
+    rep_clusters = sum(1 for c in clusters if len(c) > 1)
+    stats = {
+        "raw_poses": len(observations),
+        "fused_poses": len(fused_observations),
+        "repeated_clusters": rep_clusters,
+        "total_repeated_frames": total_repeats,
+        "avg_corner_jitter_px": round(avg_jitter, 3),
+        "theoretical_noise_reduction_pct": round((1.0 - 1.0 / np.sqrt(max(2, total_repeats / max(1, rep_clusters)))) * 100.0, 1) if total_repeats > 0 else 0.0,
+    }
+    if rep_clusters > 0:
+        log.info(f"Pose Repeat Fusion: {len(observations)} raw poses -> {len(fused_observations)} fused poses ({rep_clusters} clusters, corner jitter: {avg_jitter:.3f} px).")
+    return fused_observations, stats

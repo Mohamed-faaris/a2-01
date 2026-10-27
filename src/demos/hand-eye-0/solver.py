@@ -11,6 +11,7 @@ Supports multiple algorithmic methodologies per TESTING_PROCEDURE.md:
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass, field
 from typing import Any, Sequence
 
@@ -124,8 +125,11 @@ def solve_closed_form_rotation(tag_sample_groups: list[list[tuple[np.ndarray, np
         return np.eye(3)
 
     A_mat = np.array(eqs, dtype=np.float64)
-    _, _, vt = np.linalg.svd(A_mat)
-    q_sol = vt[-1]  # [w, x, y, z]
+    # The right singular vector of A with minimum singular value equals
+    # the eigenvector of the 4x4 matrix A.T @ A with the smallest eigenvalue.
+    cov = A_mat.T @ A_mat
+    vals, vecs = np.linalg.eigh(cov)
+    q_sol = vecs[:, 0]  # [w, x, y, z] corresponds to smallest eigenvalue
     q_sol = q_sol / np.linalg.norm(q_sol)
     return Rotation.from_quat([q_sol[1], q_sol[2], q_sol[3], q_sol[0]]).as_matrix()
 
@@ -161,12 +165,20 @@ def solve_handeye_pipeline(
     K_d, D_d, _ = load_camera_intrinsics(DEFAULT_D415_CALIB)
     K_u, D_u, _ = load_camera_intrinsics(DEFAULT_USB_CALIB)
 
-    # 1. Collect all tool sightings
+    # 1. Collect all tool sightings with uncertainty/repeat weighting
     tool_samples = []
     tool_samples_usb = []
     for obs in observations:
         for tid, det in obs.d415_tags.items():
             if tid in TOOL_TCP_TAGS:
+                rep = getattr(det, "repeat_count", 1)
+                jitter = getattr(det, "corner_jitter_px", 0.0)
+                if rep > 1:
+                    jitter_scale = 0.35 / max(jitter, 0.08) if jitter > 0.0 else 1.0
+                    jitter_scale = float(np.clip(jitter_scale, 0.5, 2.0))
+                    w = float(np.clip(math.sqrt(rep) * jitter_scale, 1.0, 5.0))
+                else:
+                    w = 1.0
                 tool_samples.append({
                     "pose": obs.pose_name,
                     "tid": tid,
@@ -174,9 +186,20 @@ def solve_handeye_pipeline(
                     "T_c_t": det.T_cam_tag,
                     "corners_px": det.corners_px,
                     "camera": "d415",
+                    "weight": w,
+                    "repeat_count": rep,
+                    "jitter_px": jitter,
                 })
         for tid, det in obs.usb_tags.items():
             if tid in TOOL_TCP_TAGS:
+                rep = getattr(det, "repeat_count", 1)
+                jitter = getattr(det, "corner_jitter_px", 0.0)
+                if rep > 1:
+                    jitter_scale = 0.35 / max(jitter, 0.08) if jitter > 0.0 else 1.0
+                    jitter_scale = float(np.clip(jitter_scale, 0.5, 2.0))
+                    w = float(np.clip(math.sqrt(rep) * jitter_scale, 1.0, 5.0))
+                else:
+                    w = 1.0
                 tool_samples_usb.append({
                     "pose": obs.pose_name,
                     "tid": tid,
@@ -184,6 +207,9 @@ def solve_handeye_pipeline(
                     "T_c_t": det.T_cam_tag,
                     "corners_px": det.corners_px,
                     "camera": "usb",
+                    "weight": w,
+                    "repeat_count": rep,
+                    "jitter_px": jitter,
                 })
 
     if not tool_samples and not tool_samples_usb:
@@ -273,11 +299,12 @@ def solve_handeye_pipeline(
             residuals = []
             for s in tool_samples:
                 tid = s["tid"]
+                w = s.get("weight", 1.0)
                 T_pred = s["T_b_tcp"] @ cur_mounts[tid]
                 T_meas = T_c @ s["T_c_t"]
-                pos_err = (T_pred[:3, 3] - T_meas[:3, 3]) * 1000.0
+                pos_err = (T_pred[:3, 3] - T_meas[:3, 3]) * 1000.0 * w
                 R_diff = T_pred[:3, :3].T @ T_meas[:3, :3]
-                angle_deg = np.linalg.norm(Rotation.from_matrix(R_diff).as_rotvec()) * 180.0 / np.pi
+                angle_deg = np.linalg.norm(Rotation.from_matrix(R_diff).as_rotvec()) * 180.0 / np.pi * w
                 residuals.extend(pos_err.tolist())
                 residuals.append(angle_deg * 2.0)
             return np.array(residuals)
@@ -328,7 +355,7 @@ def solve_handeye_pipeline(
                 tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
 
                 proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
-                diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel() * s.get("weight", 1.0)
                 residuals.extend(diff)
             return np.array(residuals)
 
@@ -388,7 +415,7 @@ def solve_handeye_pipeline(
                     tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
 
                     proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
-                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel() * s.get("weight", 1.0)
                     residuals.extend(diff)
                 return np.array(residuals)
 
@@ -442,7 +469,7 @@ def solve_handeye_pipeline(
                     tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
 
                     proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
-                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel() * s.get("weight", 1.0)
                     residuals.extend(diff)
                 return np.array(residuals)
 
@@ -553,7 +580,7 @@ def solve_handeye_pipeline(
                     rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
                     tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
                     proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
-                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel() * s.get("weight", 1.0)
                     residuals.extend(diff)
 
                 # USB camera residuals
@@ -568,7 +595,7 @@ def solve_handeye_pipeline(
                         rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
                         tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
                         proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_u, D_u)
-                        diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                        diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel() * s.get("weight", 1.0)
                         residuals.extend(diff)
 
                 return np.array(residuals)
@@ -679,7 +706,7 @@ def solve_handeye_pipeline(
                     rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
                     tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
                     proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
-                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel() * s.get("weight", 1.0)
                     residuals.extend(diff)
                 return np.array(residuals)
 

@@ -38,7 +38,7 @@ from config import (
     DEFAULT_USB_CALIB,
     load_camera_intrinsics,
 )
-from detector import PoseObservation, load_all_poses
+from detector import PoseObservation, load_all_poses, cluster_and_fuse_repeated_poses
 from solver import (
     HandEyeCalibrationResult,
     chordal_mean_rotation,
@@ -410,7 +410,10 @@ def generate_validation_suite(
     K_d, D_d, _ = load_camera_intrinsics(DEFAULT_D415_CALIB)
     K_u, D_u, _ = load_camera_intrinsics(DEFAULT_USB_CALIB)
     observations = load_all_poses(dataset_dir, K_d, D_d, K_u, D_u)
-    log.info(f"Loaded {len(observations)} pose observations.")
+    log.info(f"Loaded {len(observations)} raw pose observations.")
+    observations, repeat_stats = cluster_and_fuse_repeated_poses(observations, K_d, D_d, K_u, D_u)
+    if repeat_stats.get("repeated_clusters", 0) > 0:
+        log.info(f"Repeated Pose Fusion: {repeat_stats['raw_poses']} raw -> {len(observations)} fused ({repeat_stats['repeated_clusters']} clusters, jitter: {repeat_stats['avg_corner_jitter_px']:.3f} px).")
 
     # 1. Full Dataset Calibration
     log.info("Running full coplanar plate calibration...")
