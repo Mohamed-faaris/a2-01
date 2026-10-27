@@ -1,18 +1,18 @@
 calibrated: true
 method: 2d_corner_ba
-runtime_s: 9.8213
+runtime_s: 6.791
 metrics:
-  reproj_rms_px: 1.331
-  reproj_mean_px: 1.069
-  reproj_max_px: 4.51
-  pos_rms_mm: 35.91
-  pos_mean_mm: 32.73
-  pos_max_mm: 74.19
-  rot_rms_deg: 2.83
-  rot_mean_deg: 1.93
-  rot_max_deg: 26.99
+  reproj_rms_px: 30.813
+  reproj_mean_px: 20.342
+  reproj_max_px: 90.955
+  pos_rms_mm: 54.2
+  pos_mean_mm: 49.49
+  pos_max_mm: 109.71
+  rot_rms_deg: 5.32
+  rot_mean_deg: 3.67
+  rot_max_deg: 53.05
   box_coplanarity_rmse_mm: 0.0
-  num_tool_sightings: 181
+  num_tool_sightings: 353
 cameras:
   d415:
     T_base_camera:
@@ -41,6 +41,33 @@ cameras:
     - 0.4891017689972757
     - -0.323522220701672
     - -0.3047054771495138
+  usb:
+    T_base_camera:
+    - - -0.20271287271515245
+      - 0.5566341054539448
+      - -0.8056463019719368
+      - 1.7660648010297322
+    - - 0.0529972111841796
+      - 0.8277581019814442
+      - 0.5585766019184625
+      - -0.8737558841796217
+    - - 0.9778030409250474
+      - 0.07053366040099968
+      - -0.1972972780049603
+      - 0.8086790863423515
+    - - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+    position_m:
+    - 1.7660648010297322
+    - -0.8737558841796217
+    - 0.8086790863423515
+    quaternion_xyzw:
+    - 0.20422187891381982
+    - 0.7462855104954064
+    - 0.21074717834928897
+    - -0.5974420372013782
 tool_mounts_in_tcp:
   '6':
     T_tcp_tag:

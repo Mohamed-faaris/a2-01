@@ -164,8 +164,10 @@ def load_all_poses(
             if img_d415 is not None:
                 d415_tags = detector.detect(img_d415, K_d415, D_d415)
 
-        # USB Image (accepts usb.png or down.png)
+        # USB / Secondary Image (accepts usb.png, see3.png, or down.png)
         usb_img_path = pdir / "usb.png"
+        if not usb_img_path.is_file():
+            usb_img_path = pdir / "see3.png"
         if not usb_img_path.is_file():
             usb_img_path = pdir / "down.png"
         usb_tags = {}

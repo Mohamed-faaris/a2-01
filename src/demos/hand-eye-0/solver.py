@@ -162,6 +162,7 @@ def solve_handeye_pipeline(
 
     # 1. Collect all tool sightings
     tool_samples = []
+    tool_samples_usb = []
     for obs in observations:
         for tid, det in obs.d415_tags.items():
             if tid in TOOL_TCP_TAGS:
@@ -171,9 +172,20 @@ def solve_handeye_pipeline(
                     "T_b_tcp": obs.T_base_tcp,
                     "T_c_t": det.T_cam_tag,
                     "corners_px": det.corners_px,
+                    "camera": "d415",
+                })
+        for tid, det in obs.usb_tags.items():
+            if tid in TOOL_TCP_TAGS:
+                tool_samples_usb.append({
+                    "pose": obs.pose_name,
+                    "tid": tid,
+                    "T_b_tcp": obs.T_base_tcp,
+                    "T_c_t": det.T_cam_tag,
+                    "corners_px": det.corners_px,
+                    "camera": "usb",
                 })
 
-    if not tool_samples:
+    if not tool_samples and not tool_samples_usb:
         raise ValueError("No tool tag sightings found in observations.")
 
     tag_list = sorted(list({s["tid"] for s in tool_samples}))
@@ -446,11 +458,7 @@ def solve_handeye_pipeline(
     elif method == "coplanar_plate_ba":
         # Coplanar Tool Plate Model:
         # Tool tags 6 to 13 lie on a common planar fixture and share the identical normal vector.
-        # Parameter vector:
-        #   1. r_cam (3), t_cam (3)
-        #   2. r_plate (3), t_plate (3) [Plate 6-DOF frame in TCP]
-        #   3. For each plate tag i: (u_i, v_i, yaw_i) [2D position on plate with Z=0, and in-plane yaw]
-        #   4. For each other tool tag j: r_m (3), t_m (3) [free 6-DOF]
+        # When secondary/USB camera sightings are present, performs Joint Dual-Camera Bundle Adjustment.
         plate_tags = sorted([t for t in tag_list if t in range(6, 14)])
         other_tags = sorted([t for t in tag_list if t not in plate_tags])
 
@@ -459,12 +467,30 @@ def solve_handeye_pipeline(
             c_plate_init = np.mean([init_mounts[t][:3, 3] for t in plate_tags], axis=0)
             r_plate_init = Rotation.from_matrix(R_plate_init).as_rotvec()
 
-            params_init = [
-                Rotation.from_matrix(R_init).as_rotvec(),
-                t_cam_init,
-                r_plate_init,
-                c_plate_init,
-            ]
+            use_dual = len(tool_samples_usb) >= 6
+            if use_dual:
+                usb_groups = [
+                    [(s["T_b_tcp"], s["T_c_t"]) for s in tool_samples_usb if s["tid"] == tid]
+                    for tid in plate_tags if any(s["tid"] == tid for s in tool_samples_usb)
+                ]
+                R_u_init = solve_closed_form_rotation(usb_groups) if usb_groups else R_init
+                t_u_init = np.array([1.766, -0.874, 0.809])
+                params_init = [
+                    Rotation.from_matrix(R_init).as_rotvec(),
+                    t_cam_init,
+                    Rotation.from_matrix(R_u_init).as_rotvec(),
+                    t_u_init,
+                    r_plate_init,
+                    c_plate_init,
+                ]
+            else:
+                params_init = [
+                    Rotation.from_matrix(R_init).as_rotvec(),
+                    t_cam_init,
+                    r_plate_init,
+                    c_plate_init,
+                ]
+
             for t in plate_tags:
                 p_loc = R_plate_init.T @ (init_mounts[t][:3, 3] - c_plate_init)
                 R_rel = R_plate_init.T @ init_mounts[t][:3, :3]
@@ -483,11 +509,20 @@ def solve_handeye_pipeline(
                 T_c = np.eye(4); T_c[:3, :3] = R_c; T_c[:3, 3] = t_c
                 T_c_b = np.linalg.inv(T_c)
 
-                R_pl = Rotation.from_rotvec(p[6:9]).as_matrix()
-                t_pl = p[9:12]
+                if use_dual:
+                    R_u = Rotation.from_rotvec(p[6:9]).as_matrix()
+                    t_u = p[9:12]
+                    T_u = np.eye(4); T_u[:3, :3] = R_u; T_u[:3, 3] = t_u
+                    T_u_b = np.linalg.inv(T_u)
+                    R_pl = Rotation.from_rotvec(p[12:15]).as_matrix()
+                    t_pl = p[15:18]
+                    idx_p = 18
+                else:
+                    R_pl = Rotation.from_rotvec(p[6:9]).as_matrix()
+                    t_pl = p[9:12]
+                    idx_p = 12
 
                 cur_mounts = {}
-                idx_p = 12
                 for t in plate_tags:
                     u, v, yaw = p[idx_p], p[idx_p + 1], p[idx_p + 2]
                     idx_p += 3
@@ -505,8 +540,11 @@ def solve_handeye_pipeline(
                     cur_mounts[t] = T_m
 
                 residuals = []
+                # D415 residuals
                 for s in tool_samples:
                     tid = s["tid"]
+                    if tid not in cur_mounts:
+                        continue
                     corners_local = get_tag_corners_local(tid)
                     T_b_tag = s["T_b_tcp"] @ cur_mounts[tid]
                     T_c_tag = T_c_b @ T_b_tag
@@ -515,17 +553,42 @@ def solve_handeye_pipeline(
                     proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
                     diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
                     residuals.extend(diff)
+
+                # USB camera residuals
+                if use_dual:
+                    for s in tool_samples_usb:
+                        tid = s["tid"]
+                        if tid not in cur_mounts:
+                            continue
+                        corners_local = get_tag_corners_local(tid)
+                        T_b_tag = s["T_b_tcp"] @ cur_mounts[tid]
+                        T_c_tag = T_u_b @ T_b_tag
+                        rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
+                        tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
+                        proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_u, D_u)
+                        diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                        residuals.extend(diff)
+
                 return np.array(residuals)
 
-            opt = least_squares(res_coplanar, x0, loss="cauchy", f_scale=1.5, max_nfev=300)
+            opt = least_squares(res_coplanar, x0, loss="cauchy", f_scale=1.5, max_nfev=350)
             R_cam_opt = Rotation.from_rotvec(opt.x[0:3]).as_matrix()
             T_base_d415[:3, :3] = R_cam_opt
             T_base_d415[:3, 3] = opt.x[3:6]
 
-            R_pl_opt = Rotation.from_rotvec(opt.x[6:9]).as_matrix()
-            t_pl_opt = opt.x[9:12]
+            if use_dual:
+                R_usb_opt = Rotation.from_rotvec(opt.x[6:9]).as_matrix()
+                T_base_usb = np.eye(4)
+                T_base_usb[:3, :3] = R_usb_opt
+                T_base_usb[:3, 3] = opt.x[9:12]
+                R_pl_opt = Rotation.from_rotvec(opt.x[12:15]).as_matrix()
+                t_pl_opt = opt.x[15:18]
+                idx_p = 18
+            else:
+                R_pl_opt = Rotation.from_rotvec(opt.x[6:9]).as_matrix()
+                t_pl_opt = opt.x[9:12]
+                idx_p = 12
 
-            idx_p = 12
             for t in plate_tags:
                 u, v, yaw = opt.x[idx_p], opt.x[idx_p + 1], opt.x[idx_p + 2]
                 idx_p += 3
@@ -643,31 +706,32 @@ def solve_handeye_pipeline(
     box_center = np.array(primary_box["center"]) if primary_box else None
     box_rmse = float(primary_box["coplanarity_rmse_mm"]) if primary_box else 0.0
 
-    # 5. Solve USB Camera Extrinsics
-    T_base_usb = None
-    usb_obj_pts = []
-    usb_img_pts = []
+    # 5. Solve USB Camera Extrinsics (if not already optimized jointly)
+    if "T_base_usb" not in locals() or T_base_usb is None:
+        T_base_usb = None
+        usb_obj_pts = []
+        usb_img_pts = []
 
-    for obs in observations:
-        for tid, d in obs.usb_tags.items():
-            if tid in static_tag_poses:
-                T_b_tag = static_tag_poses[tid]
-                corners_base = (T_b_tag[:3, :3] @ get_tag_corners_local(tid).T).T + T_b_tag[:3, 3]
-                for p_b, p_px in zip(corners_base, d.corners_px):
-                    usb_obj_pts.append(p_b)
-                    usb_img_pts.append(p_px)
+        for obs in observations:
+            for tid, d in obs.usb_tags.items():
+                if tid in static_tag_poses:
+                    T_b_tag = static_tag_poses[tid]
+                    corners_base = (T_b_tag[:3, :3] @ get_tag_corners_local(tid).T).T + T_b_tag[:3, 3]
+                    for p_b, p_px in zip(corners_base, d.corners_px):
+                        usb_obj_pts.append(p_b)
+                        usb_img_pts.append(p_px)
 
-    if len(usb_obj_pts) >= 6:
-        ok, rvec_u, tvec_u = cv2.solvePnP(
-            np.array(usb_obj_pts, dtype=np.float64),
-            np.array(usb_img_pts, dtype=np.float64),
-            K_u, D_u, flags=cv2.SOLVEPNP_ITERATIVE
-        )
-        if ok:
-            R_usb_base, _ = cv2.Rodrigues(rvec_u)
-            t_usb_base = tvec_u.ravel()
-            T_u_b = np.eye(4); T_u_b[:3, :3] = R_usb_base; T_u_b[:3, 3] = t_usb_base
-            T_base_usb = np.linalg.inv(T_u_b)
+        if len(usb_obj_pts) >= 6:
+            ok, rvec_u, tvec_u = cv2.solvePnP(
+                np.array(usb_obj_pts, dtype=np.float64),
+                np.array(usb_img_pts, dtype=np.float64),
+                K_u, D_u, flags=cv2.SOLVEPNP_ITERATIVE
+            )
+            if ok:
+                R_usb_base, _ = cv2.Rodrigues(rvec_u)
+                t_usb_base = tvec_u.ravel()
+                T_u_b = np.eye(4); T_u_b[:3, :3] = R_usb_base; T_u_b[:3, 3] = t_usb_base
+                T_base_usb = np.linalg.inv(T_u_b)
 
     # 6. Comprehensive Error Evaluation (3D Residuals + 2D Reprojection)
     T_c_b = np.linalg.inv(T_base_d415)
@@ -699,12 +763,47 @@ def solve_handeye_pipeline(
         per_pose_errors.append({
             "pose": s["pose"],
             "tag_id": tid,
+            "camera": "d415",
             "pos_err_mm": pe,
             "rot_err_deg": re,
             "reproj_err_px": reproj_px,
             "predicted_pos_mm": (T_pred[:3, 3] * 1000.0).tolist(),
             "measured_pos_mm": (T_meas[:3, 3] * 1000.0).tolist(),
         })
+
+    # Evaluate USB camera sightings if available
+    if T_base_usb is not None and tool_samples_usb:
+        T_u_b = np.linalg.inv(T_base_usb)
+        for s in tool_samples_usb:
+            tid = s["tid"]
+            if tid not in final_mounts:
+                continue
+            T_pred = s["T_b_tcp"] @ final_mounts[tid]
+            T_meas = T_base_usb @ s["T_c_t"]
+            pe = float(np.linalg.norm(T_pred[:3, 3] - T_meas[:3, 3]) * 1000.0)
+            re = float(np.linalg.norm(Rotation.from_matrix(T_pred[:3, :3].T @ T_meas[:3, :3]).as_rotvec()) * 180.0 / np.pi)
+
+            T_u_tag = T_u_b @ T_pred
+            rvec_t, _ = cv2.Rodrigues(T_u_tag[:3, :3])
+            tvec_t = T_u_tag[:3, 3].reshape(3, 1)
+            corners_local = get_tag_corners_local(tid)
+            proj, _ = cv2.projectPoints(corners_local, rvec_t, tvec_t, K_u, D_u)
+            reproj_px = float(np.mean(np.linalg.norm(proj.reshape(-1, 2) - s["corners_px"], axis=1)))
+
+            pos_errs.append(pe)
+            rot_errs.append(re)
+            reproj_errs.append(reproj_px)
+
+            per_pose_errors.append({
+                "pose": s["pose"] + "_usb",
+                "tag_id": tid,
+                "camera": "usb",
+                "pos_err_mm": pe,
+                "rot_err_deg": re,
+                "reproj_err_px": reproj_px,
+                "predicted_pos_mm": (T_pred[:3, 3] * 1000.0).tolist(),
+                "measured_pos_mm": (T_meas[:3, 3] * 1000.0).tolist(),
+            })
 
     pos_errs_arr = np.array(pos_errs)
     rot_errs_arr = np.array(rot_errs)
@@ -731,7 +830,7 @@ def solve_handeye_pipeline(
         reproj_rms_px=float(np.sqrt(np.mean(reproj_errs_arr ** 2))),
         reproj_mean_px=float(np.mean(reproj_errs_arr)),
         reproj_max_px=float(np.max(reproj_errs_arr)),
-        num_tool_sightings=len(tool_samples),
+        num_tool_sightings=len(pos_errs),
         per_pose_errors=per_pose_errors,
         runtime_s=runtime_s,
     )

@@ -6,10 +6,10 @@
 
 | Algorithm / Methodology | Status | Reproj RMS [px] | Reproj Mean [px] | 3D Pos RMS [mm] | 3D Rot RMS [deg] | Runtime [s] |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| `algo_3d_pose_cauchy` | **FAIL** | **`3.661 px`** | `3.164 px` | `11.85 mm` | `2.31°` | `35.308 s` |
-| `algo_2d_corner_ba` | **FAIL** | **`1.331 px`** | `1.069 px` | `35.91 mm` | `2.83°` | `9.821 s` |
-| `algo_rigid_cube_ba` | **FAIL** | **`1.331 px`** | `1.069 px` | `35.91 mm` | `2.83°` | `7.168 s` |
-| `algo_coplanar_plate_ba` | **FAIL** | **`1.392 px`** | `1.171 px` | `35.40 mm` | `3.77°` | `3.936 s` |
+| `algo_3d_pose_cauchy` | **FAIL** | **`35.669 px`** | `24.621 px` | `49.97 mm` | `4.88°` | `31.793 s` |
+| `algo_2d_corner_ba` | **FAIL** | **`30.813 px`** | `20.342 px` | `54.20 mm` | `5.32°` | `6.791 s` |
+| `algo_rigid_cube_ba` | **FAIL** | **`30.813 px`** | `20.342 px` | `54.20 mm` | `5.32°` | `6.394 s` |
+| `algo_coplanar_plate_ba` | **FAIL** | **`1.290 px`** | `1.115 px` | `32.53 mm` | `4.99°` | `11.186 s` |
 
 ---
 
