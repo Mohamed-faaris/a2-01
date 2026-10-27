@@ -156,13 +156,21 @@ You can toggle individual 3D elements on or off:
 - `[x] Camera Sighting Rays`: Yellow sighting lines from camera sensors to tags.
 - `[x] Ground Grid`: Metric ground reference grid at $Z=0$.
 
-### 🎥 Camera POV View Presets
-Buttons to snap the 3D viewport to standard viewpoints:
-- **Home 3D View**: Standard isometric bird's-eye view.
+### 🎥 Camera POV Views & Image Overlay
+Buttons and controls to snap the 3D viewport to standard viewpoints and overlay real captured images:
+- **Home 3D View**: Standard isometric bird's-eye view (resets orbit and clears overlay).
 - **Top-Down View**: Looking directly down the $+Z$ axis at the table.
-- **Look from D415 Camera**: First-person perspective looking out from the RealSense D415 sensor.
-- **Look from USB Camera**: First-person perspective looking out from the USB context camera.
+- **Look from D415 Camera**: First-person perspective looking out from the RealSense D415 sensor, with field-of-view and aspect ratio matched to the physical camera optics.
+- **Look from USB Camera**: First-person perspective looking out from the See3CAM USB camera.
 - **Follow Robot TCP**: Third-person chase camera locked to the end-effector.
+- **Overlay Image Mode**:
+  - `Background (Look-Through)`: Overlays the actual captured photo as the viewport background behind the 3D robot arm, tags, and CAD models.
+  - `Frustum Plane (3D)`: Projects the captured photo directly onto the 3D camera frustum plane in space.
+  - `Both (Background + Frustum)`: Activates both look-through background and 3D frustum image plane simultaneously.
+  - `Disabled`: Disables image overlay.
+- **Show Tag Annotations**: Draws detected AprilTag corner boundaries and tag ID labels on the image overlay.
+- **Frustum Image Plane (m)**: Adjusts the metric distance of the 3D image quad along the camera optical axis ($0.2\text{ m}$ to $3.0\text{ m}$).
+- **Clear Background Image**: Instantly clears any background image overlay.
 
 ### 📊 Live Telemetry Card
 Displays real-time telemetry for the selected pose:
