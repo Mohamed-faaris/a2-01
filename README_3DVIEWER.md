@@ -81,6 +81,7 @@ Once started, open your web browser to:
 | **`--calib`** | Path / Dir | `src/demos/hand-eye-0/outputs/handeye_calibration.json` | Path to `handeye_calibration.json`, `scene.json`, or an output directory (e.g. `outputs/dobot-vision-011`). |
 | **`--dataset`** | Path | `tmp/eye-hand/008` | Path to the directory containing pose subfolders with `joint_angles.yaml` and camera images. |
 | **`--resources`**| Path | `/home/mfk01/Downloads/Robotics_Resources/cr5` | Directory containing DOBOT CR5A STL CAD meshes and URDF files. |
+| **`--points`** | Path | Auto (`001.jsonl`) | Path to additional points or waypoints file (`.jsonl` or `.json`), e.g. `output-dobots/pose-above-box/001.jsonl`. |
 | **`--port`** | int | `8085` | Web server port for the browser UI. |
 | **`--host`** | str | `0.0.0.0` | Server bind IP (`0.0.0.0` enables remote LAN access). |
 
@@ -123,7 +124,15 @@ To inspect how different optimization algorithms align the scene:
     --dataset inputs/dobot-vision/011
   ```
 
-### 3. Change Port If Port 8085 Is Busy
+### 3. Load Dataset with Additional Box Corner Waypoints
+```bash
+.venv/bin/python src/demos/hand-eye-0/viewer3d.py \
+  --calib outputs/dobot-vision-024 \
+  --dataset inputs/dobot-vision/024 \
+  --points output-dobots/pose-above-box/001.jsonl
+```
+
+### 4. Change Port If Port 8085 Is Busy
 ```bash
 .venv/bin/python src/demos/hand-eye-0/viewer3d.py --port 8090
 ```

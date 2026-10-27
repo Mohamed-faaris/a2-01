@@ -114,6 +114,7 @@ class HandEye3DViewer:
         calib_json_path: Path,
         dataset_dir: Path,
         resource_dir: Path = DEFAULT_CR5_RESOURCE_DIR,
+        points_path: Optional[Path | str] = None,
         host: str = "0.0.0.0",
         port: int = 8085,
     ) -> None:
@@ -147,6 +148,22 @@ class HandEye3DViewer:
         self.pose_names = [obs.pose_name for obs in self.observations]
         self.current_pose_idx = 0
 
+        # Additional points / waypoints (e.g. box corners JSONL)
+        if points_path is None:
+            candidates = [
+                REPO_ROOT / "output-dobots/pose-above-box/001.jsonl",
+                Path("output-dobots/pose-above-box/001.jsonl"),
+                REPO_ROOT / "outputs/poses/box_corners.jsonl",
+                Path("outputs/poses/box_corners.jsonl"),
+            ]
+            for c in candidates:
+                if c.is_file():
+                    points_path = c
+                    break
+        self.points_path: Optional[Path] = Path(points_path) if points_path else None
+        self.additional_points: list[dict[str, Any]] = []
+        self._load_additional_points(self.points_path)
+
         # Preload CAD meshes if available
         self.cad_meshes: dict[str, trimesh.Trimesh] = {}
         self._load_cad_meshes()
@@ -163,6 +180,117 @@ class HandEye3DViewer:
         self._setup_gui()
         self.update_scene()
         self.update_telemetry()
+
+    def _load_additional_points(self, path: Optional[Path | str]) -> None:
+        """Parses additional 3D points/poses from a .jsonl or .json file."""
+        self.additional_points = []
+        if not path:
+            return
+        p = Path(path)
+        if not p.is_file():
+            log.warning(f"Additional points file not found: {p}")
+            return
+
+        records: list[tuple[int, dict[str, Any]]] = []
+        try:
+            if p.suffix.lower() == ".jsonl":
+                with open(p, "r", encoding="utf-8") as f:
+                    for idx, line in enumerate(f, 1):
+                        line_str = line.strip()
+                        if not line_str:
+                            continue
+                        try:
+                            item = json.loads(line_str)
+                            records.append((idx, item))
+                        except json.JSONDecodeError:
+                            continue
+            elif p.suffix.lower() == ".json":
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, list):
+                    for idx, item in enumerate(data, 1):
+                        if isinstance(item, dict):
+                            records.append((idx, item))
+                elif isinstance(data, dict):
+                    for idx, (k, item) in enumerate(data.items(), 1):
+                        if isinstance(item, dict):
+                            item["name"] = item.get("name", str(k))
+                            records.append((idx, item))
+        except Exception as e:
+            log.warning(f"Could not read points file {p}: {e}")
+            return
+
+        parsed_points: list[dict[str, Any]] = []
+        for idx, item in records:
+            name = item.get("name") or f"pt_{idx:02d}"
+            pos: Optional[list[float]] = None
+            rpy: Optional[list[float]] = None
+
+            if "pose" in item and isinstance(item["pose"], (list, tuple)):
+                vals = [float(v) for v in item["pose"]]
+                pos = vals[:3]
+                if len(vals) >= 6:
+                    rpy = vals[3:6]
+            elif "point" in item and isinstance(item["point"], (list, tuple)):
+                pos = [float(v) for v in item["point"][:3]]
+            elif "position" in item and isinstance(item["position"], (list, tuple)):
+                pos = [float(v) for v in item["position"][:3]]
+            elif "position_m" in item and isinstance(item["position_m"], (list, tuple)):
+                pos = [float(v) * 1000.0 for v in item["position_m"][:3]]
+            elif all(k in item for k in ("x", "y", "z")):
+                pos = [float(item["x"]), float(item["y"]), float(item["z"])]
+                if all(k in item for k in ("rx", "ry", "rz")):
+                    rpy = [float(item["rx"]), float(item["ry"]), float(item["rz"])]
+
+            if pos is None:
+                continue
+
+            # Auto-detect mm vs meters (values > 10.0 indicate millimeters)
+            if any(abs(v) > 10.0 for v in pos):
+                pos_m = [v / 1000.0 for v in pos]
+                pos_mm = list(pos)
+            else:
+                pos_m = list(pos)
+                pos_mm = [v * 1000.0 for v in pos]
+
+            # Orientation quaternion for Viser
+            q_wxyz: Optional[tuple[float, float, float, float]] = None
+            if rpy is not None:
+                try:
+                    q = Rotation.from_euler("xyz", rpy, degrees=True).as_quat()
+                    q_wxyz = (float(q[3]), float(q[0]), float(q[1]), float(q[2]))
+                except Exception:
+                    pass
+
+            parsed_points.append({
+                "id": f"pt_{idx:02d}",
+                "name": name,
+                "pos_m": pos_m,
+                "pos_mm": pos_mm,
+                "rpy": rpy,
+                "wxyz": q_wxyz,
+            })
+
+        self.additional_points = parsed_points
+        log.info(f"Loaded {len(self.additional_points)} additional points from: {p}")
+
+    def _get_points_info_markdown(self) -> str:
+        """Markdown telemetry snippet for additional points GUI folder."""
+        if not self.additional_points:
+            src = f"`{self.points_path}`" if self.points_path else "(None)"
+            return f"**Status**: No points loaded.\n- Source: {src}"
+
+        pts = [np.array(p["pos_m"]) for p in self.additional_points]
+        total_len_mm = 0.0
+        for i in range(len(pts) - 1):
+            total_len_mm += float(np.linalg.norm(pts[i + 1] - pts[i]) * 1000.0)
+
+        p_name = self.points_path.name if self.points_path else "points"
+        return (
+            f"**File**: `{p_name}`\n"
+            f"- **Loaded Points**: `{len(self.additional_points)}`\n"
+            f"- **Path Length**: `{total_len_mm:.1f} mm`\n"
+        )
 
     def _load_cad_meshes(self) -> None:
         """Pre-loads STL meshes from robotics resources directory if present."""
@@ -261,6 +389,7 @@ class HandEye3DViewer:
             self.gui_show_frames = server.gui.add_checkbox("Joint Axes Frames", initial_value=True)
             self.gui_show_tool_tags = server.gui.add_checkbox("Tool Tags (TCP)", initial_value=True)
             self.gui_show_static_tags = server.gui.add_checkbox("Static Tags (Base & Box)", initial_value=True)
+            self.gui_show_points = server.gui.add_checkbox("Additional Points / Waypoints", initial_value=True)
             self.gui_show_cameras = server.gui.add_checkbox("Camera Frustums", initial_value=True)
             self.gui_show_rays = server.gui.add_checkbox("Camera Sighting Rays", initial_value=True)
             self.gui_show_grid = server.gui.add_checkbox("Ground Grid", initial_value=True)
@@ -270,11 +399,43 @@ class HandEye3DViewer:
                 self.gui_show_frames,
                 self.gui_show_tool_tags,
                 self.gui_show_static_tags,
+                self.gui_show_points,
                 self.gui_show_cameras,
                 self.gui_show_rays,
                 self.gui_show_grid,
             ]:
                 cb.on_update(lambda _: self.update_scene())
+
+        # Additional Points / Waypoints Folder
+        with server.gui.add_folder("📍 Additional Points / Waypoints"):
+            self.gui_show_point_labels = server.gui.add_checkbox("Point Labels", initial_value=True)
+            self.gui_show_point_frames = server.gui.add_checkbox("TCP Orientation Frames", initial_value=True)
+            self.gui_show_point_path = server.gui.add_checkbox("Trajectory Path Lines", initial_value=True)
+            self.gui_slider_point_radius = server.gui.add_slider(
+                "Point Radius (mm)", min=3.0, max=30.0, step=1.0, initial_value=12.0
+            )
+            self.gui_points_path = server.gui.add_text(
+                "Points File (.jsonl / .json)", initial_value=str(self.points_path or "")
+            )
+            self.gui_btn_reload_points = server.gui.add_button("🔄 Load / Refresh Points")
+            self.gui_points_info = server.gui.add_markdown(self._get_points_info_markdown())
+
+            for ctrl in [
+                self.gui_show_point_labels,
+                self.gui_show_point_frames,
+                self.gui_show_point_path,
+                self.gui_slider_point_radius,
+            ]:
+                ctrl.on_update(lambda _: self.update_scene())
+
+            @self.gui_btn_reload_points.on_click
+            def _(_) -> None:
+                new_path_str = self.gui_points_path.value.strip()
+                if new_path_str:
+                    self.points_path = Path(new_path_str)
+                    self._load_additional_points(self.points_path)
+                    self.gui_points_info.content = self._get_points_info_markdown()
+                    self.update_scene()
 
         # Camera POV Shortcuts Folder
         with server.gui.add_folder("🎥 Camera POV Views"):
@@ -426,6 +587,83 @@ class HandEye3DViewer:
             # 6. Sighting Rays
             if self.gui_show_rays.value:
                 self._render_sighting_rays(obs)
+
+            # 7. Additional Points / Waypoints
+            if self.gui_show_points.value:
+                self._render_additional_points()
+
+    def _render_additional_points(self) -> None:
+        """Renders user-loaded additional points/waypoints and trajectory path in 3D."""
+        if not self.additional_points:
+            return
+
+        radius = float(self.gui_slider_point_radius.value) / 1000.0  # mm to m
+        show_labels = self.gui_show_point_labels.value
+        show_frames = self.gui_show_point_frames.value
+        show_path = self.gui_show_point_path.value
+
+        pts_m = [np.array(pt["pos_m"]) for pt in self.additional_points]
+
+        for pt in self.additional_points:
+            pos = tuple(pt["pos_m"])
+            node_prefix = f"/waypoints/{pt['id']}"
+
+            # Distinct palette: approach (amber) vs retract (pink) vs standard (mint/cyan)
+            name_lower = pt["name"].lower()
+            if "approach" in name_lower:
+                col = (255, 180, 0)
+            elif "retract" in name_lower:
+                col = (245, 80, 180)
+            elif "box2" in name_lower:
+                col = (180, 90, 250)
+            else:
+                col = (0, 230, 170)
+
+            # Sphere marker
+            self.server.scene.add_icosphere(
+                f"{node_prefix}/sphere",
+                radius=radius,
+                position=pos,
+                color=col,
+            )
+
+            # Orientation frame (shows end-effector approach direction)
+            if show_frames and pt["wxyz"] is not None:
+                self.server.scene.add_frame(
+                    f"{node_prefix}/frame",
+                    wxyz=pt["wxyz"],
+                    position=pos,
+                    axes_length=0.045,
+                    axes_radius=0.0025,
+                )
+
+            # Waypoint label
+            if show_labels:
+                x_mm, y_mm, z_mm = pt["pos_mm"]
+                self.server.scene.add_label(
+                    f"{node_prefix}/label",
+                    text=f"📍 {pt['name']} [{x_mm:.0f}, {y_mm:.0f}, {z_mm:.0f}]",
+                    position=tuple(np.array(pos) + np.array([0, 0, 0.035])),
+                )
+
+        # Draw trajectory lines connecting waypoints in sequence
+        if show_path and len(pts_m) > 1:
+            for i in range(len(pts_m) - 1):
+                p1 = pts_m[i]
+                p2 = pts_m[i + 1]
+                diff = p2 - p1
+                dist = float(np.linalg.norm(diff))
+                if dist > 1e-4:
+                    center = (p1 + p2) / 2.0
+                    self.server.scene.add_cylinder(
+                        f"/waypoints/path/seg_{i}",
+                        radius=0.002,
+                        height=dist,
+                        position=tuple(center),
+                        wxyz=align_z_to_vector(diff),
+                        color=(0, 220, 255),
+                        opacity=0.8,
+                    )
 
     def _render_robot_rods(self, fk) -> None:
         """Constructs sleek cylindrical rods and spherical joint hubs."""
@@ -851,6 +1089,14 @@ def main() -> None:
         default=DEFAULT_CR5_RESOURCE_DIR,
         help="Path to /home/mfk01/Downloads/Robotics_Resources/cr5",
     )
+    parser.add_argument(
+        "--points",
+        "--extra-points",
+        "--points-jsonl",
+        type=Path,
+        default=None,
+        help="Path to additional points or waypoints file (.jsonl or .json), e.g. output-dobots/pose-above-box/001.jsonl",
+    )
     parser.add_argument("--port", type=int, default=8085, help="Viser server port")
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Viser server host")
     args = parser.parse_args()
@@ -859,6 +1105,7 @@ def main() -> None:
         calib_json_path=args.calib,
         dataset_dir=args.dataset,
         resource_dir=args.resources,
+        points_path=args.points,
         host=args.host,
         port=args.port,
     )
