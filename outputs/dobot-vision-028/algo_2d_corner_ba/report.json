@@ -2,7 +2,7 @@
   "method": "algo_2d_corner_ba",
   "description": "Direct 2D Corner Reprojection Bundle Adjustment minimizing sensor pixel residuals",
   "status": "fail",
-  "runtime_seconds": 6.858321512991097,
+  "runtime_seconds": 9.821262498007854,
   "evaluation_metrics": {
     "reprojection_rms_px": 1.3312669064793876,
     "reprojection_mean_px": 1.0692324498573917,

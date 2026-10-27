@@ -1,6 +1,6 @@
 calibrated: true
 method: rigid_cube_ba
-runtime_s: 7.3954
+runtime_s: 7.1679
 metrics:
   reproj_rms_px: 1.331
   reproj_mean_px: 1.069

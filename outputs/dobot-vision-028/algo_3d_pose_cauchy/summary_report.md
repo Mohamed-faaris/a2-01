@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary & Verification Metrics
 - **Methodology**: `3d_pose_cauchy`
-- **Runtime**: `35.229 s`
+- **Runtime**: `35.308 s`
 - **2D Reprojection Error**: `3.66 px RMS` (Mean: `3.16 px`, Max: `7.63 px`)
 - **3D Position Residual**: `11.85 mm RMS` (Mean: `9.78 mm`, Max: `32.63 mm`)
 - **3D Rotation Residual**: `2.31° RMS` (Mean: `1.09°`, Max: `25.45°`)

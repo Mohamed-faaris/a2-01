@@ -443,6 +443,149 @@ def solve_handeye_pipeline(
                 M = np.eye(4); M[:3, :3] = R_m; M[:3, 3] = t_m
                 final_mounts[tid] = M
 
+    elif method == "coplanar_plate_ba":
+        # Coplanar Tool Plate Model:
+        # Tool tags 6 to 13 lie on a common planar fixture and share the identical normal vector.
+        # Parameter vector:
+        #   1. r_cam (3), t_cam (3)
+        #   2. r_plate (3), t_plate (3) [Plate 6-DOF frame in TCP]
+        #   3. For each plate tag i: (u_i, v_i, yaw_i) [2D position on plate with Z=0, and in-plane yaw]
+        #   4. For each other tool tag j: r_m (3), t_m (3) [free 6-DOF]
+        plate_tags = sorted([t for t in tag_list if t in range(6, 14)])
+        other_tags = sorted([t for t in tag_list if t not in plate_tags])
+
+        if plate_tags:
+            R_plate_init = chordal_mean_rotation([init_mounts[t][:3, :3] for t in plate_tags])
+            c_plate_init = np.mean([init_mounts[t][:3, 3] for t in plate_tags], axis=0)
+            r_plate_init = Rotation.from_matrix(R_plate_init).as_rotvec()
+
+            params_init = [
+                Rotation.from_matrix(R_init).as_rotvec(),
+                t_cam_init,
+                r_plate_init,
+                c_plate_init,
+            ]
+            for t in plate_tags:
+                p_loc = R_plate_init.T @ (init_mounts[t][:3, 3] - c_plate_init)
+                R_rel = R_plate_init.T @ init_mounts[t][:3, :3]
+                yaw_rel = float(Rotation.from_matrix(R_rel).as_euler('zxy')[0])
+                params_init.append(np.array([p_loc[0], p_loc[1], yaw_rel]))
+
+            for t in other_tags:
+                params_init.append(Rotation.from_matrix(init_mounts[t][:3, :3]).as_rotvec())
+                params_init.append(init_mounts[t][:3, 3])
+
+            x0 = np.concatenate(params_init)
+
+            def res_coplanar(p):
+                R_c = Rotation.from_rotvec(p[0:3]).as_matrix()
+                t_c = p[3:6]
+                T_c = np.eye(4); T_c[:3, :3] = R_c; T_c[:3, 3] = t_c
+                T_c_b = np.linalg.inv(T_c)
+
+                R_pl = Rotation.from_rotvec(p[6:9]).as_matrix()
+                t_pl = p[9:12]
+
+                cur_mounts = {}
+                idx_p = 12
+                for t in plate_tags:
+                    u, v, yaw = p[idx_p], p[idx_p + 1], p[idx_p + 2]
+                    idx_p += 3
+                    R_z = Rotation.from_euler('z', yaw).as_matrix()
+                    R_tag = R_pl @ R_z
+                    t_tag = t_pl + R_pl @ np.array([u, v, 0.0])
+                    T_m = np.eye(4); T_m[:3, :3] = R_tag; T_m[:3, 3] = t_tag
+                    cur_mounts[t] = T_m
+
+                for t in other_tags:
+                    R_m = Rotation.from_rotvec(p[idx_p : idx_p + 3]).as_matrix()
+                    t_m = p[idx_p + 3 : idx_p + 6]
+                    idx_p += 6
+                    T_m = np.eye(4); T_m[:3, :3] = R_m; T_m[:3, 3] = t_m
+                    cur_mounts[t] = T_m
+
+                residuals = []
+                for s in tool_samples:
+                    tid = s["tid"]
+                    corners_local = get_tag_corners_local(tid)
+                    T_b_tag = s["T_b_tcp"] @ cur_mounts[tid]
+                    T_c_tag = T_c_b @ T_b_tag
+                    rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
+                    tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
+                    proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
+                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                    residuals.extend(diff)
+                return np.array(residuals)
+
+            opt = least_squares(res_coplanar, x0, loss="cauchy", f_scale=1.5, max_nfev=300)
+            R_cam_opt = Rotation.from_rotvec(opt.x[0:3]).as_matrix()
+            T_base_d415[:3, :3] = R_cam_opt
+            T_base_d415[:3, 3] = opt.x[3:6]
+
+            R_pl_opt = Rotation.from_rotvec(opt.x[6:9]).as_matrix()
+            t_pl_opt = opt.x[9:12]
+
+            idx_p = 12
+            for t in plate_tags:
+                u, v, yaw = opt.x[idx_p], opt.x[idx_p + 1], opt.x[idx_p + 2]
+                idx_p += 3
+                R_z = Rotation.from_euler('z', yaw).as_matrix()
+                R_tag = R_pl_opt @ R_z
+                t_tag = t_pl_opt + R_pl_opt @ np.array([u, v, 0.0])
+                M = np.eye(4); M[:3, :3] = R_tag; M[:3, 3] = t_tag
+                final_mounts[t] = M
+
+            for t in other_tags:
+                R_m = Rotation.from_rotvec(opt.x[idx_p : idx_p + 3]).as_matrix()
+                t_m = opt.x[idx_p + 3 : idx_p + 6]
+                idx_p += 6
+                M = np.eye(4); M[:3, :3] = R_m; M[:3, 3] = t_m
+                final_mounts[t] = M
+        else:
+            r_cam0 = Rotation.from_matrix(R_init).as_rotvec()
+            params_init = [r_cam0, t_cam_init]
+            for tid in tag_list:
+                r_m = Rotation.from_matrix(init_mounts[tid][:3, :3]).as_rotvec()
+                t_m = init_mounts[tid][:3, 3]
+                params_init.extend([r_m, t_m])
+            x0 = np.concatenate(params_init)
+
+            def res_general(p):
+                R_c = Rotation.from_rotvec(p[0:3]).as_matrix()
+                t_c = p[3:6]
+                T_c = np.eye(4); T_c[:3, :3] = R_c; T_c[:3, 3] = t_c
+                T_c_b = np.linalg.inv(T_c)
+                cur_mounts = {}
+                for idx, tid in enumerate(tag_list):
+                    base_p = 6 + 6 * idx
+                    R_m = Rotation.from_rotvec(p[base_p : base_p + 3]).as_matrix()
+                    t_m = p[base_p + 3 : base_p + 6]
+                    T_m = np.eye(4); T_m[:3, :3] = R_m; T_m[:3, 3] = t_m
+                    cur_mounts[tid] = T_m
+                residuals = []
+                for s in tool_samples:
+                    tid = s["tid"]
+                    corners_local = get_tag_corners_local(tid)
+                    T_b_tag = s["T_b_tcp"] @ cur_mounts[tid]
+                    T_c_tag = T_c_b @ T_b_tag
+                    rvec_tag, _ = cv2.Rodrigues(T_c_tag[:3, :3])
+                    tvec_tag = T_c_tag[:3, 3].reshape(3, 1)
+                    proj, _ = cv2.projectPoints(corners_local, rvec_tag, tvec_tag, K_d, D_d)
+                    diff = (proj.reshape(-1, 2) - s["corners_px"]).ravel()
+                    residuals.extend(diff)
+                return np.array(residuals)
+
+            opt = least_squares(res_general, x0, loss="cauchy", f_scale=1.5, max_nfev=250)
+            R_cam_opt = Rotation.from_rotvec(opt.x[0:3]).as_matrix()
+            T_base_d415[:3, :3] = R_cam_opt
+            T_base_d415[:3, 3] = opt.x[3:6]
+            for idx, tid in enumerate(tag_list):
+                base_p = 6 + 6 * idx
+                R_m = Rotation.from_rotvec(opt.x[base_p : base_p + 3]).as_matrix()
+                t_m = opt.x[base_p + 3 : base_p + 6]
+                M = np.eye(4); M[:3, :3] = R_m; M[:3, 3] = t_m
+                final_mounts[tid] = M
+
     else:
         raise ValueError(f"Unknown optimization method: {method}")
 

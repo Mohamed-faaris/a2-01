@@ -1,6 +1,6 @@
 calibrated: true
 method: 3d_pose_cauchy
-runtime_s: 35.2288
+runtime_s: 35.3078
 metrics:
   reproj_rms_px: 3.661
   reproj_mean_px: 3.164

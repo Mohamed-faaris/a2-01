@@ -2,7 +2,7 @@
   {
     "method": "algo_3d_pose_cauchy",
     "status": "FAIL",
-    "runtime_s": 35.228810906992294,
+    "runtime_s": 35.307776128000114,
     "reproj_rms_px": 3.66108793221216,
     "reproj_mean_px": 3.164443583861769,
     "reproj_max_px": 7.6252703350072535,
@@ -21,7 +21,7 @@
   {
     "method": "algo_2d_corner_ba",
     "status": "FAIL",
-    "runtime_s": 6.858321512991097,
+    "runtime_s": 9.821262498007854,
     "reproj_rms_px": 1.3312669064793876,
     "reproj_mean_px": 1.0692324498573917,
     "reproj_max_px": 4.510041252245094,
@@ -40,7 +40,7 @@
   {
     "method": "algo_rigid_cube_ba",
     "status": "FAIL",
-    "runtime_s": 7.395436554012122,
+    "runtime_s": 7.167866713993135,
     "reproj_rms_px": 1.3312669064793876,
     "reproj_mean_px": 1.0692324498573917,
     "reproj_max_px": 4.510041252245094,
@@ -53,6 +53,25 @@
     "d415_xyz_m": [
       1.8977,
       -0.3446,
+      0.796
+    ]
+  },
+  {
+    "method": "algo_coplanar_plate_ba",
+    "status": "FAIL",
+    "runtime_s": 3.936074249999365,
+    "reproj_rms_px": 1.3924409970265348,
+    "reproj_mean_px": 1.1707043142178113,
+    "reproj_max_px": 4.792166323489749,
+    "pos_rms_mm": 35.398687638770646,
+    "pos_mean_mm": 32.227421962108444,
+    "pos_max_mm": 73.61061404471677,
+    "rot_rms_deg": 3.7708991171823723,
+    "rot_mean_deg": 3.0685276907080725,
+    "box_coplanar_mm": 3.7824290221229996e-14,
+    "d415_xyz_m": [
+      1.8981,
+      -0.3452,
       0.796
     ]
   }

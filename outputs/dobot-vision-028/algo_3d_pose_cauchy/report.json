@@ -2,7 +2,7 @@
   "method": "algo_3d_pose_cauchy",
   "description": "Baseline SVD + 3D SE(3) pose error minimization with Cauchy robust loss",
   "status": "fail",
-  "runtime_seconds": 35.228810906992294,
+  "runtime_seconds": 35.307776128000114,
   "evaluation_metrics": {
     "reprojection_rms_px": 3.66108793221216,
     "reprojection_mean_px": 3.164443583861769,

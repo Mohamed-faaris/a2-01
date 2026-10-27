@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary & Verification Metrics
 - **Methodology**: `rigid_cube_ba`
-- **Runtime**: `7.395 s`
+- **Runtime**: `7.168 s`
 - **2D Reprojection Error**: `1.33 px RMS` (Mean: `1.07 px`, Max: `4.51 px`)
 - **3D Position Residual**: `35.91 mm RMS` (Mean: `32.73 mm`, Max: `74.19 mm`)
 - **3D Rotation Residual**: `2.83° RMS` (Mean: `1.93°`, Max: `26.99°`)

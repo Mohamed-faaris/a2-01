@@ -2,7 +2,7 @@
   "scene_format_version": "1.0.0",
   "origin_frame": "base_link",
   "calibration_method": "2d_corner_ba",
-  "runtime_seconds": 6.858321512991097,
+  "runtime_seconds": 9.821262498007854,
   "summary_metrics": {
     "reproj_rms_px": 1.3312669064793876,
     "pos_rms_mm": 35.90572760970106,
@@ -439,6 +439,29 @@
         ],
         "tag_size_m": 0.0575
       }
+    },
+    "fixture_plate": {
+      "type": "coplanar_fixture_plate",
+      "member_tags": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "surface_normal_tcp": [
+        -0.06814072643451238,
+        0.04952330765794384,
+        0.9964458256220423
+      ],
+      "center_mm": [
+        -8.799499444498405,
+        14.439192597538561,
+        -24.658548946203407
+      ]
     }
   },
   "static_landmarks": {

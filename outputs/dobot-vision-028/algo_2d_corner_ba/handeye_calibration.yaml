@@ -1,6 +1,6 @@
 calibrated: true
 method: 2d_corner_ba
-runtime_s: 6.8583
+runtime_s: 9.8213
 metrics:
   reproj_rms_px: 1.331
   reproj_mean_px: 1.069

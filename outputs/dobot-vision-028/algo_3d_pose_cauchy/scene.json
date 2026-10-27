@@ -2,7 +2,7 @@
   "scene_format_version": "1.0.0",
   "origin_frame": "base_link",
   "calibration_method": "3d_pose_cauchy",
-  "runtime_seconds": 35.228810906992294,
+  "runtime_seconds": 35.307776128000114,
   "summary_metrics": {
     "reproj_rms_px": 3.66108793221216,
     "pos_rms_mm": 11.854129504909173,
@@ -439,6 +439,29 @@
         ],
         "tag_size_m": 0.0575
       }
+    },
+    "fixture_plate": {
+      "type": "coplanar_fixture_plate",
+      "member_tags": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "surface_normal_tcp": [
+        -0.09482272029101657,
+        0.05200791242869175,
+        0.9941347135883652
+      ],
+      "center_mm": [
+        10.939345986795683,
+        27.852526452115683,
+        -12.01717404501448
+      ]
     }
   },
   "static_landmarks": {
