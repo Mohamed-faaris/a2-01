@@ -1,0 +1,280 @@
+{
+  "dataset": "inputs/dobot-vision/042",
+  "total_observations": 15,
+  "total_tool_sightings": 140,
+  "camera_breakdown": {
+    "d415": {
+      "sightings": 61,
+      "reproj_rms_px": 1.995402727100588,
+      "reproj_mean_px": 1.8382189300167897,
+      "reproj_max_px": 4.928457508645874,
+      "pos_rms_mm": 38.62295970633625,
+      "pos_mean_mm": 32.91826805924078,
+      "optical_z_rms_mm": 37.089130978474714,
+      "lateral_xy_rms_mm": 10.77633424401922
+    },
+    "usb": {
+      "sightings": 79,
+      "reproj_rms_px": 1.5856830232665493,
+      "reproj_mean_px": 1.5000604808596636,
+      "reproj_max_px": 3.565407210211857,
+      "pos_rms_mm": 37.52114224600374,
+      "pos_mean_mm": 30.71116314455878,
+      "optical_z_rms_mm": 34.32913365789126,
+      "lateral_xy_rms_mm": 15.14419683388608
+    }
+  },
+  "cross_validation_5fold": {
+    "folds": [
+      {
+        "fold": 1,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 36,
+        "d415_xyz_m": [
+          1.9022,
+          -0.3588,
+          0.7748
+        ],
+        "held_out_reproj_rms_px": 2.257537484159705,
+        "held_out_reproj_mean_px": 2.0456418875346256,
+        "held_out_pos_rms_mm": 47.854014629088276,
+        "held_out_pos_mean_mm": 39.67110591321476,
+        "held_out_rot_rms_deg": 49.41965853954944
+      },
+      {
+        "fold": 2,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 36,
+        "d415_xyz_m": [
+          1.9034,
+          -0.3714,
+          0.7813
+        ],
+        "held_out_reproj_rms_px": 2.153867214441649,
+        "held_out_reproj_mean_px": 2.0053725848061643,
+        "held_out_pos_rms_mm": 30.76315239834321,
+        "held_out_pos_mean_mm": 27.619449438252595,
+        "held_out_rot_rms_deg": 53.68257063115679
+      },
+      {
+        "fold": 3,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 36,
+        "d415_xyz_m": [
+          1.8959,
+          -0.3725,
+          0.7885
+        ],
+        "held_out_reproj_rms_px": 2.649370962218143,
+        "held_out_reproj_mean_px": 2.433989477927319,
+        "held_out_pos_rms_mm": 32.55931834805265,
+        "held_out_pos_mean_mm": 27.88024071431667,
+        "held_out_rot_rms_deg": 45.69994254858227
+      },
+      {
+        "fold": 4,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 15,
+        "d415_xyz_m": [
+          1.8974,
+          -0.3632,
+          0.7858
+        ],
+        "held_out_reproj_rms_px": 3.7704349864764644,
+        "held_out_reproj_mean_px": 3.4293365315054385,
+        "held_out_pos_rms_mm": 50.739118270534306,
+        "held_out_pos_mean_mm": 41.95167107484274,
+        "held_out_rot_rms_deg": 42.97017559250147
+      },
+      {
+        "fold": 5,
+        "train_poses": 12,
+        "val_poses": 3,
+        "val_sightings": 15,
+        "d415_xyz_m": [
+          1.9009,
+          -0.3675,
+          0.7844
+        ],
+        "held_out_reproj_rms_px": 1.9149773721432766,
+        "held_out_reproj_mean_px": 1.8520112920332825,
+        "held_out_pos_rms_mm": 39.626615898275865,
+        "held_out_pos_mean_mm": 35.69045217064288,
+        "held_out_rot_rms_deg": 17.9876105607984
+      }
+    ],
+    "d415_mean_mm": [
+      1899.98,
+      -366.68,
+      782.95
+    ],
+    "d415_std_mm": [
+      2.84,
+      5.11,
+      4.7
+    ],
+    "d415_max_diff_mm": [
+      7.46,
+      13.67,
+      13.72
+    ],
+    "usb_mean_mm": [
+      1671.05,
+      -998.37,
+      812.72
+    ],
+    "usb_std_mm": [
+      2.24,
+      2.09,
+      1.7
+    ],
+    "usb_max_diff_mm": [
+      6.41,
+      6.08,
+      4.68
+    ]
+  },
+  "multistart_sensitivity": {
+    "seeds": [],
+    "d415_spread_mm": [
+      0,
+      0,
+      0
+    ],
+    "d415_std_mm": [
+      0,
+      0,
+      0
+    ],
+    "usb_spread_mm": [
+      0,
+      0,
+      0
+    ],
+    "usb_std_mm": [
+      0,
+      0,
+      0
+    ]
+  },
+  "tag_breakdown": {
+    "40": {
+      "sightings": 4,
+      "reproj_rms_px": 1.082,
+      "reproj_mean_px": 1.049,
+      "pos_rms_mm": 6.2,
+      "pos_mean_mm": 5.39,
+      "rot_rms_deg": 2.01
+    },
+    "62": {
+      "sightings": 20,
+      "reproj_rms_px": 1.454,
+      "reproj_mean_px": 1.407,
+      "pos_rms_mm": 40.81,
+      "pos_mean_mm": 33.33,
+      "rot_rms_deg": 62.71
+    },
+    "63": {
+      "sightings": 23,
+      "reproj_rms_px": 1.74,
+      "reproj_mean_px": 1.68,
+      "pos_rms_mm": 38.14,
+      "pos_mean_mm": 32.82,
+      "rot_rms_deg": 47.6
+    },
+    "64": {
+      "sightings": 20,
+      "reproj_rms_px": 1.704,
+      "reproj_mean_px": 1.595,
+      "pos_rms_mm": 32.95,
+      "pos_mean_mm": 26.51,
+      "rot_rms_deg": 67.97
+    },
+    "65": {
+      "sightings": 24,
+      "reproj_rms_px": 2.138,
+      "reproj_mean_px": 1.917,
+      "pos_rms_mm": 45.2,
+      "pos_mean_mm": 37.97,
+      "rot_rms_deg": 30.95
+    },
+    "66": {
+      "sightings": 24,
+      "reproj_rms_px": 1.911,
+      "reproj_mean_px": 1.78,
+      "pos_rms_mm": 34.67,
+      "pos_mean_mm": 29.75,
+      "rot_rms_deg": 37.11
+    },
+    "67": {
+      "sightings": 25,
+      "reproj_rms_px": 1.667,
+      "reproj_mean_px": 1.562,
+      "pos_rms_mm": 37.8,
+      "pos_mean_mm": 33.42,
+      "rot_rms_deg": 28.7
+    }
+  },
+  "radial_distance_breakdown": {
+    "Center (r < 250 px)": {
+      "sightings": 37,
+      "reproj_rms_px": 1.732,
+      "pos_rms_mm": 28.26
+    },
+    "Mid-field (250 <= r < 450 px)": {
+      "sightings": 59,
+      "reproj_rms_px": 2.035,
+      "pos_rms_mm": 43.62
+    },
+    "Periphery (r >= 450 px)": {
+      "sightings": 44,
+      "reproj_rms_px": 1.4,
+      "pos_rms_mm": 37.05
+    }
+  },
+  "viewing_angle_breakdown": {
+    "Steep Slant (> 40\u00b0)": {
+      "sightings": 140,
+      "reproj_rms_px": 1.776,
+      "pos_rms_mm": 38.01
+    }
+  },
+  "analytical_uncertainty": {
+    "jacobian_condition_number": 522343962.52,
+    "singular_values": [
+      55668.824,
+      52402.001,
+      39382.442,
+      32697.633,
+      18333.419,
+      15575.82,
+      14342.381,
+      13308.589
+    ],
+    "min_singular_value": 0.0001,
+    "d415_pos_std_err_mm": [
+      0.98,
+      1.6,
+      1.26
+    ],
+    "d415_rot_std_err_deg": [
+      0.05,
+      0.06,
+      0.06
+    ],
+    "usb_pos_std_err_mm": [
+      1.05,
+      0.9,
+      0.87
+    ],
+    "usb_rot_std_err_deg": [
+      0.03,
+      0.04,
+      0.03
+    ]
+  }
+}

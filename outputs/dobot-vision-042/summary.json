@@ -1,0 +1,78 @@
+[
+  {
+    "method": "algo_3d_pose_cauchy",
+    "status": "FAIL",
+    "runtime_s": 72.41161046100001,
+    "reproj_rms_px": 15.12301633084326,
+    "reproj_mean_px": 13.303232942466295,
+    "reproj_max_px": 38.32846014757466,
+    "pos_rms_mm": 38.76687698190332,
+    "pos_mean_mm": 31.942815210113263,
+    "pos_max_mm": 112.57984918904961,
+    "rot_rms_deg": 42.417879657327155,
+    "rot_mean_deg": 28.7629171792912,
+    "box_coplanar_mm": 0.8436494033478147,
+    "d415_xyz_m": [
+      1.9082,
+      -0.3351,
+      0.8472
+    ]
+  },
+  {
+    "method": "algo_2d_corner_ba",
+    "status": "FAIL",
+    "runtime_s": 16.653590975000043,
+    "reproj_rms_px": 8.053949460420874,
+    "reproj_mean_px": 6.345020942116188,
+    "reproj_max_px": 18.93779115189723,
+    "pos_rms_mm": 44.612734639741646,
+    "pos_mean_mm": 37.97242728316826,
+    "pos_max_mm": 125.07883081389959,
+    "rot_rms_deg": 46.58467210773419,
+    "rot_mean_deg": 25.887956871148717,
+    "box_coplanar_mm": 0.8436494033478298,
+    "d415_xyz_m": [
+      1.9044,
+      -0.3536,
+      0.7832
+    ]
+  },
+  {
+    "method": "algo_rigid_cube_ba",
+    "status": "FAIL",
+    "runtime_s": 15.34638364500006,
+    "reproj_rms_px": 8.053949460420874,
+    "reproj_mean_px": 6.345020942116188,
+    "reproj_max_px": 18.93779115189723,
+    "pos_rms_mm": 44.612734639741646,
+    "pos_mean_mm": 37.97242728316826,
+    "pos_max_mm": 125.07883081389959,
+    "rot_rms_deg": 46.58467210773419,
+    "rot_mean_deg": 25.887956871148717,
+    "box_coplanar_mm": 0.8436494033478298,
+    "d415_xyz_m": [
+      1.9044,
+      -0.3536,
+      0.7832
+    ]
+  },
+  {
+    "method": "algo_coplanar_plate_ba",
+    "status": "FAIL",
+    "runtime_s": 88.41855079400011,
+    "reproj_rms_px": 1.7758628003921524,
+    "reproj_mean_px": 1.6474009479924117,
+    "reproj_max_px": 4.928457508645874,
+    "pos_rms_mm": 38.00514693764297,
+    "pos_mean_mm": 31.67283028595594,
+    "pos_max_mm": 115.53424179409612,
+    "rot_rms_deg": 46.27531101842214,
+    "rot_mean_deg": 25.85399581826246,
+    "box_coplanar_mm": 0.8436494033478628,
+    "d415_xyz_m": [
+      1.8993,
+      -0.3662,
+      0.786
+    ]
+  }
+]

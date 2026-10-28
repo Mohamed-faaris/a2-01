@@ -24,6 +24,10 @@ groups:
         size_m: 0.0410
         size_mm: 41.0
         description: "Mini cube tool tags 20, 21"
+      - ids: [62, 63, 64, 65, 66, 67]
+        size_m: 0.0700
+        size_mm: 70.0
+        description: "Large 70mm tool plate tags 62-67"
 
   base_markers:
     link: "base_link"
