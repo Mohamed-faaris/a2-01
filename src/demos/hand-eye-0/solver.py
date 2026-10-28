@@ -488,7 +488,7 @@ def solve_handeye_pipeline(
         # Coplanar Tool Plate Model:
         # Tool tags 6 to 13 lie on a common planar fixture and share the identical normal vector.
         # When secondary/USB camera sightings are present, performs Joint Dual-Camera Bundle Adjustment.
-        plate_tags = sorted([t for t in tag_list if t in range(6, 14)])
+        plate_tags = sorted([t for t in tag_list if (t in range(6, 14) or t in range(62, 68))])
         other_tags = sorted([t for t in tag_list if t not in plate_tags])
 
         if plate_tags:
