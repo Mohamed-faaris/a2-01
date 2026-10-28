@@ -19,3 +19,12 @@ constraints:
     top_offset_m: -0.01           # Sits 1 cm below base_link bottom (Z = -0.01) to prevent false self-collision
     center_xy_m: [0.0, 0.0]       # Centered directly under robot base_link
     enabled: true
+
+  # 3. Y-axis Base Link Obstacle (Box_0)
+  Box_0:
+    id: "Box_0"
+    kind: "obstacle"
+    size_m: [0.0405395, 0.0405395, 0.0405395]
+    position_m: [0.0, 0.15, 0.05]
+    orientation_quat: [0.0, 0.0, 0.0, 1.0]
+    enabled: true
