@@ -264,11 +264,12 @@ class RealWorldConnectionApp:
 
         def _run():
             try:
+                c_flag = f"--constraints {self.args.constraints}" if getattr(self.args, "constraints", None) else ""
                 inner_cmd = (
                     f"unset ROS_DISTRO ROS_PACKAGE_PATH AMENT_PREFIX_PATH PYTHONPATH CMAKE_PREFIX_PATH && "
                     f"source /opt/ros/humble/setup.bash && "
                     f"source {DEFAULT_DOBOT_WS}/install/setup.bash && "
-                    f"python3 {DEFAULT_DOBOT_WS}/scripts/demo_tracker.py --publish"
+                    f"python3 {DEFAULT_DOBOT_WS}/scripts/demo_tracker.py --publish {c_flag}"
                 )
                 in_container = os.path.exists("/run/.containerenv") or os.environ.get("CONTAINER_ID") == "moveit-dev"
                 if in_container:
@@ -351,11 +352,12 @@ class RealWorldConnectionApp:
                 exec_flag = "--execute" if execute else ""
                 speed_val = getattr(self.args, "speed", 0.15)
                 buffer_val = getattr(self.args, "buffer", 0.10)
+                c_flag = f"--constraints {self.args.constraints}" if getattr(self.args, "constraints", None) else ""
                 inner_cmd = (
                     f"unset ROS_DISTRO ROS_PACKAGE_PATH AMENT_PREFIX_PATH PYTHONPATH CMAKE_PREFIX_PATH && "
                     f"source /opt/ros/humble/setup.bash && "
                     f"source {DEFAULT_DOBOT_WS}/install/setup.bash && "
-                    f"python3 {DEFAULT_DOBOT_WS}/scripts/demo_tracker.py --publish --probe-corners {target_platform} --buffer {buffer_val} --speed {speed_val} {exec_flag}"
+                    f"python3 {DEFAULT_DOBOT_WS}/scripts/demo_tracker.py --publish --probe-corners {target_platform} --buffer {buffer_val} --speed {speed_val} {c_flag} {exec_flag}"
                 )
 
                 in_container = os.path.exists("/run/.containerenv") or os.environ.get("CONTAINER_ID") == "moveit-dev"
@@ -860,6 +862,8 @@ def main():
     parser.add_argument("--no-display", action="store_true", help="Run headlessly without GUI window")
     parser.add_argument("--auto-trigger", action="store_true", help="Automatically trigger robot motion once tracking stabilizes")
     parser.add_argument("--probe-corners", action="store_true", help="Probe 15 cm above each reachable corner of the platform (instead of pick-and-place)")
+    parser.add_argument("--probe-tags", "--prob-tags", type=str, default=None, help="Path to JSONL file with tag poses to probe sequentially")
+    parser.add_argument("--constraints", "--constraint", type=str, default=None, help="Path to constraints.yaml (defines ground_plane floor & base_pedestal)")
     parser.add_argument("--buffer", "--corner-inset", type=float, default=0.10, help="Buffer / inset distance in meters from outer platform edges in X and Y (default: 0.10 = 10cm)")
     parser.add_argument("--speed", type=float, default=0.15, help="Robot velocity and acceleration scaling factor (default: 0.15 = 15%)")
     parser.add_argument("--execute", action="store_true", default=True, help="Execute robot motion upon trigger (default: True)")
